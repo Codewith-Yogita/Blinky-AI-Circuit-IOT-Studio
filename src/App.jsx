@@ -309,17 +309,17 @@ function App() {
         {activeStage === STAGES.CIRCUIT && (
           <div className="space-y-6">
             {/* Monumental, Clean Stage 1 Heading (Centered & Ultra Bold) */}
-            <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-white/[0.08] w-full">
+            <div className="flex flex-col items-center text-center space-y-2.5 pb-4 border-b border-white/[0.08] w-full">
               <span className="text-xs sm:text-sm font-mono uppercase tracking-widest text-amber-500 font-extrabold block">
                 01 / VIRTUAL HARDWARE
               </span>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] text-center">
                 Interactive Wokwi Circuit
               </h1>
-              <p className="text-xs sm:text-base text-zinc-400 font-medium text-center max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Real-time ESP32 hardware simulation, interactive sensors, and pinout wiring.
               </p>
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CODE)}
@@ -372,17 +372,17 @@ function App() {
         {activeStage === STAGES.CODE && (
           <div className="space-y-6">
             {/* Monumental, Clean Stage 2 Heading (Centered & Ultra Bold) */}
-            <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-white/[0.08] w-full">
+            <div className="flex flex-col items-center text-center space-y-2.5 pb-4 border-b border-white/[0.08] w-full">
               <span className="text-xs sm:text-sm font-mono uppercase tracking-widest text-amber-500 font-extrabold block">
                 02 / SYNTHESIZED FIRMWARE
               </span>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] text-center">
                 Synthesized Arduino C++
               </h1>
-              <p className="text-xs sm:text-base text-zinc-400 font-medium text-center max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Verified pin mappings, non-blocking loops, and compiled firmware routines.
               </p>
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CIRCUIT)}
@@ -436,17 +436,17 @@ function App() {
         {activeStage === STAGES.FLASH && (
           <div className="space-y-6">
             {/* Monumental, Clean Stage 3 Heading (Centered & Ultra Bold) */}
-            <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-white/[0.08] w-full">
+            <div className="flex flex-col items-center text-center space-y-2.5 pb-4 border-b border-white/[0.08] w-full">
               <span className="text-xs sm:text-sm font-mono uppercase tracking-widest text-amber-500 font-extrabold block">
                 03 / SERIAL FLASHING
               </span>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] text-center">
                 Flash Firmware to ESP32
               </h1>
-              <p className="text-xs sm:text-base text-zinc-400 font-medium text-center max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Direct browser-to-chip WebSerial upload via esptool and PySerial channel.
               </p>
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CODE)}
@@ -494,17 +494,17 @@ function App() {
         {activeStage === STAGES.AI_TEST && (
           <div className="space-y-6">
             {/* Monumental, Clean Stage 4 Heading (Centered & Ultra Bold) */}
-            <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-white/[0.08] w-full">
+            <div className="flex flex-col items-center text-center space-y-2.5 pb-4 border-b border-white/[0.08] w-full">
               <span className="text-xs sm:text-sm font-mono uppercase tracking-widest text-amber-500 font-extrabold block">
                 04 / AGENTIC VERIFICATION
               </span>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] text-center">
                 AI Autonomous Self-Healing
               </h1>
-              <p className="text-xs sm:text-base text-zinc-400 font-medium text-center max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Autonomous loop: diagnose signal noise, calculate corrections, and hot-patch firmware.
               </p>
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.SUCCESS)}
@@ -534,17 +534,17 @@ function App() {
         {activeStage === STAGES.SUCCESS && (
           <div className="space-y-8">
             {/* Monumental, Clean Stage 5 Heading (Centered & Ultra Bold) */}
-            <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-white/[0.08] w-full">
+            <div className="flex flex-col items-center text-center space-y-2.5 pb-4 border-b border-white/[0.08] w-full">
               <span className="text-xs sm:text-sm font-mono uppercase tracking-widest text-emerald-400 font-extrabold block">
                 05 / LIVE TELEMETRY
               </span>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.85)] text-center">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight leading-tight text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] text-center">
                 Verified Telemetry &amp; Guide
               </h1>
-              <p className="text-xs sm:text-base text-zinc-400 font-medium text-center max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Hardware loop verified. Real-time sensor metrics synchronized with TigerData / PostgreSQL.
               </p>
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CIRCUIT)}

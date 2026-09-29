@@ -169,7 +169,7 @@ export default function Interactive3DHeadline() {
               transform: `perspective(1400px) rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,
             }}
           >
-            <h1 className="text-4xl sm:text-6xl md:text-7xl xl:text-8xl font-black tracking-tighter leading-[1.03] m-0 p-0 pointer-events-none">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl xl:text-7xl font-black tracking-tighter leading-[1.03] m-0 p-0 pointer-events-none">
               <span className="text-3d-white block">
                 BUILD HARDWARE
               </span>

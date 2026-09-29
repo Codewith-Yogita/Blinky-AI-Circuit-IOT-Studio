@@ -239,30 +239,30 @@ export default function LandingPage({
       </header>
 
       {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
-      <main className="flex-1 w-full px-6 sm:px-12 lg:px-16 py-12 space-y-28 sm:space-y-36">
+      <main className="flex-1 w-full px-6 sm:px-10 lg:px-14 py-8 sm:py-10 space-y-16 sm:space-y-24">
         {/* ================= HERO SECTION (LARGE HEADINGS, SINGLE CLEAR FOCAL POINT) ================= */}
         <section id="hero" className="scroll-mt-24 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Content (7 Cols) */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-5">
               <div className="inline-flex items-center gap-2 text-xs font-mono font-semibold tracking-widest text-amber-500 uppercase">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                 <span>AI-Powered Electronics Assistant</span>
               </div>
 
               <h1
-                className={`text-5xl sm:text-7xl lg:text-8xl font-black font-outfit tracking-tight leading-[1.05] ${
+                className={`text-3xl sm:text-5xl lg:text-6xl font-black font-outfit tracking-tight leading-[1.1] ${
                   isDark ? "text-white" : "text-zinc-950"
                 }`}
               >
                 From circuit to working IoT project.{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-6xl sm:text-8xl lg:text-9xl font-normal block mt-1">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-4xl sm:text-5xl lg:text-6xl font-normal block mt-1">
                   Powered by AI.
                 </span>
               </h1>
 
               <p
-                className={`text-base sm:text-xl font-normal leading-relaxed max-w-2xl ${
+                className={`text-sm sm:text-base lg:text-lg font-normal leading-relaxed max-w-xl ${
                   isDark ? "text-zinc-400" : "text-zinc-600"
                 }`}
               >
@@ -275,7 +275,7 @@ export default function LandingPage({
               </div>
 
               {/* CTAs */}
-              <div className="pt-4 flex flex-wrap items-center gap-4">
+              <div className="pt-2 flex flex-wrap items-center gap-4">
                 <button
                   type="button"
                   onClick={() => setShowNewProjectModal(true)}
@@ -303,14 +303,14 @@ export default function LandingPage({
             </div>
 
             {/* Right Realistic Image Focal Point (5 Cols) */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative rounded-3xl overflow-hidden border border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.2)] group">
+            <div className="lg:col-span-5 relative flex items-center justify-center">
+              <div className="relative rounded-3xl overflow-hidden border border-amber-500/30 shadow-[0_0_40px_rgba(245,158,11,0.18)] max-h-[380px] lg:max-h-[420px] w-full group">
                 <img
                   src="/images/blinky_vision_scan.jpg"
                   alt="Phone Camera Vision AI Component Scanning"
-                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full max-h-[380px] lg:max-h-[420px] object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-5">
                   <div className="space-y-1">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-semibold flex items-center gap-1.5">
                       <Camera className="w-3.5 h-3.5" />
@@ -328,21 +328,21 @@ export default function LandingPage({
 
         {/* ================= SECTION 2: ABOUT BLINKY (RECONSTRUCTED EXACTLY FROM YOUR IMAGE LAYOUT!) ================= */}
         <section id="about" className="scroll-mt-24 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
             {/* Left Massive Statement (Matching "THE HYPE STOPS HERE." layout in amber-red) */}
-            <div className="lg:col-span-5 select-none space-y-1">
-              <h2 className="text-6xl sm:text-8xl lg:text-9xl font-black font-outfit uppercase tracking-tighter leading-none text-transparent bg-clip-text bg-gradient-to-b from-amber-400 via-orange-400 to-red-500">
+            <div className="lg:col-span-5 select-none space-y-1 overflow-visible">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] text-transparent bg-clip-text bg-gradient-to-b from-amber-400 via-orange-400 to-red-500 whitespace-nowrap">
                 PHYSICAL
               </h2>
               <div
-                className={`text-6xl sm:text-8xl lg:text-9xl font-black font-outfit uppercase tracking-tighter leading-none ${
+                className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap ${
                   isDark ? "text-zinc-600/70" : "text-zinc-300"
                 }`}
               >
                 CIRCUITS.
               </div>
               <div
-                className={`text-6xl sm:text-8xl lg:text-9xl font-black font-outfit uppercase tracking-tighter leading-none ${
+                className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap ${
                   isDark ? "text-zinc-700/60" : "text-zinc-300/80"
                 }`}
               >
@@ -351,9 +351,9 @@ export default function LandingPage({
             </div>
 
             {/* Right Editorial Copy (Clean, focused, no clutter) */}
-            <div className="lg:col-span-7 space-y-6 pt-2">
+            <div className="lg:col-span-7 space-y-5 pt-1">
               <h3
-                className={`text-2xl sm:text-3xl font-bold font-outfit leading-snug ${
+                className={`text-xl sm:text-2xl font-bold font-outfit leading-snug ${
                   isDark ? "text-white" : "text-zinc-950"
                 }`}
               >
@@ -361,7 +361,7 @@ export default function LandingPage({
               </h3>
 
               <p
-                className={`text-base sm:text-lg leading-relaxed ${
+                className={`text-sm sm:text-base leading-relaxed ${
                   isDark ? "text-zinc-300" : "text-zinc-700"
                 }`}
               >
@@ -369,7 +369,7 @@ export default function LandingPage({
               </p>
 
               <p
-                className={`text-base sm:text-lg leading-relaxed ${
+                className={`text-sm sm:text-base leading-relaxed ${
                   isDark ? "text-zinc-400" : "text-zinc-600"
                 }`}
               >
@@ -388,12 +388,12 @@ export default function LandingPage({
         </section>
 
         {/* ================= SECTION 3: HOW BLINKY WORKS (THE 4 PROGRESSIVE STEPS) ================= */}
-        <section id="how-it-works" className="scroll-mt-24 w-full space-y-10">
+        <section id="how-it-works" className="scroll-mt-24 w-full space-y-8">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
               ✦ Process Workflow
             </span>
-            <h2 className="text-4xl sm:text-6xl font-black font-outfit tracking-tight">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight">
               How Blinky Works
             </h2>
           </div>
@@ -401,8 +401,8 @@ export default function LandingPage({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* 01 Capture & Describe */}
             <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-4xl font-black font-outfit text-amber-500 mb-3">01</div>
-              <h3 className="text-lg font-bold font-outfit mb-2 text-white">Capture &amp; Describe</h3>
+              <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-500 mb-3">01</div>
+              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Capture &amp; Describe</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                 Use the phone camera to capture components or an existing circuit and describe the desired project through voice or text.
               </p>
@@ -410,8 +410,8 @@ export default function LandingPage({
 
             {/* 02 AI Understands */}
             <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-4xl font-black font-outfit text-orange-500 mb-3">02</div>
-              <h3 className="text-lg font-bold font-outfit mb-2 text-white">AI Understands</h3>
+              <div className="text-3xl sm:text-4xl font-black font-outfit text-orange-500 mb-3">02</div>
+              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">AI Understands</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                 Gemini Vision identifies components and interprets the user's requirements through the Blinky AI Agent, powered by Python and FastAPI.
               </p>
@@ -419,8 +419,8 @@ export default function LandingPage({
 
             {/* 03 Circuit & Code Generation */}
             <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-4xl font-black font-outfit text-red-500 mb-3">03</div>
-              <h3 className="text-lg font-bold font-outfit mb-2 text-white">Circuit &amp; Code</h3>
+              <div className="text-3xl sm:text-4xl font-black font-outfit text-red-500 mb-3">03</div>
+              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Circuit &amp; Code</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                 Blinky generates a circuit diagram with the required connections and pin mappings, along with Arduino C++ code for the intended setup.
               </p>
@@ -428,8 +428,8 @@ export default function LandingPage({
 
             {/* 04 Flash & Execute */}
             <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-4xl font-black font-outfit text-amber-400 mb-3">04</div>
-              <h3 className="text-lg font-bold font-outfit mb-2 text-white">Flash &amp; Execute</h3>
+              <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-400 mb-3">04</div>
+              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Flash &amp; Execute</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                 The generated code is uploaded to the ESP32 through the hardware execution layer, while telemetry and real-time feedback help users monitor the project.
               </p>
@@ -444,7 +444,7 @@ export default function LandingPage({
               <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
                 ✦ Hardware Library
               </span>
-              <h2 className="text-4xl sm:text-6xl font-black font-outfit tracking-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight">
                 Featured Circuits
               </h2>
             </div>
@@ -513,7 +513,7 @@ export default function LandingPage({
             <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
               ✦ Engineering Stack
             </span>
-            <h2 className="text-4xl sm:text-6xl font-black font-outfit tracking-tight">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight">
               Tech Stack
             </h2>
           </div>
@@ -545,8 +545,8 @@ export default function LandingPage({
         </section>
 
         {/* ================= SECTION 7: UNBOXED, BOLD IMPACT CTA ================= */}
-        <section className="py-24 sm:py-36 text-center flex flex-col items-center justify-center space-y-8 select-none w-full">
-          <h2 className="text-5xl sm:text-7xl lg:text-9xl font-black font-outfit uppercase tracking-tighter text-white leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]">
+        <section className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter text-white leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]">
             Ready to dig in?
           </h2>
 

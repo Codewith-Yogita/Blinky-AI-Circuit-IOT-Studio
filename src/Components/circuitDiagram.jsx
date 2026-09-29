@@ -23,7 +23,9 @@ const WOKWI_PRESET_MAP = {
   water_level_alarm: "343594090247488082", // ESP32 + HC-SR04 Ultrasonic + Buzzer + 4 LEDs
   single_led: "441971812032999425",        // ESP32 DevKit V1 + LED Blink
   dual_led_button: "408056248585797633",   // ESP32 DevKit V1 + Push Button + LED
+  oled_display: "305569420067603028",      // ESP32 DevKit V1 + SSD1306 OLED Display
 };
+
 
 function CircuitDiagram({ circuit }) {
   const [viewMode, setViewMode] = useState("wokwi_circuit"); // 'wokwi_circuit' | 'schematic' | 'diagram_json' | 'wokwi_cloud'

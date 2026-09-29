@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Terminal, Zap, Loader2, CheckCircle2, AlertCircle, Trash2, Cpu, X } from "lucide-react";
+import { Terminal, Zap, Loader2, CheckCircle2, AlertCircle, Trash2, Cpu, X, ArrowRight } from "lucide-react";
 import { checkDeviceStatus, flashFirmware } from "../services/hardwareApi";
 
 function HardwarePanel({ code }) {
@@ -119,29 +119,36 @@ function HardwarePanel({ code }) {
         <div className="hardware-actions">
           <button
             type="button"
-            className={`serial-toggle-btn ${showSerial ? "active" : ""}`}
+            className={`serial-toggle-btn group ${showSerial ? "active" : ""}`}
             onClick={() => setShowSerial((prev) => !prev)}
           >
-            <Terminal size={14} />
-            <span>{showSerial ? "Hide Serial Monitor" : "Serial Monitor"}</span>
+            <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
+              <Terminal size={12} />
+            </div>
+            <span className="font-outfit">{showSerial ? "Hide Serial Monitor" : "Serial Monitor"}</span>
           </button>
 
           <button
             type="button"
-            className="flash-btn"
+            className="flash-btn group"
             onClick={handleFlash}
             disabled={!device.connected || !code || flashingState.isFlashing}
           >
             {flashingState.isFlashing ? (
-              <>
-                <Loader2 size={15} className="animate-spin" />
-                <span>Uploading...</span>
-              </>
+              <span className="flex items-center gap-2.5">
+                <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
+                  <Loader2 size={12} className="animate-spin" />
+                </div>
+                <span className="font-outfit">Uploading...</span>
+              </span>
             ) : (
-              <>
-                <Zap size={15} className="fill-amber-400" />
-                <span>Flash to ESP32</span>
-              </>
+              <span className="flex items-center gap-2.5">
+                <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
+                  <Zap size={12} className="fill-amber-400" />
+                </div>
+                <span className="font-outfit">Flash to ESP32</span>
+                <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+              </span>
             )}
           </button>
         </div>

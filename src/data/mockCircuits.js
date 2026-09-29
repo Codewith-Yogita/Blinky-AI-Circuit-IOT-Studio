@@ -377,3 +377,87 @@ void loop() {
     "10. Deflecting the joystick or clicking the thumbstick will trigger the Red Alert LED!",
   ],
 };
+
+export const oledDisplayCircuit = {
+  id: "oled_display",
+  title: "ESP32 SSD1306 0.96\" I2C OLED Display",
+  board: {
+    id: "esp32",
+    type: "ESP32",
+    model: "ESP32 DevKit V1",
+  },
+  components: [
+    {
+      id: "oled_1",
+      type: "oled",
+      name: "SSD1306 0.96\" I2C OLED",
+    },
+  ],
+  connections: [
+    {
+      from: { component: "esp32", pin: "3V3" },
+      to: { component: "oled_1", pin: "VCC" },
+    },
+    {
+      from: { component: "esp32", pin: "GND" },
+      to: { component: "oled_1", pin: "GND" },
+    },
+    {
+      from: { component: "esp32", pin: "GPIO22" },
+      to: { component: "oled_1", pin: "SCL" },
+    },
+    {
+      from: { component: "esp32", pin: "GPIO21" },
+      to: { component: "oled_1", pin: "SDA" },
+    },
+  ],
+  code: `// Blinky generated Arduino C++ sketch for ESP32
+// Project: ESP32 SSD1306 OLED Display "hello Blinky!"
+// Protocol: I2C (SDA=21, SCL=22)
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+#define SCREEN_ADDRESS 0x3C
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin(21, 22);
+
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;);
+  }
+
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(2);
+  display.setCursor(14, 20);
+  display.println("hello");
+  display.setCursor(14, 38);
+  display.println("Blinky!");
+  display.display();
+
+  Serial.println("⚡ Blinky: OLED Display Initialized Successfully");
+}
+
+void loop() {
+  // Pulse screen brightness or update status message
+  delay(1000);
+}`,
+  instructions: [
+    "1. Mount the ESP32 DevKit V1 and 0.96\" I2C OLED Display onto the breadboard.",
+    "2. Connect OLED VCC to ESP32 3V3 power output.",
+    "3. Connect OLED GND to ESP32 GND rail.",
+    "4. Connect OLED SCL pin to ESP32 GPIO22 (I2C Clock).",
+    "5. Connect OLED SDA pin to ESP32 GPIO21 (I2C Data).",
+    "6. Upload firmware to see 'hello Blinky!' shine on the high-contrast display!",
+  ],
+};
+

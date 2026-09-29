@@ -33,16 +33,21 @@ function SuccessBanner({ onRestart, onOpenTelemetry }) {
 
         <div className="success-actions">
           {onOpenTelemetry && (
-            <button type="button" className="telemetry-cta-btn" onClick={onOpenTelemetry}>
-              <Activity size={15} />
-              <span>View Real-Time Telemetry Feed</span>
-              <ArrowRight size={15} />
+            <button type="button" className="telemetry-cta-btn group" onClick={onOpenTelemetry}>
+              <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
+                <Activity size={12} />
+              </div>
+              <span className="font-outfit">View Real-Time Telemetry Feed</span>
+              <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
           {onRestart && (
-            <button type="button" className="restart-btn" onClick={onRestart}>
-              <RotateCcw size={15} />
-              <span>Re-run Circuit Verification</span>
+            <button type="button" className="restart-btn group" onClick={onRestart}>
+              <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
+                <RotateCcw size={12} />
+              </div>
+              <span className="font-outfit">Re-run Circuit Verification</span>
+              <ArrowRight size={13} className="text-zinc-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
         </div>

@@ -180,58 +180,48 @@ function CodePanel({
         <div className="code-header-actions">
           <button
             type="button"
-            className="action-btn wokwi-btn"
+            className="action-btn wokwi-btn group"
             onClick={handleOpenWokwi}
             title="Open online ESP32 simulator in Wokwi"
           >
+            <div className="w-4 h-4 rounded border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
+              <ExternalLink size={10} />
+            </div>
             <span>Wokwi Simulator</span>
-            <ExternalLink size={12} />
           </button>
           <button
             type="button"
-            className="action-btn"
+            className="action-btn group"
             onClick={handleCopyWokwiJson}
             title="Copy Wokwi diagram.json configuration"
           >
-            {copiedWokwi ? (
-              <>
-                <Check size={13} className="text-emerald-400" />
-                <span>Wokwi JSON Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy size={13} />
-                <span>Wokwi JSON</span>
-              </>
-            )}
+            <div className="w-4 h-4 rounded border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
+              {copiedWokwi ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+            </div>
+            <span>{copiedWokwi ? "Wokwi JSON Copied!" : "Wokwi JSON"}</span>
           </button>
           <button
             type="button"
-            className="action-btn"
+            className="action-btn group"
             onClick={handleDownload}
             disabled={!code || isLoading}
             title="Download Arduino Sketch (.ino)"
           >
-            <Download size={13} />
+            <div className="w-4 h-4 rounded border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
+              <Download size={10} />
+            </div>
             <span>Download .ino</span>
           </button>
           <button
             type="button"
-            className={`action-btn copy-btn ${copied ? "copied" : ""}`}
+            className={`action-btn copy-btn group ${copied ? "copied" : ""}`}
             onClick={handleCopy}
             disabled={!code || isLoading}
           >
-            {copied ? (
-              <>
-                <Check size={13} className="text-emerald-400" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy size={13} />
-                <span>Copy Code</span>
-              </>
-            )}
+            <div className="w-4 h-4 rounded border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
+              {copied ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} />}
+            </div>
+            <span>{copied ? "Copied!" : "Copy Code"}</span>
           </button>
         </div>
       </div>

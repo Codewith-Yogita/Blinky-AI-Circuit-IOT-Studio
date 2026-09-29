@@ -53,7 +53,7 @@ blinkyAntigravity/
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Install Dependencies
 ```bash

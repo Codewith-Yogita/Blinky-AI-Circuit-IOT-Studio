@@ -192,47 +192,58 @@ export default function LandingPage({
           </nav>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-6 sm:gap-7">
             {/* Day / Night View Toggle */}
             <button
               type="button"
               onClick={toggleTheme}
-              className={`p-2 rounded-full border transition-all ${
-                isDark
-                  ? "border-amber-500/25 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                  : "border-amber-900/20 bg-amber-100 text-amber-700 hover:bg-amber-200"
-              }`}
+              className="p-1 text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
               title={isDark ? "Switch to Day Mode" : "Switch to Night Mode"}
             >
               {isDark ? (
-                <Sun className="w-4 h-4 text-amber-400" />
+                <Sun className="w-4 h-4 text-amber-400 hover:rotate-45 transition-transform" />
               ) : (
-                <Moon className="w-4 h-4 text-amber-600" />
+                <Moon className="w-4 h-4 text-amber-600 hover:-rotate-12 transition-transform" />
               )}
             </button>
 
-            {/* Star on GitHub */}
+            {/* Star on GitHub (Clean Link Without Box) */}
             <a
               href="https://github.com/Codewith-Yogita/Blinky-AI-Circuit-IOT-Studio"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-red-500/15 hover:from-amber-500/25 hover:to-red-500/25 text-amber-400 hover:text-amber-300 text-xs font-semibold transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:scale-105 active:scale-95"
+              className="group flex items-center gap-1.5 text-xs sm:text-sm font-medium text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer"
             >
-              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-              <span className="font-outfit hidden sm:inline">Star on GitHub</span>
+              <Star className="w-3.5 h-3.5 fill-amber-400/70 text-amber-400 group-hover:scale-110 transition-transform" />
+              <span className="font-outfit hidden sm:inline group-hover:underline underline-offset-4 decoration-amber-500/50">
+                Star on GitHub
+              </span>
             </a>
 
-            {/* Launch Studio CTA */}
+            {/* Launch Studio CTA (Handwritten / Brush Accent Link Without Rigid Box) */}
             <button
               type="button"
               onClick={onLaunchStudio}
-              className="group px-4 py-2 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white text-xs font-bold shadow-[0_2px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_16px_rgba(245,158,11,0.2)] transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2.5"
+              className="group relative flex flex-col items-start text-xs sm:text-sm font-bold font-outfit text-white hover:text-amber-300 transition-colors py-1 cursor-pointer"
             >
-              <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                <Sparkles className="w-3 h-3" />
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+                <span>Launch Studio</span>
+                <ArrowRight className="w-3.5 h-3.5 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
               </div>
-              <span className="font-outfit">Launch Studio</span>
-              <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+              {/* Organic hand-drawn brush stroke underline */}
+              <svg
+                className="w-full h-2 -mt-0.5 text-red-500/90 group-hover:text-amber-400 transition-colors overflow-visible"
+                viewBox="0 0 100 8"
+                fill="none"
+              >
+                <path
+                  d="M2 5 C30 2, 65 7, 98 4"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+              </svg>
             </button>
           </div>
         </div>
@@ -276,9 +287,9 @@ export default function LandingPage({
         {/* Hero Content Container */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
           <div className="max-w-2xl space-y-6 sm:space-y-7">
-            {/* AI Assistant Pill Tag */}
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-amber-500/35 bg-amber-500/10 backdrop-blur-md text-xs font-mono font-semibold tracking-widest text-amber-400 uppercase shadow-lg shadow-amber-500/5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            {/* AI Assistant Tag - Clean without rigid box */}
+            <div className="inline-flex items-center gap-2 text-xs font-mono font-semibold tracking-widest text-amber-400 uppercase select-none">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
               <span>AI-Powered Electronics Assistant</span>
             </div>
 
@@ -312,61 +323,82 @@ export default function LandingPage({
               Capture your components with your phone camera, describe what you want to build, and Blinky synthesizes verified circuit wiring with production Arduino C++ firmware.
             </p>
 
-            {/* CTAs */}
-            <div className="pt-2 flex flex-wrap items-center gap-4">
+            {/* CTAs - Removed rigid boxes in favor of handwritten brush stroke aesthetic */}
+            <div className="pt-2 flex flex-wrap items-center gap-8 sm:gap-10">
+              {/* Primary Callout: Hand-Drawn Brush Underline CTA */}
               <button
                 type="button"
                 onClick={() => setShowNewProjectModal(true)}
-                className="group px-7 py-3.5 rounded-2xl border border-amber-500/40 hover:border-amber-400 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-zinc-950 font-bold text-sm tracking-wide shadow-[0_0_25px_rgba(245,158,11,0.35)] hover:shadow-[0_0_35px_rgba(245,158,11,0.5)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+                className="group relative inline-flex flex-col items-start cursor-pointer transition-transform hover:scale-[1.03] active:scale-95"
               >
-                <div className="w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center text-zinc-950">
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                <div className="flex items-center gap-3 text-2xl sm:text-3xl font-bold font-outfit text-white group-hover:text-amber-300 transition-colors">
+                  <span>Start New Project</span>
+                  <ArrowRight className="w-6 h-6 text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300" />
                 </div>
-                <span className="font-outfit font-extrabold">Start New Project</span>
-                <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform" />
+                {/* Organic Hand-Drawn Paint/Brush Stroke Underline */}
+                <svg
+                  className="w-full h-4 -mt-1 text-red-500 group-hover:text-orange-400 transition-colors duration-300 overflow-visible"
+                  viewBox="0 0 200 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3 9 C45 4, 110 13, 175 6 C188 5, 195 8, 198 7"
+                    stroke="currentColor"
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12 12 C60 8, 125 14, 185 9"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    opacity="0.75"
+                  />
+                </svg>
               </button>
 
+              {/* Secondary Callout: Handwritten Link with Wavy Underline */}
               <button
                 type="button"
                 onClick={() => scrollToSection("about")}
-                className="group px-6 py-3.5 rounded-2xl border border-white/15 hover:border-amber-500/40 bg-black/40 hover:bg-black/60 backdrop-blur-xl text-zinc-200 hover:text-white text-sm font-semibold shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2.5"
+                className="group flex items-center gap-2 text-lg sm:text-xl font-handwriting text-zinc-400 hover:text-white transition-colors cursor-pointer py-1"
               >
-                <div className="w-6 h-6 rounded-lg border border-white/10 bg-white/[0.06] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-                  <BookOpen className="w-3.5 h-3.5" />
-                </div>
-                <span className="font-outfit">Explore Architecture</span>
-                <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
+                <span className="underline decoration-zinc-600 group-hover:decoration-amber-400 decoration-wavy underline-offset-8 transition-colors">
+                  Explore Architecture
+                </span>
+                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-transform" />
               </button>
             </div>
 
-            {/* Hand-drawn style note with curved arrow pointing towards the hardware in background */}
-            <div className="pt-3 flex items-center gap-3 text-sm sm:text-base font-handwriting text-amber-300/90 select-none">
-              <span>Works with ESP32, Arduino, sensors &amp; more</span>
+            {/* Hand-drawn style note with curved doodle arrow matching reference */}
+            <div className="pt-2 flex items-center gap-3 text-base sm:text-lg font-handwriting text-zinc-400 select-none">
+              <span>Works with ESP32, Arduino, sensors and more.</span>
               <svg
-                className="w-10 h-6 text-amber-400/80 -rotate-6 hidden sm:block"
+                className="w-9 h-6 text-zinc-500 -rotate-6"
                 viewBox="0 0 45 25"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M4 12 C18 20, 28 18, 38 7" />
-                <path d="M30 6 L39 7 L37 15" />
+                <path d="M4 14 C16 22, 28 20, 38 8" />
+                <path d="M30 7 L39 8 L36 17" />
               </svg>
             </div>
           </div>
         </div>
 
-        {/* Floating Bottom-Right Vision AI Badge */}
-        <div className="absolute right-6 sm:right-10 lg:right-14 bottom-8 hidden md:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-amber-500/25 bg-black/70 backdrop-blur-xl shadow-2xl text-xs">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          <span className="font-mono text-[11px] uppercase tracking-wider font-semibold text-amber-400 flex items-center gap-1.5">
-            <Camera className="w-3.5 h-3.5" />
-            <span>Gemini Vision AI</span>
+        {/* Floating Bottom-Right Vision AI Note (No heavy border box) */}
+        <div className="absolute right-6 sm:right-10 lg:right-14 bottom-8 hidden md:flex items-center gap-2 text-xs font-mono text-zinc-400 select-none">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          <span className="font-semibold text-amber-400 uppercase tracking-wider text-[11px]">
+            Gemini Vision AI
           </span>
           <span className="text-zinc-600">•</span>
-          <span className="text-zinc-300 font-medium">Real-Time Component Detection</span>
+          <span className="text-zinc-400">Live Component Scanning</span>
         </div>
       </section>
 

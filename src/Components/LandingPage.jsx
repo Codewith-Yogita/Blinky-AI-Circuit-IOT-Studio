@@ -54,7 +54,14 @@ export default function LandingPage({
   const heroSubheadRef = useRef(null);
   const heroDescRef = useRef(null);
   const heroCtasRef = useRef(null);
-  const heroTraceRef = useRef(null);
+  const heroConduitRef = useRef(null);
+
+  // Transition conduits
+  const heroToCircuitConduitRef = useRef(null);
+  const circuitToAboutConduitRef = useRef(null);
+  const neuralDistributorRef = useRef(null);
+  const aboutToWorkflowConduitRef = useRef(null);
+  const workflowBusRef = useRef(null);
 
   // Section 2 refs
   const aboutSectionRef = useRef(null);
@@ -68,6 +75,7 @@ export default function LandingPage({
 
   // Bottom CTA ref
   const bottomCtaRef = useRef(null);
+  const bottomCtaPowerRingRef = useRef(null);
 
   // Sync theme with document root
   useEffect(() => {
@@ -98,11 +106,16 @@ export default function LandingPage({
             heroSubheadRef.current,
             heroDescRef.current,
             heroCtasRef.current,
+            heroToCircuitConduitRef.current,
+            circuitToAboutConduitRef.current,
+            neuralDistributorRef.current,
             aboutWord1Ref.current,
             aboutWord2Ref.current,
             aboutWord3Ref.current,
             aboutContentRef.current,
+            aboutToWorkflowConduitRef.current,
             bottomCtaRef.current,
+            bottomCtaPowerRingRef.current,
           ],
           { opacity: 1, y: 0, x: 0, scale: 1 }
         );
@@ -174,101 +187,175 @@ export default function LandingPage({
         1.25
       );
 
+      // Step 8: Hero Central Conductive Conduit initializes
+      if (heroToCircuitConduitRef.current) {
+        enterTl.fromTo(
+          heroToCircuitConduitRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.6 },
+          1.5
+        );
+      }
+
       // ================= 2. HERO SCROLL-DRIVEN SCRUB & PARALLAX =================
       const heroScrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: heroSectionRef.current,
           start: "top top",
-          end: "+=75%",
+          end: "+=85%",
           scrub: 0.65,
         },
       });
 
+      // Hero content recedes smoothly as scroll progresses
       heroScrollTl
         .to(
           heroContentRef.current,
-          { y: -65, scale: 0.93, opacity: 0.15, ease: "none" },
+          { y: -60, scale: 0.94, opacity: 0.2, ease: "none" },
           0
         )
         .to(
           heroBgRef.current,
-          { y: 70, scale: 1.07, ease: "none" },
+          { y: 80, scale: 1.06, ease: "none" },
           0
         );
 
-      if (heroTraceRef.current) {
+      // Central conduit draws downward as user scrolls, leading directly into the circuit story
+      if (heroConduitRef.current) {
         heroScrollTl.fromTo(
-          heroTraceRef.current,
-          { strokeDashoffset: 400 },
+          heroConduitRef.current,
+          { strokeDasharray: 260, strokeDashoffset: 260 },
           { strokeDashoffset: 0, ease: "none" },
-          0
+          0.1
         );
       }
 
-      // ================= 3. SECTION 2: "PHYSICAL CIRCUITS. AI BRAIN." REVEAL =================
-      gsap.fromTo(
-        [aboutWord1Ref.current, aboutWord2Ref.current, aboutWord3Ref.current],
-        { y: 55, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.14,
-          duration: 0.9,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: aboutSectionRef.current,
-            start: "top 78%",
-          },
-        }
+      // ================= 3. CIRCUIT TO SECTION 2 CONDUIT & "PHYSICAL CIRCUITS. AI BRAIN." REVEAL =================
+      // Conduit leaving the circuit canvas and striking the AI Neural Distributor Node
+      const aboutTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: aboutSectionRef.current,
+          start: "top 80%",
+          end: "top 45%",
+          scrub: 0.6,
+        },
+      });
+
+      if (circuitToAboutConduitRef.current) {
+        aboutTl.fromTo(
+          circuitToAboutConduitRef.current,
+          { strokeDasharray: 240, strokeDashoffset: 240 },
+          { strokeDashoffset: 0, ease: "none" }
+        );
+      }
+
+      if (neuralDistributorRef.current) {
+        aboutTl.fromTo(
+          neuralDistributorRef.current,
+          { scale: 0.4, opacity: 0 },
+          { scale: 1, opacity: 1, ease: "back.out(1.5)" },
+          "-=0.3"
+        );
+      }
+
+      // Staggered illumination of the 3 monumental words as the signal branches
+      aboutTl.fromTo(
+        aboutWord1Ref.current,
+        { y: 35, opacity: 0 },
+        { y: 0, opacity: 1, ease: "power2.out" }
+      );
+      aboutTl.fromTo(
+        aboutWord2Ref.current,
+        { y: 35, opacity: 0.2 },
+        { y: 0, opacity: 1, ease: "power2.out" },
+        "-=0.2"
+      );
+      aboutTl.fromTo(
+        aboutWord3Ref.current,
+        { y: 35, opacity: 0.2 },
+        { y: 0, opacity: 1, ease: "power2.out" },
+        "-=0.2"
       );
 
       gsap.fromTo(
         aboutContentRef.current,
-        { y: 40, opacity: 0 },
+        { y: 35, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 0.9,
+          duration: 0.85,
           ease: "power3.out",
           scrollTrigger: {
             trigger: aboutSectionRef.current,
+            start: "top 68%",
+          },
+        }
+      );
+
+      // ================= 4. SECTION 3: "HOW BLINKY WORKS" CONNECTED BUS =================
+      // Conduit leading from Section 2 into Section 3 workflow bus
+      const workflowTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: howItWorksSectionRef.current,
+          start: "top 75%",
+          end: "top 35%",
+          scrub: 0.7,
+        },
+      });
+
+      if (aboutToWorkflowConduitRef.current) {
+        workflowTl.fromTo(
+          aboutToWorkflowConduitRef.current,
+          { strokeDasharray: 260, strokeDashoffset: 260 },
+          { strokeDashoffset: 0, ease: "none" }
+        );
+      }
+
+      if (workflowBusRef.current) {
+        workflowTl.fromTo(
+          workflowBusRef.current,
+          { strokeDasharray: 1000, strokeDashoffset: 1000 },
+          { strokeDashoffset: 0, ease: "none" }
+        );
+      }
+
+      // The 4 workflow cards activate sequentially as current reaches each station
+      gsap.fromTo(
+        ".workflow-card",
+        { y: 40, opacity: 0.35, scale: 0.98 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          stagger: 0.15,
+          duration: 0.85,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: howItWorksSectionRef.current,
             start: "top 72%",
           },
         }
       );
 
-      // ================= 4. SECTION 3: "HOW BLINKY WORKS" STAGGERED WORKFLOW =================
-      gsap.fromTo(
-        ".workflow-card",
-        { y: 45, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.13,
-          duration: 0.85,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: howItWorksSectionRef.current,
-            start: "top 80%",
-          },
-        }
+      // ================= 5. MONUMENTAL BOTTOM CTA (MASTER POWER TERMINAL) =================
+      const bottomTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: bottomCtaRef.current,
+          start: "top 80%",
+        },
+      });
+
+      bottomTl.fromTo(
+        bottomCtaPowerRingRef.current,
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.4)" }
       );
 
-      // ================= 5. MONUMENTAL BOTTOM CTA =================
-      gsap.fromTo(
+      bottomTl.fromTo(
         bottomCtaRef.current,
-        { y: 40, opacity: 0, scale: 0.96 },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: bottomCtaRef.current,
-            start: "top 85%",
-          },
-        }
+        { y: 35, opacity: 0, scale: 0.97 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.9, ease: "power3.out" },
+        0.15
       );
     }, pageRef);
 
@@ -463,7 +550,7 @@ export default function LandingPage({
       <section
         ref={heroSectionRef}
         id="hero"
-        className="relative w-full min-h-[640px] sm:min-h-[720px] lg:min-h-[780px] flex items-center overflow-hidden border-b border-white/[0.08]"
+        className="relative w-full min-h-[660px] sm:min-h-[740px] lg:min-h-[800px] flex items-center overflow-hidden border-b border-white/[0.08]"
       >
         {/* Background Image Layer with Cinematic Parallax */}
         <div className="absolute inset-0 z-0 select-none overflow-hidden">
@@ -495,23 +582,6 @@ export default function LandingPage({
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
         </div>
-
-        {/* Conductive Scroll-Scrubbed Electrical Trace Line */}
-        <svg
-          className="absolute right-8 md:right-16 top-1/4 h-3/4 w-28 pointer-events-none z-10 hidden sm:block overflow-visible"
-          viewBox="0 0 100 600"
-          fill="none"
-        >
-          <path
-            ref={heroTraceRef}
-            d="M 60 0 L 60 180 L 25 240 L 25 440 L 70 520 L 70 600"
-            stroke="#f59e0b"
-            strokeWidth="1.2"
-            strokeDasharray="400"
-            strokeDashoffset="400"
-            opacity="0.35"
-          />
-        </svg>
 
         {/* Hero Content Container (Controlled Entrance Sequence) */}
         <div
@@ -662,14 +732,48 @@ export default function LandingPage({
           <span className="text-zinc-600">•</span>
           <span className="text-zinc-400 font-medium">Live Component Scanning</span>
         </div>
+
+        {/* ================= CONNECTIVE CONDUIT: HERO TO CIRCUIT STORY ================= */}
+        <div
+          ref={heroToCircuitConduitRef}
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-20"
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.9)] animate-ping" />
+          <svg className="w-6 h-20 overflow-visible" viewBox="0 0 24 80" fill="none">
+            <path
+              ref={heroConduitRef}
+              d="M 12 0 L 12 80"
+              stroke="#f59e0b"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="260"
+              strokeDashoffset="260"
+            />
+          </svg>
+        </div>
       </section>
 
       {/* ================= INTERACTIVE STORY CHAPTER: WATCH YOUR CIRCUIT BUILD ITSELF ================= */}
-      <section id="circuit-story" className="scroll-mt-20 w-full">
+      <section id="circuit-story" className="scroll-mt-20 w-full relative">
         <InteractiveCircuitStory
           isDark={isDark}
           onLaunchStudio={onLaunchStudio}
         />
+
+        {/* Connective Conduit: Circuit Story down into Section 2 */}
+        <div className="w-full flex flex-col items-center pointer-events-none -mt-4 mb-2 z-20">
+          <svg className="w-6 h-16 overflow-visible" viewBox="0 0 24 64" fill="none">
+            <path
+              ref={circuitToAboutConduitRef}
+              d="M 12 0 L 12 64"
+              stroke="#f59e0b"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="240"
+              strokeDashoffset="240"
+            />
+          </svg>
+        </div>
       </section>
 
       {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
@@ -677,26 +781,38 @@ export default function LandingPage({
 
         {/* ================= SECTION 2: ABOUT BLINKY ("PHYSICAL CIRCUITS. AI BRAIN.") ================= */}
         <section ref={aboutSectionRef} id="about" className="scroll-mt-24 w-full">
+          {/* Central AI Neural Distributor Node */}
+          <div className="w-full flex justify-center mb-8">
+            <div
+              ref={neuralDistributorRef}
+              className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 font-mono text-xs font-bold tracking-wider uppercase shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+            >
+              <Cpu size={14} className="text-amber-400 animate-spin" style={{ animationDuration: "12s" }} />
+              <span>AI Neural Netlist Distributor</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
             {/* Left Massive Statement - Reveal on Scroll */}
             <div className="lg:col-span-5 select-none space-y-1 overflow-hidden">
               <div ref={aboutWord1Ref}>
-                <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] text-transparent bg-clip-text bg-gradient-to-b from-amber-400 via-orange-400 to-red-500 whitespace-nowrap">
+                <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] text-transparent bg-clip-text bg-gradient-to-b from-amber-400 via-orange-400 to-red-500 whitespace-nowrap drop-shadow-[0_2px_15px_rgba(245,158,11,0.3)]">
                   PHYSICAL
                 </h2>
               </div>
               <div
                 ref={aboutWord2Ref}
-                className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap ${
-                  isDark ? "text-zinc-600/70" : "text-zinc-300"
+                className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap transition-colors duration-300 ${
+                  isDark ? "text-orange-400/90" : "text-zinc-600"
                 }`}
               >
                 CIRCUITS.
               </div>
               <div
                 ref={aboutWord3Ref}
-                className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap ${
-                  isDark ? "text-zinc-700/60" : "text-zinc-300/80"
+                className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap transition-colors duration-300 ${
+                  isDark ? "text-red-500/90" : "text-zinc-700"
                 }`}
               >
                 AI BRAIN.
@@ -738,63 +854,134 @@ export default function LandingPage({
               </div>
             </div>
           </div>
+
+          {/* Connective Conduit: Section 2 down into Section 3 Workflow */}
+          <div className="w-full flex justify-center mt-12 pointer-events-none">
+            <svg className="w-6 h-16 overflow-visible" viewBox="0 0 24 64" fill="none">
+              <path
+                ref={aboutToWorkflowConduitRef}
+                d="M 12 0 L 12 64"
+                stroke="#f97316"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeDasharray="260"
+                strokeDashoffset="260"
+              />
+            </svg>
+          </div>
         </section>
 
         {/* ================= SECTION 3: HOW BLINKY WORKS (THE 4 PROGRESSIVE STEPS) ================= */}
-        <section ref={howItWorksSectionRef} id="how-it-works" className="scroll-mt-24 w-full space-y-8">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
-              ✦ Process Workflow
-            </span>
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight">
-              How Blinky Works
-            </h2>
+        <section ref={howItWorksSectionRef} id="how-it-works" className="scroll-mt-24 w-full space-y-8 relative">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
+                ✦ Continuous Execution Pipeline
+              </span>
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight text-white">
+                How Blinky Works
+              </h2>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-zinc-400">
+              <Activity size={14} className="text-emerald-400" />
+              <span>4 STATIONS // SYNCHRONIZED</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* 01 Capture & Describe */}
-            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-500 mb-3">01</div>
-              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Capture &amp; Describe</h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Use the phone camera to capture components or an existing circuit and describe the desired project through voice or text.
-              </p>
-            </div>
+          {/* Horizontal Circuit Bus Bar (Desktop) */}
+          <div className="relative">
+            <svg
+              className="absolute -top-4 left-0 right-0 w-full h-8 pointer-events-none hidden lg:block overflow-visible"
+              viewBox="0 0 1000 32"
+              fill="none"
+              preserveAspectRatio="none"
+            >
+              <path
+                ref={workflowBusRef}
+                d="M 0 16 L 1000 16"
+                stroke="#f59e0b"
+                strokeWidth="2.5"
+                strokeDasharray="1000"
+                strokeDashoffset="1000"
+                strokeLinecap="round"
+              />
+              <circle cx="125" cy="16" r="4.5" fill="#f59e0b" />
+              <circle cx="375" cy="16" r="4.5" fill="#f97316" />
+              <circle cx="625" cy="16" r="4.5" fill="#ef4444" />
+              <circle cx="875" cy="16" r="4.5" fill="#10b981" />
+            </svg>
 
-            {/* 02 AI Understands */}
-            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-3xl sm:text-4xl font-black font-outfit text-orange-500 mb-3">02</div>
-              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">AI Understands</h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Gemini Vision identifies components and interprets the user's requirements through the Blinky AI Agent, powered by Python and FastAPI.
-              </p>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+              {/* 01 Capture & Describe */}
+              <div className={`workflow-card p-6 rounded-3xl border transition-all duration-300 hover:border-amber-500/50 hover:shadow-[0_8px_30px_rgba(245,158,11,0.12)] ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-500">01</div>
+                  <Camera size={20} className="text-amber-400/80" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Capture &amp; Describe</h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                  Use the phone camera to capture components or an existing circuit and describe the desired project through voice or text.
+                </p>
+              </div>
 
-            {/* 03 Circuit & Code Generation */}
-            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-3xl sm:text-4xl font-black font-outfit text-red-500 mb-3">03</div>
-              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Circuit &amp; Code</h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Blinky generates a circuit diagram with the required connections and pin mappings, along with Arduino C++ code for the intended setup.
-              </p>
-            </div>
+              {/* 02 AI Understands */}
+              <div className={`workflow-card p-6 rounded-3xl border transition-all duration-300 hover:border-orange-500/50 hover:shadow-[0_8px_30px_rgba(249,115,22,0.12)] ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl sm:text-4xl font-black font-outfit text-orange-500">02</div>
+                  <Bot size={20} className="text-orange-400/80" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">AI Understands</h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                  Gemini Vision identifies components and interprets the user's requirements through the Blinky AI Agent, powered by Python and FastAPI.
+                </p>
+              </div>
 
-            {/* 04 Flash & Execute */}
-            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
-              <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-400 mb-3">04</div>
-              <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Flash &amp; Execute</h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                The generated code is uploaded to the ESP32 through the hardware execution layer, while telemetry and real-time feedback help users monitor the project.
-              </p>
+              {/* 03 Circuit & Code Generation */}
+              <div className={`workflow-card p-6 rounded-3xl border transition-all duration-300 hover:border-red-500/50 hover:shadow-[0_8px_30px_rgba(239,68,68,0.12)] ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl sm:text-4xl font-black font-outfit text-red-500">03</div>
+                  <Terminal size={20} className="text-red-400/80" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Circuit &amp; Code</h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                  Blinky generates a circuit diagram with the required connections and pin mappings, along with Arduino C++ code for the intended setup.
+                </p>
+              </div>
+
+              {/* 04 Flash & Execute */}
+              <div className={`workflow-card p-6 rounded-3xl border transition-all duration-300 hover:border-emerald-500/50 hover:shadow-[0_8px_30px_rgba(16,185,129,0.15)] ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-3xl sm:text-4xl font-black font-outfit text-emerald-400">04</div>
+                  <Flame size={20} className="text-emerald-400/80" />
+                </div>
+                <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Flash &amp; Execute</h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+                  The generated code is uploaded to the ESP32 through the hardware execution layer, while telemetry and real-time feedback help users monitor the project.
+                </p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ================= SECTION 4: UNBOXED, BOLD IMPACT CTA ================= */}
+        {/* ================= SECTION 4: UNBOXED, BOLD IMPACT CTA (MASTER POWER TERMINAL) ================= */}
         <section
           ref={bottomCtaRef}
-          className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full"
+          className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full relative"
         >
+          {/* Collector Power Ring behind Final CTA */}
+          <div
+            ref={bottomCtaPowerRingRef}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[480px] h-[340px] sm:h-[480px] rounded-full border border-amber-500/20 bg-radial-gradient pointer-events-none blur-xl"
+            style={{
+              background: "radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(239, 68, 68, 0.05) 50%, transparent 75%)",
+            }}
+          />
+
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 font-mono text-xs font-bold uppercase tracking-wider">
+            <Zap size={13} className="text-amber-400" />
+            <span>Master Control Terminal</span>
+          </div>
+
           <h2 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter text-white leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]">
             Ready to dig in?
           </h2>
@@ -803,7 +990,7 @@ export default function LandingPage({
           <button
             type="button"
             onClick={onLaunchStudio}
-            className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95 py-2"
+            className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95 py-2 z-10"
           >
             <div className="flex items-center gap-3.5 text-2xl sm:text-4xl font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
               <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400 group-hover:rotate-45 group-hover:scale-125 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" />

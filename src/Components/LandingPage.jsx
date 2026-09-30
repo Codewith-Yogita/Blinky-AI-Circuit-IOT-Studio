@@ -192,56 +192,71 @@ export default function LandingPage({
           </nav>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-6 sm:gap-7">
+          <div className="flex items-center gap-6 sm:gap-8">
             {/* Day / Night View Toggle */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-1 text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
+              className="p-1.5 text-zinc-400 hover:text-amber-400 hover:scale-110 active:scale-90 transition-all duration-300 cursor-pointer"
               title={isDark ? "Switch to Day Mode" : "Switch to Night Mode"}
             >
               {isDark ? (
-                <Sun className="w-4 h-4 text-amber-400 hover:rotate-45 transition-transform" />
+                <Sun className="w-4 h-4 text-amber-400 hover:rotate-90 transition-transform duration-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
               ) : (
-                <Moon className="w-4 h-4 text-amber-600 hover:-rotate-12 transition-transform" />
+                <Moon className="w-4 h-4 text-amber-600 hover:-rotate-45 transition-transform duration-500" />
               )}
             </button>
 
-            {/* Star on GitHub (Clean Link Without Box) */}
+            {/* Star on GitHub (Bold Link with Animated Underline) */}
             <a
               href="https://github.com/Codewith-Yogita/Blinky-AI-Circuit-IOT-Studio"
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-1.5 text-xs sm:text-sm font-medium text-zinc-400 hover:text-amber-300 transition-colors cursor-pointer"
+              className="group flex items-center gap-2 text-xs sm:text-sm font-bold font-outfit text-zinc-200 hover:text-amber-300 transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95"
             >
-              <Star className="w-3.5 h-3.5 fill-amber-400/70 text-amber-400 group-hover:scale-110 transition-transform" />
-              <span className="font-outfit hidden sm:inline group-hover:underline underline-offset-4 decoration-amber-500/50">
+              <Star className="w-4 h-4 fill-amber-400/90 text-amber-400 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]" />
+              <span className="font-outfit hidden sm:inline relative">
                 Star on GitHub
+                <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-amber-400 to-orange-500 group-hover:w-full transition-all duration-300 rounded-full" />
               </span>
             </a>
 
-            {/* Launch Studio CTA (Handwritten / Brush Accent Link Without Rigid Box) */}
+            {/* Launch Studio CTA (Bold Handwritten / Brush Accent with Smooth Glow Transition) */}
             <button
               type="button"
               onClick={onLaunchStudio}
-              className="group relative flex flex-col items-start text-xs sm:text-sm font-bold font-outfit text-white hover:text-amber-300 transition-colors py-1 cursor-pointer"
+              className="group relative flex flex-col items-start text-sm sm:text-base font-black font-outfit text-white hover:text-amber-200 transition-all duration-300 py-1 cursor-pointer hover:scale-105 active:scale-95"
             >
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400 group-hover:rotate-45 group-hover:scale-125 transition-transform duration-300 drop-shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
                 <span>Launch Studio</span>
-                <ArrowRight className="w-3.5 h-3.5 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                <ArrowRight className="w-4 h-4 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all duration-300 drop-shadow-[0_0_6px_rgba(239,68,68,0.7)]" />
               </div>
-              {/* Organic hand-drawn brush stroke underline */}
+              {/* Bold organic brush stroke underline with gradient & glow */}
               <svg
-                className="w-full h-2 -mt-0.5 text-red-500/90 group-hover:text-amber-400 transition-colors overflow-visible"
-                viewBox="0 0 100 8"
+                className="w-full h-2.5 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_10px_rgba(249,115,22,0.9)]"
+                viewBox="0 0 110 10"
                 fill="none"
               >
+                <defs>
+                  <linearGradient id="brushGradHeader" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ef4444" />
+                    <stop offset="60%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#f59e0b" />
+                  </linearGradient>
+                </defs>
                 <path
-                  d="M2 5 C30 2, 65 7, 98 4"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
+                  d="M2 6 C35 2, 75 8, 108 5"
+                  stroke="url(#brushGradHeader)"
+                  strokeWidth="3.4"
                   strokeLinecap="round"
+                />
+                <path
+                  d="M8 8 C40 5, 80 8, 102 6"
+                  stroke="url(#brushGradHeader)"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  opacity="0.8"
                 />
               </svg>
             </button>
@@ -288,9 +303,11 @@ export default function LandingPage({
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
           <div className="max-w-2xl space-y-6 sm:space-y-7">
             {/* AI Assistant Tag - Clean without rigid box */}
-            <div className="inline-flex items-center gap-2 text-xs font-mono font-semibold tracking-widest text-amber-400 uppercase select-none">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-              <span>AI-Powered Electronics Assistant</span>
+            <div className="inline-flex items-center gap-2.5 text-xs font-mono font-bold tracking-widest text-amber-400 uppercase select-none">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+              <span className="tracking-[0.2em] drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">
+                AI-POWERED ELECTRONICS ASSISTANT
+              </span>
             </div>
 
             {/* Main Headline - Bold & Expressive */}
@@ -301,7 +318,7 @@ export default function LandingPage({
                 }`}
               >
                 Point. Understand.{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 font-handwriting text-5xl sm:text-7xl lg:text-8xl font-normal block sm:inline">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 font-handwriting text-5xl sm:text-7xl lg:text-8xl font-normal block sm:inline drop-shadow-[0_2px_16px_rgba(239,68,68,0.4)]">
                   Build.
                 </span>
               </h1>
@@ -323,64 +340,82 @@ export default function LandingPage({
               Capture your components with your phone camera, describe what you want to build, and Blinky synthesizes verified circuit wiring with production Arduino C++ firmware.
             </p>
 
-            {/* CTAs - Removed rigid boxes in favor of handwritten brush stroke aesthetic */}
-            <div className="pt-2 flex flex-wrap items-center gap-8 sm:gap-10">
-              {/* Primary Callout: Hand-Drawn Brush Underline CTA */}
+            {/* CTAs - Bold, Expressive, and Animated with Organic Brush Stroke */}
+            <div className="pt-3 flex flex-wrap items-center gap-8 sm:gap-12">
+              {/* Primary Callout: Bold Hand-Drawn Brush Underline CTA */}
               <button
                 type="button"
                 onClick={() => setShowNewProjectModal(true)}
-                className="group relative inline-flex flex-col items-start cursor-pointer transition-transform hover:scale-[1.03] active:scale-95"
+                className="group relative inline-flex flex-col items-start cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95"
               >
-                <div className="flex items-center gap-3 text-2xl sm:text-3xl font-bold font-outfit text-white group-hover:text-amber-300 transition-colors">
+                <div className="flex items-center gap-3.5 text-2xl sm:text-3xl lg:text-4xl font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
                   <span>Start New Project</span>
-                  <ArrowRight className="w-6 h-6 text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300" />
+                  <ArrowRight className="w-6 h-6 sm:w-7 sm:h-7 text-red-500 group-hover:text-amber-400 group-hover:translate-x-3 transition-all duration-300 ease-out drop-shadow-[0_0_12px_rgba(239,68,68,0.7)]" />
                 </div>
-                {/* Organic Hand-Drawn Paint/Brush Stroke Underline */}
+
+                {/* Bold Textured Organic Brush Stroke with Gradient & Transition Glow */}
                 <svg
-                  className="w-full h-4 -mt-1 text-red-500 group-hover:text-orange-400 transition-colors duration-300 overflow-visible"
-                  viewBox="0 0 200 16"
+                  className="w-full h-5 -mt-1 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_2px_8px_rgba(239,68,68,0.55)] group-hover:drop-shadow-[0_4px_20px_rgba(249,115,22,0.9)]"
+                  viewBox="0 0 220 18"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
+                  <defs>
+                    <linearGradient id="brushGradientHero" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="50%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#f59e0b" />
+                    </linearGradient>
+                  </defs>
+                  {/* Base heavy organic brush stroke */}
                   <path
-                    d="M3 9 C45 4, 110 13, 175 6 C188 5, 195 8, 198 7"
-                    stroke="currentColor"
-                    strokeWidth="4.5"
+                    d="M4 10 C35 4, 85 14, 140 7 C175 3, 200 9, 216 7"
+                    stroke="url(#brushGradientHero)"
+                    strokeWidth="6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
+                  {/* Rough texture stroke to give authentic marker / brush feel */}
                   <path
-                    d="M12 12 C60 8, 125 14, 185 9"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                    d="M10 13 C55 8, 120 15, 195 9"
+                    stroke="url(#brushGradientHero)"
+                    strokeWidth="3"
                     strokeLinecap="round"
-                    opacity="0.75"
+                    opacity="0.85"
+                  />
+                  {/* Extra brush bristles accent */}
+                  <path
+                    d="M18 14 C70 12, 130 15, 170 11"
+                    stroke="#fbbf24"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    opacity="0.7"
                   />
                 </svg>
               </button>
 
-              {/* Secondary Callout: Handwritten Link with Wavy Underline */}
+              {/* Secondary Callout: Bold Handwritten Link with Wavy Underline */}
               <button
                 type="button"
                 onClick={() => scrollToSection("about")}
-                className="group flex items-center gap-2 text-lg sm:text-xl font-handwriting text-zinc-400 hover:text-white transition-colors cursor-pointer py-1"
+                className="group flex items-center gap-2.5 text-xl sm:text-2xl font-bold font-handwriting text-zinc-300 hover:text-white transition-all duration-300 cursor-pointer py-1 hover:scale-105 active:scale-95"
               >
-                <span className="underline decoration-zinc-600 group-hover:decoration-amber-400 decoration-wavy underline-offset-8 transition-colors">
+                <span className="underline decoration-amber-500/60 group-hover:decoration-amber-400 decoration-[3px] decoration-wavy underline-offset-8 transition-colors duration-300">
                   Explore Architecture
                 </span>
-                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-transform" />
+                <ArrowRight className="w-5 h-5 text-zinc-400 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300" />
               </button>
             </div>
 
             {/* Hand-drawn style note with curved doodle arrow matching reference */}
-            <div className="pt-2 flex items-center gap-3 text-base sm:text-lg font-handwriting text-zinc-400 select-none">
+            <div className="pt-2 flex items-center gap-3 text-lg sm:text-xl font-bold font-handwriting text-zinc-300/90 select-none group">
               <span>Works with ESP32, Arduino, sensors and more.</span>
               <svg
-                className="w-9 h-6 text-zinc-500 -rotate-6"
+                className="w-10 h-7 text-amber-400/90 -rotate-6 transition-transform duration-300 group-hover:translate-x-1.5 group-hover:-translate-y-1 group-hover:rotate-0"
                 viewBox="0 0 45 25"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.8"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -392,13 +427,13 @@ export default function LandingPage({
         </div>
 
         {/* Floating Bottom-Right Vision AI Note (No heavy border box) */}
-        <div className="absolute right-6 sm:right-10 lg:right-14 bottom-8 hidden md:flex items-center gap-2 text-xs font-mono text-zinc-400 select-none">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          <span className="font-semibold text-amber-400 uppercase tracking-wider text-[11px]">
+        <div className="absolute right-6 sm:right-10 lg:right-14 bottom-8 hidden md:flex items-center gap-2.5 text-xs font-mono text-zinc-300 select-none">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
+          <span className="font-bold text-amber-400 uppercase tracking-wider text-[11px] drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]">
             Gemini Vision AI
           </span>
           <span className="text-zinc-600">•</span>
-          <span className="text-zinc-400">Live Component Scanning</span>
+          <span className="text-zinc-400 font-medium">Live Component Scanning</span>
         </div>
       </section>
 

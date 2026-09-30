@@ -57,10 +57,8 @@ export default function LandingPage({
   const heroSubheadRef = useRef(null);
   const heroDescRef = useRef(null);
   const heroCtasRef = useRef(null);
-  const heroConduitRef = useRef(null);
 
   // Transition conduits
-  const heroToCircuitConduitRef = useRef(null);
   const circuitToAboutConduitRef = useRef(null);
   const neuralDistributorRef = useRef(null);
   const aboutToWorkflowConduitRef = useRef(null);
@@ -191,16 +189,6 @@ export default function LandingPage({
         1.2
       );
 
-      // Step 8: Hero Central Conductive Conduit initializes
-      if (heroToCircuitConduitRef.current) {
-        enterTl.fromTo(
-          heroToCircuitConduitRef.current,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.5 },
-          1.4
-        );
-      }
-
       // ================= 2. HERO SCROLL-DRIVEN SCRUB & PARALLAX =================
       const heroScrollTl = gsap.timeline({
         scrollTrigger: {
@@ -223,16 +211,6 @@ export default function LandingPage({
           { y: isMobile ? 25 : 80, scale: 1.04, ease: "none" },
           0
         );
-
-      // Central conduit draws downward as user scrolls
-      if (heroConduitRef.current) {
-        heroScrollTl.fromTo(
-          heroConduitRef.current,
-          { strokeDasharray: 260, strokeDashoffset: 260 },
-          { strokeDashoffset: 0, ease: "none" },
-          0.1
-        );
-      }
 
       // ================= 3. CIRCUIT TO SECTION 2 CONDUIT & "PHYSICAL CIRCUITS. AI BRAIN." REVEAL =================
       const aboutTl = gsap.timeline({
@@ -662,9 +640,8 @@ export default function LandingPage({
             {/* Step 3: AI Assistant Tag */}
             <div
               ref={heroTagRef}
-              className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-mono font-bold tracking-widest text-amber-400 uppercase select-none"
+              className="inline-flex items-center text-[10px] sm:text-xs font-mono font-bold tracking-widest text-amber-400 uppercase select-none"
             >
-              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 animate-ping shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
               <span className="tracking-[0.16em] sm:tracking-[0.2em] drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">
                 AI-POWERED ELECTRONICS ASSISTANT
               </span>
@@ -779,34 +756,6 @@ export default function LandingPage({
           </div>
         </div>
 
-        {/* Floating Bottom-Right Vision AI Note (Desktop only) */}
-        <div className="absolute right-6 sm:right-10 lg:right-14 bottom-6 hidden md:flex items-center gap-2 text-xs font-mono text-zinc-300 select-none">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
-          <span className="font-bold text-amber-400 uppercase tracking-wider text-[11px]">
-            Gemini Vision AI
-          </span>
-          <span className="text-zinc-600">•</span>
-          <span className="text-zinc-400 font-medium">Live Component Scanning</span>
-        </div>
-
-        {/* ================= CONNECTIVE CONDUIT: HERO TO CIRCUIT STORY ================= */}
-        <div
-          ref={heroToCircuitConduitRef}
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-20"
-        >
-          <div className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.9)] animate-ping" />
-          <svg className="w-4 sm:w-6 h-12 sm:h-20 overflow-visible" viewBox="0 0 24 80" fill="none">
-            <path
-              ref={heroConduitRef}
-              d="M 12 0 L 12 80"
-              stroke="#f59e0b"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeDasharray="260"
-              strokeDashoffset="260"
-            />
-          </svg>
-        </div>
       </section>
 
       {/* ================= INTERACTIVE STORY CHAPTER: WATCH YOUR CIRCUIT BUILD ITSELF ================= */}

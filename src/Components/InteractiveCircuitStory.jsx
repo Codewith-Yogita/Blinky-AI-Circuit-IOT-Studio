@@ -1,4 +1,5 @@
-import { useRef, useLayoutEffect, useState } from "react";
+import { useRef, useLayoutEffect, useState, useEffect } from "react";
+import "@wokwi/elements";
 import {
   Sparkles,
   ArrowRight,
@@ -9,7 +10,6 @@ import {
   Terminal,
   Activity,
   Layers,
-  Flame,
 } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -19,6 +19,10 @@ gsap.registerPlugin(ScrollTrigger);
 export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio }) {
   const containerRef = useRef(null);
   const pinTargetRef = useRef(null);
+  const workbenchContainerRef = useRef(null);
+
+  // Responsive scale state for the 700x420 artboard
+  const [artboardScale, setArtboardScale] = useState(1);
 
   // Story phases indicators (Desktop)
   const phase1Ref = useRef(null);
@@ -36,37 +40,63 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
   const progressFillRef = useRef(null);
   const mobileProgressFillRef = useRef(null);
 
-  // Hardware SVG groups
-  const esp32Ref = useRef(null);
+  // Hardware Elements
+  const esp32ContainerRef = useRef(null);
   const esp32ReticleRef = useRef(null);
-  const sensorRef = useRef(null);
-  const resistorRef = useRef(null);
-  const ledRef = useRef(null);
-  const ledGlowRef = useRef(null);
-  const ledLightBeamRef = useRef(null);
-  const ledCoreRef = useRef(null);
+  const esp32ElementRef = useRef(null);
 
-  // Wires and Solder Pads
-  const wire1Ref = useRef(null); // 5V Power
-  const wire2Ref = useRef(null); // GND Return
-  const wire3Ref = useRef(null); // GPIO2 Signal
-  const wire4Ref = useRef(null); // Resistor to LED Anode
-  const wire5Ref = useRef(null); // LED Cathode to GND
+  const sonarContainerRef = useRef(null);
+  const resistorContainerRef = useRef(null);
+  const ledContainerRef = useRef(null);
+  const wokwiLedRef = useRef(null);
+  const ledRadialGlowRef = useRef(null);
+
+  // Wires and Solder Eyelets
+  const wire1Ref = useRef(null); // 5V Power (Red)
+  const wire2Ref = useRef(null); // GND Upper (Slate)
+  const wire3Ref = useRef(null); // GPIO2 Signal (Amber)
+  const wire4Ref = useRef(null); // Resistor to LED (Orange)
+  const wire5Ref = useRef(null); // LED Ground Return (Slate)
 
   const pad1Ref = useRef(null);
   const pad2Ref = useRef(null);
   const pad3Ref = useRef(null);
   const pad4Ref = useRef(null);
+  const pad5Ref = useRef(null);
 
-  // Pulses and Badges
-  const pulseNode1Ref = useRef(null);
-  const pulseNode2Ref = useRef(null);
-  const pulseNode3Ref = useRef(null);
+  // Pulses and Diagnostic Badges
+  const pulseGroupRef = useRef(null);
   const verifiedBadgeRef = useRef(null);
   const terminalHudRef = useRef(null);
   const launchCtaRef = useRef(null);
   const mobileLaunchCtaRef = useRef(null);
   const outgoingConduitRef = useRef(null);
+
+  // Calculate responsive scale for the 700x420 workbench
+  useEffect(() => {
+    if (!workbenchContainerRef.current) return;
+
+    const handleResize = () => {
+      if (!workbenchContainerRef.current) return;
+      const { clientWidth, clientHeight } = workbenchContainerRef.current;
+      // Logical canvas dimensions: 700w x 420h
+      // Subtract header (~40px) and terminal hud (~45px)
+      const availW = clientWidth - 20;
+      const availH = clientHeight - 88;
+      const s = Math.min(availW / 700, availH / 420);
+      setArtboardScale(Math.min(Math.max(s, 0.38), 1.25));
+    };
+
+    handleResize();
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(workbenchContainerRef.current);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -74,16 +104,15 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
 
     const ctx = gsap.context(() => {
       if (prefersReducedMotion) {
-        // Instant complete state for accessibility
+        // Complete static state for accessibility
         gsap.set(
           [
-            esp32Ref.current,
-            sensorRef.current,
-            resistorRef.current,
-            ledRef.current,
-            ledGlowRef.current,
-            ledLightBeamRef.current,
-            ledCoreRef.current,
+            esp32ContainerRef.current,
+            sonarContainerRef.current,
+            resistorContainerRef.current,
+            ledContainerRef.current,
+            ledRadialGlowRef.current,
+            pulseGroupRef.current,
             verifiedBadgeRef.current,
             terminalHudRef.current,
             launchCtaRef.current,
@@ -92,41 +121,48 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
           ],
           { opacity: 1, scale: 1, x: 0, y: 0 }
         );
-        gsap.set([wire1Ref.current, wire2Ref.current, wire3Ref.current, wire4Ref.current, wire5Ref.current], {
-          strokeDashoffset: 0,
-        });
+        gsap.set(
+          [wire1Ref.current, wire2Ref.current, wire3Ref.current, wire4Ref.current, wire5Ref.current],
+          { strokeDashoffset: 0 }
+        );
         gsap.set([progressFillRef.current, mobileProgressFillRef.current], { width: "100%" });
+        if (wokwiLedRef.current) wokwiLedRef.current.value = true;
         return;
       }
 
       // ================= INITIAL DORMANT STATE =================
-      gsap.set(esp32Ref.current, { opacity: 0, y: 35, scale: 0.94 });
-      gsap.set(esp32ReticleRef.current, { opacity: 0, scale: 1.2 });
-      gsap.set(sensorRef.current, { opacity: 0, y: -30, scale: 0.9 });
-      gsap.set(resistorRef.current, { opacity: 0, y: 20, scale: 0.85 });
-      gsap.set(ledRef.current, { opacity: 0, y: 20, scale: 0.85 });
-      gsap.set([ledGlowRef.current, ledLightBeamRef.current], { opacity: 0, scale: 0.3 });
-      gsap.set(ledCoreRef.current, { fill: "#7f1d1d" });
+      gsap.set(esp32ContainerRef.current, { opacity: 0, y: 30, scale: 0.94 });
+      gsap.set(esp32ReticleRef.current, { opacity: 0, scale: 1.15 });
+      gsap.set(sonarContainerRef.current, { opacity: 0, y: -25, scale: 0.92 });
+      gsap.set(resistorContainerRef.current, { opacity: 0, y: 18, scale: 0.88 });
+      gsap.set(ledContainerRef.current, { opacity: 0, y: 18, scale: 0.88 });
+      gsap.set(ledRadialGlowRef.current, { opacity: 0, scale: 0.4 });
 
       // Solder pads
-      gsap.set([pad1Ref.current, pad2Ref.current, pad3Ref.current, pad4Ref.current], {
+      gsap.set([pad1Ref.current, pad2Ref.current, pad3Ref.current, pad4Ref.current, pad5Ref.current], {
         opacity: 0,
         scale: 0,
       });
 
       // SVG Wires initially un-routed
-      gsap.set([wire1Ref.current, wire2Ref.current, wire3Ref.current, wire4Ref.current, wire5Ref.current], {
-        strokeDasharray: 320,
-        strokeDashoffset: 320,
+      const wires = [
+        { el: wire1Ref.current, len: 680 },
+        { el: wire2Ref.current, len: 650 },
+        { el: wire3Ref.current, len: 200 },
+        { el: wire4Ref.current, len: 220 },
+        { el: wire5Ref.current, len: 480 },
+      ];
+      wires.forEach(({ el, len }) => {
+        if (el) {
+          gsap.set(el, { strokeDasharray: len, strokeDashoffset: len });
+        }
       });
 
-      gsap.set([pulseNode1Ref.current, pulseNode2Ref.current, pulseNode3Ref.current], {
-        opacity: 0,
-      });
-      gsap.set(verifiedBadgeRef.current, { opacity: 0, scale: 0.8, y: -10 });
-      gsap.set(terminalHudRef.current, { opacity: 0.4 });
-      gsap.set([launchCtaRef.current, mobileLaunchCtaRef.current], { opacity: 0, y: 12, scale: 0.96 });
-      gsap.set(outgoingConduitRef.current, { strokeDasharray: 300, strokeDashoffset: 300, opacity: 0 });
+      gsap.set(pulseGroupRef.current, { opacity: 0 });
+      gsap.set(verifiedBadgeRef.current, { opacity: 0, scale: 0.85, y: -8 });
+      gsap.set(terminalHudRef.current, { opacity: 0.45 });
+      gsap.set([launchCtaRef.current, mobileLaunchCtaRef.current], { opacity: 0, y: 10, scale: 0.96 });
+      gsap.set(outgoingConduitRef.current, { strokeDasharray: 200, strokeDashoffset: 200, opacity: 0 });
 
       // Story HUD phase initial emphasis (Desktop)
       gsap.set(phase1Ref.current, { opacity: 1, borderColor: "rgba(245, 158, 11, 0.4)" });
@@ -136,9 +172,8 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       });
 
       // Mobile active phase setup
-      gsap.set(mobilePhase1Ref.current, { display: "block", opacity: 1 });
+      gsap.set(mobilePhase1Ref.current, { opacity: 1 });
       gsap.set([mobilePhase2Ref.current, mobilePhase3Ref.current, mobilePhase4Ref.current], {
-        display: "none",
         opacity: 0,
       });
 
@@ -149,28 +184,35 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
         scrollTrigger: {
           trigger: pinTargetRef.current,
           start: "top top",
-          end: isMobile ? "+=110%" : "+=240%",
+          end: isMobile ? "+=140%" : "+=220%",
           pin: true,
-          scrub: isMobile ? 0.5 : 0.75,
+          scrub: 1.0, // Silky-smooth 1-second spring inertia
           anticipatePin: 1,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            // Dynamically power the official Wokwi LED in Phase 4
+            if (wokwiLedRef.current) {
+              wokwiLedRef.current.value = progress >= 0.76;
+            }
+          },
         },
       });
 
       // ---------- BEAT 1: SILICON CORE INITIALIZATION (Scroll 0% - 25%) ----------
       masterTl.to(
         esp32ReticleRef.current,
-        { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
+        { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" },
         0
       );
       masterTl.to(
-        esp32Ref.current,
-        { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "back.out(1.2)" },
+        esp32ContainerRef.current,
+        { opacity: 1, y: 0, scale: 1, duration: 0.75, ease: "back.out(1.2)" },
         0.15
       );
       masterTl.to(
         esp32ReticleRef.current,
         { opacity: 0.25, duration: 0.3 },
-        0.8
+        0.75
       );
       masterTl.to(
         [progressFillRef.current, mobileProgressFillRef.current],
@@ -191,19 +233,17 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       );
 
       masterTl.to(mobilePhase1Ref.current, { opacity: 0, duration: 0.2 }, 1.0);
-      masterTl.set(mobilePhase1Ref.current, { display: "none" }, 1.2);
-      masterTl.set(mobilePhase2Ref.current, { display: "block" }, 1.2);
-      masterTl.to(mobilePhase2Ref.current, { opacity: 1, duration: 0.2 }, 1.2);
+      masterTl.to(mobilePhase2Ref.current, { opacity: 1, duration: 0.2 }, 1.15);
 
       // Sonar sensor docks
       masterTl.to(
-        sensorRef.current,
-        { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "back.out(1.3)" },
+        sonarContainerRef.current,
+        { opacity: 1, y: 0, scale: 1, duration: 0.65, ease: "back.out(1.2)" },
         1.0
       );
       // Resistor & LED dock
       masterTl.to(
-        [resistorRef.current, ledRef.current],
+        [resistorContainerRef.current, ledContainerRef.current],
         { opacity: 1, y: 0, scale: 1, stagger: 0.12, duration: 0.6, ease: "power2.out" },
         1.2
       );
@@ -213,7 +253,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
         1.1
       );
 
-      // ---------- BEAT 3: DYNAMIC COPPER TRACE ROUTING (Scroll 50% - 75%) ----------
+      // ---------- BEAT 3: DYNAMIC DUPONT TRACE ROUTING (Scroll 50% - 75%) ----------
       masterTl.to(
         phase2Ref.current,
         { opacity: 0.35, borderColor: "rgba(255, 255, 255, 0.06)", duration: 0.25 },
@@ -226,9 +266,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       );
 
       masterTl.to(mobilePhase2Ref.current, { opacity: 0, duration: 0.2 }, 2.0);
-      masterTl.set(mobilePhase2Ref.current, { display: "none" }, 2.2);
-      masterTl.set(mobilePhase3Ref.current, { display: "block" }, 2.2);
-      masterTl.to(mobilePhase3Ref.current, { opacity: 1, duration: 0.2 }, 2.2);
+      masterTl.to(mobilePhase3Ref.current, { opacity: 1, duration: 0.2 }, 2.15);
 
       // Wire 1: 5V DC Power Rail (Red) routes to Sensor VCC
       masterTl.to(
@@ -238,7 +276,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       );
       masterTl.to(
         pad1Ref.current,
-        { opacity: 1, scale: 1.3, duration: 0.2, yoyo: true, repeat: 1 },
+        { opacity: 1, scale: 1.25, duration: 0.2, yoyo: true, repeat: 1 },
         2.5
       );
 
@@ -250,32 +288,32 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       );
       masterTl.to(
         pad2Ref.current,
-        { opacity: 1, scale: 1.3, duration: 0.2, yoyo: true, repeat: 1 },
+        { opacity: 1, scale: 1.25, duration: 0.2, yoyo: true, repeat: 1 },
         2.7
       );
 
       // Wire 3: GPIO2 Signal (Amber)
       masterTl.to(
         wire3Ref.current,
-        { strokeDashoffset: 0, duration: 0.6, ease: "power1.inOut" },
-        2.5
+        { strokeDashoffset: 0, duration: 0.5, ease: "power1.inOut" },
+        2.4
       );
       masterTl.to(
         pad3Ref.current,
-        { opacity: 1, scale: 1.3, duration: 0.2, yoyo: true, repeat: 1 },
-        3.0
+        { opacity: 1, scale: 1.25, duration: 0.2, yoyo: true, repeat: 1 },
+        2.85
       );
 
       // Wire 4 & 5: Resistor to LED & LED return
       masterTl.to(
         [wire4Ref.current, wire5Ref.current],
-        { strokeDashoffset: 0, stagger: 0.15, duration: 0.5, ease: "power1.inOut" },
-        2.8
+        { strokeDashoffset: 0, stagger: 0.15, duration: 0.55, ease: "power1.inOut" },
+        2.7
       );
       masterTl.to(
-        pad4Ref.current,
-        { opacity: 1, scale: 1.3, duration: 0.2, yoyo: true, repeat: 1 },
-        3.2
+        [pad4Ref.current, pad5Ref.current],
+        { opacity: 1, scale: 1.25, duration: 0.2, yoyo: true, repeat: 1 },
+        3.15
       );
 
       masterTl.to(
@@ -288,75 +326,63 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       masterTl.to(
         phase3Ref.current,
         { opacity: 0.35, borderColor: "rgba(255, 255, 255, 0.06)", duration: 0.25 },
-        3.4
+        3.3
       );
       masterTl.to(
         phase4Ref.current,
         { opacity: 1, borderColor: "rgba(16, 185, 129, 0.6)", duration: 0.3 },
-        3.4
+        3.3
       );
 
-      masterTl.to(mobilePhase3Ref.current, { opacity: 0, duration: 0.2 }, 3.4);
-      masterTl.set(mobilePhase3Ref.current, { display: "none" }, 3.6);
-      masterTl.set(mobilePhase4Ref.current, { display: "block" }, 3.6);
-      masterTl.to(mobilePhase4Ref.current, { opacity: 1, duration: 0.2 }, 3.6);
+      masterTl.to(mobilePhase3Ref.current, { opacity: 0, duration: 0.2 }, 3.3);
+      masterTl.to(mobilePhase4Ref.current, { opacity: 1, duration: 0.2 }, 3.45);
 
       // Current pulse nodes ignite
       masterTl.to(
-        [pulseNode1Ref.current, pulseNode2Ref.current, pulseNode3Ref.current],
+        pulseGroupRef.current,
         { opacity: 1, duration: 0.25 },
-        3.4
+        3.35
       );
 
-      // LED Ignites into radiant emission
+      // LED Ignites into radiant emission bloom
       masterTl.to(
-        ledCoreRef.current,
-        { fill: "url(#ledActiveGrad)", duration: 0.4 },
-        3.5
-      );
-      masterTl.to(
-        ledGlowRef.current,
-        { opacity: 1, scale: 1.25, duration: 0.6, ease: "power2.out" },
-        3.5
-      );
-      masterTl.to(
-        ledLightBeamRef.current,
-        { opacity: 0.85, scale: 1, duration: 0.6, ease: "power2.out" },
-        3.5
+        ledRadialGlowRef.current,
+        { opacity: 0.85, scale: 1.2, duration: 0.5, ease: "power2.out" },
+        3.45
       );
 
       // Terminal HUD transitions to full verified brightness
       masterTl.to(
         terminalHudRef.current,
-        { opacity: 1, duration: 0.4 },
-        3.6
+        { opacity: 1, duration: 0.35 },
+        3.5
       );
 
       // Verification Badge
       masterTl.to(
         verifiedBadgeRef.current,
-        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.5)" },
-        3.7
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.4)" },
+        3.6
       );
 
       // Launch Studio CTA unlocks
       masterTl.to(
         [launchCtaRef.current, mobileLaunchCtaRef.current],
-        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power2.out" },
-        3.8
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power2.out" },
+        3.7
       );
 
       // Outgoing energy conduit feeds downward
       masterTl.to(
         outgoingConduitRef.current,
-        { strokeDashoffset: 0, opacity: 1, duration: 0.6, ease: "power1.inOut" },
-        3.9
+        { strokeDashoffset: 0, opacity: 1, duration: 0.5, ease: "power1.inOut" },
+        3.8
       );
 
       masterTl.to(
         [progressFillRef.current, mobileProgressFillRef.current],
         { width: "100%", duration: 0.5 },
-        3.7
+        3.6
       );
     }, containerRef);
 
@@ -381,7 +407,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
                 <span>02 // Circuit Synthesis</span>
               </div>
               <div className="text-[10px] font-mono font-bold text-zinc-400">
-                REAL HARDWARE
+                WOKWI REAL HARDWARE
               </div>
             </div>
 
@@ -394,9 +420,9 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
                 </span>
               </h2>
 
-              {/* Dynamic Active Step Cards */}
-              <div className="relative min-h-[54px] rounded-xl border border-amber-500/30 bg-[#120d18]/95 p-2.5 shadow-lg">
-                <div ref={mobilePhase1Ref} className="space-y-0.5">
+              {/* Dynamic Active Step Cards (CSS Grid overlay for smooth zero-jank transitions) */}
+              <div className="relative min-h-[56px] rounded-xl border border-amber-500/30 bg-[#120d18]/95 p-2.5 shadow-lg grid grid-cols-1 grid-rows-1">
+                <div ref={mobilePhase1Ref} className="col-start-1 row-start-1 space-y-0.5 transition-opacity duration-300">
                   <div className="flex items-center gap-2 text-xs font-bold text-white font-outfit">
                     <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono text-[10px]">01</span>
                     <span>ESP32-WROOM-32 Placed</span>
@@ -406,7 +432,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
                   </p>
                 </div>
 
-                <div ref={mobilePhase2Ref} className="space-y-0.5">
+                <div ref={mobilePhase2Ref} className="col-start-1 row-start-1 space-y-0.5 transition-opacity duration-300 pointer-events-none">
                   <div className="flex items-center gap-2 text-xs font-bold text-white font-outfit">
                     <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 font-mono text-[10px]">02</span>
                     <span>HC-SR04 &amp; 220Ω Load Mounted</span>
@@ -416,7 +442,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
                   </p>
                 </div>
 
-                <div ref={mobilePhase3Ref} className="space-y-0.5">
+                <div ref={mobilePhase3Ref} className="col-start-1 row-start-1 space-y-0.5 transition-opacity duration-300 pointer-events-none">
                   <div className="flex items-center gap-2 text-xs font-bold text-white font-outfit">
                     <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-mono text-[10px]">03</span>
                     <span>Dupont Jumper Wires Etched</span>
@@ -426,7 +452,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
                   </p>
                 </div>
 
-                <div ref={mobilePhase4Ref} className="space-y-0.5">
+                <div ref={mobilePhase4Ref} className="col-start-1 row-start-1 space-y-0.5 transition-opacity duration-300 pointer-events-none">
                   <div className="flex items-center gap-2 text-xs font-bold text-white font-outfit">
                     <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[10px]">04</span>
                     <span>3.3V Current &amp; C++ Code Verified</span>
@@ -448,52 +474,50 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
             </div>
           </div>
 
-          {/* ================= DESKTOP STORY HUD (≥ 1024px) ================= */}
-          <div className="hidden lg:block lg:col-span-5 space-y-6 z-20">
-            {/* Top Telemetry Header */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                  <span>Scene 02 // Circuit Synthesis</span>
-                </div>
-                <div className="text-[11px] font-mono font-bold text-zinc-400">
-                  REAL HARDWARE COMPONENTS
-                </div>
-              </div>
-
-              {/* Progress Scrubber Bar */}
-              <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                <div
-                  ref={progressFillRef}
-                  className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-400 rounded-full transition-all duration-150"
-                  style={{ width: "15%" }}
-                />
-              </div>
+          {/* ================= DESPORT STORY HUD & CHOREOGRAPHY (Left Column) ================= */}
+          <div className="hidden lg:flex lg:col-span-5 flex-col justify-center space-y-5 z-20">
+            {/* Tagline Badge */}
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span>Scene 02 // Circuit Synthesis</span>
+              </span>
+              <span className="text-xs font-mono text-zinc-400">
+                WOKWI REAL HARDWARE
+              </span>
             </div>
 
-            {/* Title with Gradient */}
+            {/* Narrative Headline */}
             <div className="space-y-2">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight text-white leading-[1.08]">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-outfit text-white tracking-tight leading-[1.1]">
                 Watch Your Circuit{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-4xl sm:text-5xl lg:text-6xl font-normal drop-shadow-[0_2px_14px_rgba(245,158,11,0.3)]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-4xl sm:text-5xl lg:text-6xl font-normal block mt-1">
                   Build Itself.
                 </span>
               </h2>
-              <p className="text-xs sm:text-sm text-zinc-400 font-medium">
+              <p className="text-sm sm:text-base text-zinc-400 font-normal leading-relaxed max-w-md">
                 Scroll down to assemble authentic physical hardware, route real Dupont jumpers, and synthesize Arduino firmware in real-time.
               </p>
             </div>
 
-            {/* 4 Interactive Story Phases */}
-            <div className="space-y-3 pt-1">
+            {/* Linear Phase Progress Track */}
+            <div className="w-full h-1.5 bg-white/[0.08] rounded-full overflow-hidden my-1">
+              <div
+                ref={progressFillRef}
+                className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-400 rounded-full transition-all duration-100 ease-out"
+                style={{ width: "10%" }}
+              />
+            </div>
+
+            {/* 4 Sequential Choreography Beat Cards */}
+            <div className="space-y-2.5">
               {/* Phase 1 */}
               <div
                 ref={phase1Ref}
                 className="p-3.5 sm:p-4 rounded-2xl border bg-[#100b16]/90 transition-all duration-300"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-mono text-xs font-bold shrink-0 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+                  <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-mono text-xs font-bold shrink-0">
                     01
                   </div>
                   <div className="flex-1 min-w-0">
@@ -584,11 +608,13 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
             </div>
           </div>
 
-          {/* ================= ULTRA-REALISTIC ELECTRONICS WORKBENCH CANVAS ================= */}
-          <div className="w-full lg:col-span-7 relative h-[260px] sm:h-[330px] md:h-[400px] lg:h-[520px] rounded-2xl sm:rounded-3xl bg-[#09070c] border border-amber-500/35 shadow-[0_20px_60px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.08),0_0_40px_rgba(245,158,11,0.12)] overflow-hidden">
-            
+          {/* ================= ULTRA-REALISTIC WOKWI ELECTRONICS WORKBENCH CANVAS ================= */}
+          <div
+            ref={workbenchContainerRef}
+            className="w-full lg:col-span-7 relative h-[280px] sm:h-[350px] md:h-[420px] lg:h-[530px] rounded-2xl sm:rounded-3xl bg-[#09070c] border border-amber-500/35 shadow-[0_20px_60px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.08),0_0_40px_rgba(245,158,11,0.12)] overflow-hidden flex flex-col"
+          >
             {/* Top Workspace Header Bar */}
-            <div className="absolute top-0 left-0 right-0 h-9 sm:h-11 px-3 sm:px-6 bg-[#130d19]/90 border-b border-white/[0.08] flex items-center justify-between z-30 backdrop-blur-md">
+            <div className="h-9 sm:h-11 px-3 sm:px-6 bg-[#130d19]/90 border-b border-white/[0.08] flex items-center justify-between z-30 backdrop-blur-md shrink-0">
               <div className="flex items-center gap-2 sm:gap-2.5">
                 <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500/80 shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
                 <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-amber-500/80 shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
@@ -601,512 +627,357 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
               </div>
             </div>
 
-            {/* ================= VECTOR HARDWARE & CIRCUIT CANVAS ================= */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none z-10"
-              viewBox="0 0 600 440"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              <defs>
-                {/* Visual Shaders, Metallic Gradients & Glow Filters */}
-                <filter id="circuitGlow" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur stdDeviation="3.5" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-
-                <filter id="componentShadow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="2" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.85" />
-                </filter>
-
-                {/* Brushed Aluminum Shield Gradient */}
-                <linearGradient id="metalShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#475569" />
-                  <stop offset="25%" stopColor="#334155" />
-                  <stop offset="50%" stopColor="#64748b" />
-                  <stop offset="75%" stopColor="#1e293b" />
-                  <stop offset="100%" stopColor="#475569" />
-                </linearGradient>
-
-                {/* Gold Pin Plating Gradient */}
-                <linearGradient id="goldPinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#fef08a" />
-                  <stop offset="50%" stopColor="#f59e0b" />
-                  <stop offset="100%" stopColor="#b45309" />
-                </linearGradient>
-
-                {/* Ultrasonic Aluminum Can Gradient */}
-                <radialGradient id="transducerSilverGrad" cx="35%" cy="35%" r="65%">
-                  <stop offset="0%" stopColor="#f8fafc" />
-                  <stop offset="35%" stopColor="#cbd5e1" />
-                  <stop offset="75%" stopColor="#64748b" />
-                  <stop offset="100%" stopColor="#334155" />
-                </radialGradient>
-
-                {/* Resistor Ceramic Body Gradient */}
-                <linearGradient id="resistorBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#fde68a" />
-                  <stop offset="20%" stopColor="#d4a373" />
-                  <stop offset="70%" stopColor="#a3704c" />
-                  <stop offset="100%" stopColor="#78350f" />
-                </linearGradient>
-
-                {/* Active Glowing Ruby LED Dome */}
-                <radialGradient id="ledActiveGrad" cx="35%" cy="30%" r="70%">
-                  <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="20%" stopColor="#fef08a" />
-                  <stop offset="50%" stopColor="#ef4444" />
-                  <stop offset="90%" stopColor="#991b1b" />
-                  <stop offset="100%" stopColor="#450a0a" />
-                </radialGradient>
-
-                {/* Breadboard Gold Via Dot Grid Pattern */}
-                <pattern id="breadboardGrid" width="22" height="22" patternUnits="userSpaceOnUse">
-                  <circle cx="11" cy="11" r="3" fill="#140f1c" stroke="#b45309" strokeWidth="0.8" strokeOpacity="0.4" />
-                  <circle cx="11" cy="11" r="1.3" fill="#070509" />
-                </pattern>
-              </defs>
-
-              {/* Prototyping Breadboard Dot Grid Background */}
-              <rect width="600" height="440" fill="url(#breadboardGrid)" />
-
-              {/* ================= DUPONT JUMPER WIRES WITH REAL SHADOW & SPECULAR HIGHLIGHT ================= */}
-              
-              {/* Wire 1: 5V DC Power Rail (Red) */}
-              <path
-                d="M 175 160 C 220 160, 270 95, 360 95"
-                stroke="#000000"
-                strokeWidth="7"
-                strokeOpacity="0.6"
-                fill="none"
-                strokeLinecap="round"
-                transform="translate(2, 4)"
-              />
-              <path
-                ref={wire1Ref}
-                d="M 175 160 C 220 160, 270 95, 360 95"
-                stroke="#ef4444"
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-              />
-
-              {/* Wire 2: Ground Return Rail (Dark Slate/Black) */}
-              <path
-                d="M 175 280 C 250 280, 330 380, 480 380 C 530 380, 530 140, 530 95"
-                stroke="#000000"
-                strokeWidth="7"
-                strokeOpacity="0.6"
-                fill="none"
-                strokeLinecap="round"
-                transform="translate(2, 4)"
-              />
-              <path
-                ref={wire2Ref}
-                d="M 175 280 C 250 280, 330 380, 480 380 C 530 380, 530 140, 530 95"
-                stroke="#475569"
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-              />
-
-              {/* Wire 3: Digital GPIO2 Signal to Resistor (Amber) */}
-              <path
-                d="M 175 220 C 200 220, 220 222, 260 222"
-                stroke="#000000"
-                strokeWidth="7"
-                strokeOpacity="0.6"
-                fill="none"
-                strokeLinecap="round"
-                transform="translate(2, 4)"
-              />
-              <path
-                ref={wire3Ref}
-                d="M 175 220 C 200 220, 220 222, 260 222"
-                stroke="#f59e0b"
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-              />
-
-              {/* Wire 4: Resistor to LED Anode (Orange/Gold) */}
-              <path
-                d="M 340 222 L 420 222"
-                stroke="#000000"
-                strokeWidth="7"
-                strokeOpacity="0.6"
-                fill="none"
-                strokeLinecap="round"
-                transform="translate(2, 4)"
-              />
-              <path
-                ref={wire4Ref}
-                d="M 340 222 L 420 222"
-                stroke="#f97316"
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-              />
-
-              {/* Wire 5: LED Cathode to GND rail */}
-              <path
-                d="M 460 242 C 460 380, 480 380, 480 380"
-                stroke="#000000"
-                strokeWidth="6"
-                strokeOpacity="0.6"
-                fill="none"
-                strokeLinecap="round"
-                transform="translate(2, 4)"
-              />
-              <path
-                ref={wire5Ref}
-                d="M 460 242 C 460 380, 480 380, 480 380"
-                stroke="#64748b"
-                strokeWidth="3.2"
-                fill="none"
-                strokeLinecap="round"
-              />
-
-              {/* Black Dupont Crimp Connector Boots at Wire Ends */}
-              {/* At ESP32 pins */}
-              <rect x="170" y="153" width="10" height="14" rx="2" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-              <rect x="170" y="213" width="10" height="14" rx="2" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-              <rect x="170" y="273" width="10" height="14" rx="2" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-              
-              {/* At Sonar pins */}
-              <rect x="355" y="88" width="10" height="14" rx="2" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-              <rect x="525" y="88" width="10" height="14" rx="2" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-
-              {/* Solder Contact Pads at Terminals */}
-              <circle ref={pad1Ref} cx="360" cy="95" r="4.5" fill="#f87171" filter="url(#circuitGlow)" />
-              <circle ref={pad2Ref} cx="530" cy="95" r="4.5" fill="#94a3b8" filter="url(#circuitGlow)" />
-              <circle ref={pad3Ref} cx="260" cy="222" r="4.5" fill="#fbbf24" filter="url(#circuitGlow)" />
-              <circle ref={pad4Ref} cx="420" cy="222" r="4.5" fill="#fb923c" filter="url(#circuitGlow)" />
-
-              {/* Electrical Current Pulse Photons (Active in Phase 4) */}
-              <circle
-                ref={pulseNode1Ref}
-                r="4.5"
-                fill="#fef08a"
-                filter="url(#circuitGlow)"
+            {/* Responsive Scaling Artboard Viewport */}
+            <div className="relative flex-1 w-full flex items-center justify-center overflow-hidden">
+              <div
+                className="relative shrink-0 select-none"
+                style={{
+                  width: "700px",
+                  height: "420px",
+                  transform: `scale(${artboardScale})`,
+                  transformOrigin: "center center",
+                }}
               >
-                <animateMotion
-                  path="M 175 220 C 200 220, 220 222, 260 222"
-                  dur="1.1s"
-                  repeatCount="indefinite"
-                />
-              </circle>
-
-              <circle
-                ref={pulseNode2Ref}
-                r="4.5"
-                fill="#fef08a"
-                filter="url(#circuitGlow)"
-              >
-                <animateMotion
-                  path="M 340 222 L 420 222"
-                  dur="1.1s"
-                  repeatCount="indefinite"
-                />
-              </circle>
-
-              <circle
-                ref={pulseNode3Ref}
-                r="4.5"
-                fill="#fca5a5"
-                filter="url(#circuitGlow)"
-              >
-                <animateMotion
-                  path="M 175 160 C 220 160, 270 95, 360 95"
-                  dur="1.3s"
-                  repeatCount="indefinite"
-                />
-              </circle>
-
-              {/* Outgoing Conduit Path (Flows out of canvas into Section 2) */}
-              <path
-                ref={outgoingConduitRef}
-                d="M 480 380 L 480 440"
-                stroke="#f59e0b"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                filter="url(#circuitGlow)"
-              />
-
-              {/* ================= COMPONENT 1: REALISTIC ESP32 DEVKIT V1 ================= */}
-              {/* Alignment Reticle */}
-              <rect
-                ref={esp32ReticleRef}
-                x="30"
-                y="80"
-                width="150"
-                height="240"
-                rx="16"
-                fill="none"
-                stroke="#f59e0b"
-                strokeWidth="1.5"
-                strokeDasharray="6 4"
-                opacity="0.5"
-              />
-
-              <g ref={esp32Ref} id="esp32-mcu" transform="translate(35, 85)" filter="url(#componentShadow)">
-                {/* Matte Obsidian Black PCB Substrate */}
-                <rect width="140" height="230" rx="8" fill="#120e18" stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.7" />
-                
-                {/* 4 Corner Screwholes with Gold Annular Rings */}
-                <circle cx="8" cy="8" r="4.5" fill="#1c1917" stroke="#d97706" strokeWidth="1" />
-                <circle cx="132" cy="8" r="4.5" fill="#1c1917" stroke="#d97706" strokeWidth="1" />
-                <circle cx="8" cy="222" r="4.5" fill="#1c1917" stroke="#d97706" strokeWidth="1" />
-                <circle cx="132" cy="222" r="4.5" fill="#1c1917" stroke="#d97706" strokeWidth="1" />
-
-                {/* MIFA Meandering Copper PCB Antenna at Top */}
-                <rect x="25" y="6" width="90" height="26" rx="3" fill="#241208" stroke="#78350f" strokeWidth="0.8" />
-                {/* Serpentine Golden Copper Trace */}
-                <path
-                  d="M 32 26 L 32 12 L 40 12 L 40 26 L 48 26 L 48 12 L 56 12 L 56 26 L 64 26 L 64 12 L 72 12 L 72 26 L 80 26 L 80 12 L 88 12 L 88 26 L 96 26 L 96 12 L 108 12"
-                  stroke="url(#goldPinGrad)"
-                  strokeWidth="1.6"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                {/* Authentic Wokwi Prototyping Dot Grid Background */}
+                <div
+                  className="absolute inset-0 rounded-xl"
+                  style={{
+                    backgroundColor: "#0d0a14",
+                    backgroundImage: `
+                      radial-gradient(circle at center, rgba(245, 158, 11, 0.22) 1.5px, transparent 1.5px),
+                      radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 3.5px, transparent 3.5px)
+                    `,
+                    backgroundSize: "20px 20px, 20px 20px",
+                    backgroundPosition: "0 0, 0 0",
+                  }}
                 />
 
-                {/* Brushed Aluminum Metal RF Shield (ESP-WROOM-32) */}
-                <rect x="20" y="38" width="100" height="100" rx="6" fill="url(#metalShieldGrad)" stroke="#64748b" strokeWidth="1.2" />
-                <rect x="22" y="40" width="96" height="96" rx="4" fill="none" stroke="#94a3b8" strokeWidth="0.5" strokeOpacity="0.4" />
-                
-                {/* Laser-Etched Espressif Emblem & Markings */}
-                <polygon points="70,48 76,51.5 76,58.5 70,62 64,58.5 64,51.5" fill="#f8fafc" opacity="0.8" />
-                <text x="70" y="73" fill="#f1f5f9" fontSize="10.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle" letterSpacing="0.5">
-                  ESPRESSIF
-                </text>
-                <text x="70" y="87" fill="#f8fafc" fontSize="11" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">
-                  ESP-WROOM-32
-                </text>
-                <text x="70" y="100" fill="#cbd5e1" fontSize="7.5" fontFamily="monospace" textAnchor="middle">
-                  FCC ID: 2AC7Z-ESPWROOM32
-                </text>
-                <text x="70" y="112" fill="#94a3b8" fontSize="7" fontFamily="monospace" textAnchor="middle">
-                  Wi-Fi + BT 4.2 + BLE SoC
-                </text>
+                {/* Subtle Silkscreen Blueprint Coordinate Grid Lines */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+                  <line x1="55" y1="20" x2="55" y2="400" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="3 3" />
+                  <line x1="645" y1="20" x2="645" y2="400" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="3 3" />
+                  <line x1="20" y1="360" x2="680" y2="360" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="3 3" />
+                  <text x="65" y="32" fill="#f59e0b" fontSize="8" fontFamily="monospace" fontWeight="bold">SEC_01: MCU CORE</text>
+                  <text x="380" y="32" fill="#f59e0b" fontSize="8" fontFamily="monospace" fontWeight="bold">SEC_02: SENSOR CLUSTER</text>
+                </svg>
 
-                {/* Mini 2D DataMatrix Security Square */}
-                <rect x="30" y="118" width="12" height="12" fill="#0f172a" stroke="#64748b" strokeWidth="0.5" />
-                <rect x="32" y="120" width="3" height="3" fill="#f8fafc" />
-                <rect x="37" y="120" width="3" height="3" fill="#f8fafc" />
-                <rect x="32" y="125" width="3" height="3" fill="#f8fafc" />
-                <rect x="36" y="124" width="4" height="4" fill="#f8fafc" />
+                {/* ================= SVG DUPONT WIRES & PIN CONNECTIONS LAYER ================= */}
+                <svg
+                  className="absolute inset-0 w-full h-full pointer-events-none z-10"
+                  viewBox="0 0 700 420"
+                >
+                  <defs>
+                    <filter id="circuitGlow" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="3.5" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                    <filter id="wireDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.85" />
+                    </filter>
+                  </defs>
 
-                {/* CE Stamped Mark */}
-                <text x="105" y="128" fill="#e2e8f0" fontSize="10" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
-                  CE
-                </text>
+                  {/* ---------------- WIRE 1: 5V DC POWER RAIL (RED) ---------------- */}
+                  {/* Connects ESP32 VIN (60, 268.5) -> HC-SR04 VCC (441.3, 139.5) via top channel */}
+                  <path
+                    d="M 60 268.5 C 20 268.5, 20 72, 175 72 C 290 72, 390 72, 441.3 139.5"
+                    stroke="#09060f"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    strokeOpacity="0.85"
+                  />
+                  <path
+                    ref={wire1Ref}
+                    d="M 60 268.5 C 20 268.5, 20 72, 175 72 C 290 72, 390 72, 441.3 139.5"
+                    stroke="#ef4444"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    fill="none"
+                    filter="url(#wireDropShadow)"
+                  />
 
-                {/* EN & BOOT Tactile Buttons with Metal Domes */}
-                <g transform="translate(24, 148)">
-                  <rect width="18" height="14" rx="2" fill="#1c1917" stroke="#78350f" strokeWidth="0.8" />
-                  <circle cx="9" cy="7" r="4.5" fill="#cbd5e1" stroke="#475569" strokeWidth="0.8" />
-                  <text x="9" y="21" fill="#a1a1aa" fontSize="6.5" fontFamily="monospace" textAnchor="middle">EN</text>
-                </g>
+                  {/* ---------------- WIRE 2: GROUND BUS (DARK SLATE) ---------------- */}
+                  {/* Connects ESP32 GND (60, 259) -> HC-SR04 GND (471.3, 139.5) via upper channel */}
+                  <path
+                    d="M 60 259 C 32 259, 32 86, 180 86 C 300 86, 410 86, 471.3 139.5"
+                    stroke="#09060f"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    strokeOpacity="0.85"
+                  />
+                  <path
+                    ref={wire2Ref}
+                    d="M 60 259 C 32 259, 32 86, 180 86 C 300 86, 410 86, 471.3 139.5"
+                    stroke="#475569"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    fill="none"
+                    filter="url(#wireDropShadow)"
+                  />
 
-                <g transform="translate(98, 148)">
-                  <rect width="18" height="14" rx="2" fill="#1c1917" stroke="#78350f" strokeWidth="0.8" />
-                  <circle cx="9" cy="7" r="4.5" fill="#cbd5e1" stroke="#475569" strokeWidth="0.8" />
-                  <text x="9" y="21" fill="#a1a1aa" fontSize="6.5" fontFamily="monospace" textAnchor="middle">BOOT</text>
-                </g>
+                  {/* ---------------- WIRE 3: GPIO2 DIGITAL SIGNAL (WARM AMBER) ---------------- */}
+                  {/* Connects ESP32 GPIO2 (164, 240.4) -> Resistor Pin 1 (262, 257) */}
+                  <path
+                    d="M 164 240.4 C 195 240.4, 225 257, 262 257"
+                    stroke="#09060f"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    strokeOpacity="0.85"
+                  />
+                  <path
+                    ref={wire3Ref}
+                    d="M 164 240.4 C 195 240.4, 225 257, 262 257"
+                    stroke="#f59e0b"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    fill="none"
+                    filter="url(#wireDropShadow)"
+                  />
 
-                {/* Silicon CP2102 USB Bridge Chip (Center) */}
-                <rect x="56" y="152" width="28" height="28" rx="2" fill="#09060d" stroke="#64748b" strokeWidth="0.8" />
-                <circle cx="61" cy="157" r="1.2" fill="#f59e0b" />
-                <text x="70" y="168" fill="#cbd5e1" fontSize="6" fontFamily="monospace" fontWeight="bold" textAnchor="middle">CP2102</text>
+                  {/* ---------------- WIRE 4: RESISTOR TO LED ANODE (VIVID ORANGE) ---------------- */}
+                  {/* Connects Resistor Pin 2 (317, 257) -> LED Anode (465, 274) */}
+                  <path
+                    d="M 317 257 C 365 257, 415 274, 465 274"
+                    stroke="#09060f"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    strokeOpacity="0.85"
+                  />
+                  <path
+                    ref={wire4Ref}
+                    d="M 317 257 C 365 257, 415 274, 465 274"
+                    stroke="#f97316"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    fill="none"
+                    filter="url(#wireDropShadow)"
+                  />
 
-                {/* AMS1117-3.3 Voltage Regulator (SOT-223) */}
-                <rect x="52" y="186" width="36" height="16" rx="2" fill="#1c1917" stroke="#475569" strokeWidth="0.8" />
-                <rect x="62" y="184" width="16" height="3" fill="#cbd5e1" />
-                <text x="70" y="197" fill="#94a3b8" fontSize="6" fontFamily="monospace" textAnchor="middle">AMS1117</text>
+                  {/* ---------------- WIRE 5: LED CATHODE GROUND RETURN (SLATE) ---------------- */}
+                  {/* Connects LED Cathode (455, 274) -> Curves down into lower bus -> ESP32 right GND (164, 259) */}
+                  <path
+                    d="M 455 274 C 455 350, 250 350, 164 259"
+                    stroke="#09060f"
+                    strokeWidth="6.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    strokeOpacity="0.85"
+                  />
+                  <path
+                    ref={wire5Ref}
+                    d="M 455 274 C 455 350, 250 350, 164 259"
+                    stroke="#64748b"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    fill="none"
+                    filter="url(#wireDropShadow)"
+                  />
 
-                {/* Micro-USB Receptacle at Bottom */}
-                <rect x="50" y="212" width="40" height="18" rx="3" fill="#334155" stroke="#cbd5e1" strokeWidth="1" />
-                <rect x="56" y="218" width="28" height="8" rx="1.5" fill="#0f172a" />
+                  {/* ---------------- BLACK DUPONT TERMINAL CONNECTOR BOOTS ---------------- */}
+                  {/* At ESP32 Left Pins */}
+                  <rect x="54" y="263" width="8" height="11" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.8" />
+                  <rect x="54" y="253.5" width="8" height="11" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.8" />
+                  
+                  {/* At ESP32 Right Pins */}
+                  <rect x="158" y="235" width="8" height="11" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.8" />
+                  <rect x="158" y="253.5" width="8" height="11" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.8" />
 
-                {/* Left & Right 15-Pin Black Thermoplastic Header Strips */}
-                {/* Left Header */}
-                <rect x="3" y="20" width="11" height="190" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-                {Array.from({ length: 15 }).map((_, i) => (
-                  <circle key={`lpin-${i}`} cx="8.5" cy={30 + i * 12} r="2.2" fill="url(#goldPinGrad)" stroke="#78350f" strokeWidth="0.6" />
-                ))}
+                  {/* At Sonar Bottom Pins */}
+                  <rect x="437.3" y="134" width="8" height="11" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.8" />
+                  <rect x="467.3" y="134" width="8" height="11" rx="1.5" fill="#18181b" stroke="#3f3f46" strokeWidth="0.8" />
 
-                {/* Right Header */}
-                <rect x="126" y="20" width="11" height="190" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-                {Array.from({ length: 15 }).map((_, i) => (
-                  <circle key={`rpin-${i}`} cx="131.5" cy={30 + i * 12} r="2.2" fill="url(#goldPinGrad)" stroke="#78350f" strokeWidth="0.6" />
-                ))}
+                  {/* ---------------- SOLDER TERMINAL EYELET PINS ---------------- */}
+                  <circle ref={pad1Ref} cx="441.3" cy="139.5" r="4.5" fill="#f87171" filter="url(#circuitGlow)" />
+                  <circle ref={pad2Ref} cx="471.3" cy="139.5" r="4.5" fill="#94a3b8" filter="url(#circuitGlow)" />
+                  <circle ref={pad3Ref} cx="262" cy="257" r="4.5" fill="#fbbf24" filter="url(#circuitGlow)" />
+                  <circle ref={pad4Ref} cx="465" cy="274" r="4.5" fill="#fb923c" filter="url(#circuitGlow)" />
+                  <circle ref={pad5Ref} cx="455" cy="274" r="4.5" fill="#94a3b8" filter="url(#circuitGlow)" />
 
-                {/* Output Labels at Key Terminals */}
-                <text x="122" y="77" fill="#fca5a5" fontSize="8" fontFamily="monospace" fontWeight="bold" textAnchor="end">5V ●</text>
-                <text x="122" y="137" fill="#fef08a" fontSize="8" fontFamily="monospace" fontWeight="bold" textAnchor="end">GPIO2 ●</text>
-                <text x="122" y="197" fill="#cbd5e1" fontSize="8" fontFamily="monospace" fontWeight="bold" textAnchor="end">GND ●</text>
-              </g>
+                  {/* ---------------- PHASE 4: ANIMATED ELECTRON CURRENT FLOW PHOTONS ---------------- */}
+                  <g ref={pulseGroupRef}>
+                    {/* Photon 1: GPIO2 -> Resistor */}
+                    <circle r="4" fill="#fef08a" filter="url(#circuitGlow)">
+                      <animateMotion
+                        path="M 164 240.4 C 195 240.4, 225 257, 262 257"
+                        dur="0.9s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
 
-              {/* ================= COMPONENT 2: REALISTIC HC-SR04 ULTRASONIC SENSOR ================= */}
-              <g ref={sensorRef} id="sonar-sensor" transform="translate(345, 45)" filter="url(#componentShadow)">
-                {/* Classic Royal Blue PCB Board */}
-                <rect width="195" height="85" rx="8" fill="#1e3a8a" stroke="#60a5fa" strokeWidth="1.5" />
-                
-                {/* 4 Mounting Screwholes */}
-                <circle cx="8" cy="8" r="3.5" fill="#0f172a" stroke="#93c5fd" strokeWidth="0.8" />
-                <circle cx="187" cy="8" r="3.5" fill="#0f172a" stroke="#93c5fd" strokeWidth="0.8" />
-                <circle cx="8" cy="77" r="3.5" fill="#0f172a" stroke="#93c5fd" strokeWidth="0.8" />
-                <circle cx="187" cy="77" r="3.5" fill="#0f172a" stroke="#93c5fd" strokeWidth="0.8" />
+                    {/* Photon 2: Resistor -> LED Anode */}
+                    <circle r="4" fill="#fef08a" filter="url(#circuitGlow)">
+                      <animateMotion
+                        path="M 317 257 C 365 257, 415 274, 465 274"
+                        dur="0.9s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
 
-                {/* Left Transducer (Transmitter "T") - 3D Aluminum Acoustic Can with Mesh */}
-                <circle cx="50" cy="42" r="32" fill="url(#transducerSilverGrad)" stroke="#94a3b8" strokeWidth="2.5" />
-                <circle cx="50" cy="42" r="25" fill="#0f172a" stroke="#475569" strokeWidth="1.2" />
-                {/* Wire Mesh Acoustic Grille Crosshatching */}
-                <path
-                  d="M 28 42 H 72 M 50 20 V 64 M 34 30 L 66 54 M 34 54 L 66 30 M 30 36 L 70 48 M 30 48 L 70 36"
-                  stroke="#334155"
-                  strokeWidth="0.9"
-                  opacity="0.8"
-                />
-                <circle cx="50" cy="42" r="12" fill="#1e293b" />
-                <text x="50" y="47" fill="#f8fafc" fontSize="13" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">
-                  T
-                </text>
+                    {/* Photon 3: 5V Power -> Sonar */}
+                    <circle r="4" fill="#fca5a5" filter="url(#circuitGlow)">
+                      <animateMotion
+                        path="M 60 268.5 C 20 268.5, 20 72, 175 72 C 290 72, 390 72, 441.3 139.5"
+                        dur="1.4s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
 
-                {/* Right Transducer (Receiver "R") */}
-                <circle cx="145" cy="42" r="32" fill="url(#transducerSilverGrad)" stroke="#94a3b8" strokeWidth="2.5" />
-                <circle cx="145" cy="42" r="25" fill="#0f172a" stroke="#475569" strokeWidth="1.2" />
-                <path
-                  d="M 123 42 H 167 M 145 20 V 64 M 129 30 L 161 54 M 129 54 L 161 30 M 125 36 L 165 48 M 125 48 L 165 36"
-                  stroke="#334155"
-                  strokeWidth="0.9"
-                  opacity="0.8"
-                />
-                <circle cx="145" cy="42" r="12" fill="#1e293b" />
-                <text x="145" y="47" fill="#f8fafc" fontSize="13" fontFamily="sans-serif" fontWeight="900" textAnchor="middle">
-                  R
-                </text>
+                    {/* Photon 4: LED Cathode -> Ground return loop */}
+                    <circle r="3.5" fill="#93c5fd" filter="url(#circuitGlow)">
+                      <animateMotion
+                        path="M 455 274 C 455 350, 250 350, 164 259"
+                        dur="1.3s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                  </g>
 
-                {/* Metal Quartz Crystal Oscillator Package (HC-49/S) */}
-                <rect x="89" y="32" width="18" height="24" rx="4" fill="#cbd5e1" stroke="#64748b" strokeWidth="1" />
-                <text x="98" y="46" fill="#334155" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
-                  4.000
-                </text>
+                  {/* Outgoing Conduit Path (Flows out of canvas downward into Section 2) */}
+                  <path
+                    ref={outgoingConduitRef}
+                    d="M 455 350 L 455 420"
+                    stroke="#f59e0b"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    filter="url(#circuitGlow)"
+                  />
+                </svg>
 
-                {/* Silkscreen Brand Label */}
-                <text x="98" y="20" fill="#fef08a" fontSize="9.5" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
-                  HC-SR04
-                </text>
+                {/* ================= AUTHENTIC @wokwi/elements HARDWARE COMPONENTS LAYER ================= */}
+                <div className="absolute inset-0 pointer-events-none z-20">
+                  
+                  {/* ---------------- 1. ESP32 DEVKIT V1 ---------------- */}
+                  {/* Footprint Reticle */}
+                  <div
+                    ref={esp32ReticleRef}
+                    className="absolute border-2 border-dashed border-amber-500/60 rounded-xl pointer-events-none"
+                    style={{
+                      left: "50px",
+                      top: "105px",
+                      width: "119px",
+                      height: "175px",
+                    }}
+                  />
 
-                {/* 4-Pin Right Angle Header at Bottom */}
-                <rect x="74" y="70" width="48" height="12" fill="#1c1917" stroke="#44403c" strokeWidth="0.8" />
-                <circle cx="80" cy="76" r="2.2" fill="url(#goldPinGrad)" />
-                <circle cx="92" cy="76" r="2.2" fill="url(#goldPinGrad)" />
-                <circle cx="104" cy="76" r="2.2" fill="url(#goldPinGrad)" />
-                <circle cx="116" cy="76" r="2.2" fill="url(#goldPinGrad)" />
+                  <div
+                    ref={esp32ContainerRef}
+                    className="absolute flex flex-col items-center pointer-events-auto"
+                    style={{
+                      left: "55px",
+                      top: "110px",
+                      width: "109px",
+                      height: "165px",
+                    }}
+                  >
+                    <wokwi-esp32-devkit-v1
+                      ref={esp32ElementRef}
+                      ledPower=""
+                      style={{ transformOrigin: "top left" }}
+                    />
+                    
+                    {/* Silkscreen Brand Chip */}
+                    <div className="mt-1.5 px-2 py-0.5 rounded bg-black/80 border border-amber-500/40 text-[9px] font-mono font-bold text-amber-300 tracking-wider shadow-sm flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>ESP32 DEVKIT V1</span>
+                    </div>
 
-                <text x="80" y="66" fill="#fca5a5" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">VCC</text>
-                <text x="92" y="66" fill="#cbd5e1" fontSize="6.5" fontFamily="monospace" textAnchor="middle">Trig</text>
-                <text x="104" y="66" fill="#cbd5e1" fontSize="6.5" fontFamily="monospace" textAnchor="middle">Echo</text>
-                <text x="116" y="66" fill="#cbd5e1" fontSize="6.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">GND</text>
-              </g>
+                    {/* Pin Label Callouts */}
+                    <span className="absolute -left-7 top-[154px] text-[8px] font-mono font-bold text-red-400 bg-black/70 px-1 rounded">5V</span>
+                    <span className="absolute -left-9 top-[144px] text-[8px] font-mono font-bold text-zinc-400 bg-black/70 px-1 rounded">GND</span>
+                    <span className="absolute -right-11 top-[125px] text-[8px] font-mono font-bold text-amber-300 bg-black/70 px-1 rounded">GPIO2</span>
+                    <span className="absolute -right-9 top-[144px] text-[8px] font-mono font-bold text-zinc-400 bg-black/70 px-1 rounded">GND</span>
+                  </div>
 
-              {/* ================= COMPONENT 3: REALISTIC 220Ω CERAMIC RESISTOR ================= */}
-              <g ref={resistorRef} id="resistor-comp" transform="translate(255, 208)" filter="url(#componentShadow)">
-                {/* Tinned Copper Wire Leads (Left & Right) */}
-                <line x1="0" y1="14" x2="20" y2="14" stroke="#e2e8f0" strokeWidth="3" strokeLinecap="round" />
-                <line x1="72" y1="14" x2="92" y2="14" stroke="#e2e8f0" strokeWidth="3" strokeLinecap="round" />
+                  {/* ---------------- 2. HC-SR04 ULTRASONIC SENSOR ---------------- */}
+                  <div
+                    ref={sonarContainerRef}
+                    className="absolute flex flex-col items-center pointer-events-auto"
+                    style={{
+                      left: "370px",
+                      top: "45px",
+                      width: "170px",
+                      height: "95px",
+                    }}
+                  >
+                    <wokwi-hc-sr04 style={{ transformOrigin: "top left" }} />
 
-                {/* Specular Highlight on Leads */}
-                <line x1="0" y1="13.2" x2="20" y2="13.2" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" />
-                <line x1="72" y1="13.2" x2="92" y2="13.2" stroke="#ffffff" strokeWidth="1" strokeLinecap="round" />
+                    {/* Silkscreen Pin Indicators at Sensor Pins */}
+                    <div className="absolute -bottom-4 flex items-center gap-2 text-[8px] font-mono font-bold">
+                      <span className="text-red-400">VCC</span>
+                      <span className="text-zinc-500">TRIG</span>
+                      <span className="text-zinc-500">ECHO</span>
+                      <span className="text-zinc-400">GND</span>
+                    </div>
+                  </div>
 
-                {/* Classical Dumbbell / Dog-Bone Ceramic Body */}
-                <path
-                  d="M 20 14 C 20 7, 24 5, 28 5 C 32 5, 34 8, 46 8 C 58 8, 60 5, 64 5 C 68 5, 72 7, 72 14 C 72 21, 68 23, 64 23 C 60 23, 58 20, 46 20 C 34 20, 32 23, 28 23 C 24 23, 20 21, 20 14 Z"
-                  fill="url(#resistorBodyGrad)"
-                  stroke="#78350f"
-                  strokeWidth="1.2"
-                />
+                  {/* ---------------- 3. 220Ω CERAMIC RESISTOR ---------------- */}
+                  <div
+                    ref={resistorContainerRef}
+                    className="absolute flex flex-col items-center pointer-events-auto"
+                    style={{
+                      left: "260px",
+                      top: "250px",
+                      width: "60px",
+                      height: "14px",
+                    }}
+                  >
+                    <wokwi-resistor value="220" />
+                    
+                    <span className="absolute -bottom-4 text-[8px] font-mono font-bold text-amber-300 bg-black/75 px-1.5 py-0.5 rounded border border-amber-500/25 whitespace-nowrap">
+                      220Ω (±5%)
+                    </span>
+                  </div>
 
-                {/* Precision Color Bands (220Ω: Red - Red - Brown - Gold) */}
-                <rect x="27" y="5.2" width="5.5" height="17.6" fill="#dc2626" rx="1" />
-                <rect x="36" y="7.5" width="5.5" height="13" fill="#dc2626" rx="1" />
-                <rect x="45" y="7.5" width="5.5" height="13" fill="#78350f" rx="1" />
-                <rect x="61" y="5.2" width="5.5" height="17.6" fill="url(#goldPinGrad)" rx="1" />
+                  {/* ---------------- 4. 5mm RED DIFFUSED LED ---------------- */}
+                  <div
+                    ref={ledContainerRef}
+                    className="absolute flex flex-col items-center pointer-events-auto"
+                    style={{
+                      left: "440px",
+                      top: "230px",
+                      width: "40px",
+                      height: "50px",
+                    }}
+                  >
+                    {/* Ambient Radiant Glow Beam */}
+                    <div
+                      ref={ledRadialGlowRef}
+                      className="absolute -top-6 -left-6 w-28 h-28 rounded-full pointer-events-none"
+                      style={{
+                        background: "radial-gradient(circle, rgba(239, 68, 68, 0.85) 0%, rgba(239, 68, 68, 0.25) 45%, transparent 70%)",
+                        filter: "blur(4px)",
+                      }}
+                    />
 
-                {/* Component Label */}
-                <text x="46" y="34" fill="#fef08a" fontSize="8.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
-                  220Ω (±5%)
-                </text>
-              </g>
+                    <wokwi-led
+                      ref={wokwiLedRef}
+                      color="red"
+                      style={{ transformOrigin: "top left" }}
+                    />
 
-              {/* ================= COMPONENT 4: REALISTIC 5mm RED DIFFUSED LED ================= */}
-              <g ref={ledRef} id="led-emitter" transform="translate(420, 195)" filter="url(#componentShadow)">
-                {/* Physical Terminal Leads */}
-                <line x1="0" y1="27" x2="22" y2="27" stroke="#e2e8f0" strokeWidth="3" strokeLinecap="round" />
-                <line x1="42" y1="48" x2="42" y2="70" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round" />
+                    {/* Component Label */}
+                    <span className="absolute -bottom-4 text-[8px] font-mono font-bold text-red-300 bg-black/75 px-1.5 py-0.5 rounded border border-red-500/30 whitespace-nowrap">
+                      5mm RED LED
+                    </span>
+                  </div>
 
-                {/* Ambient Radial Light Beam onto Breadboard */}
-                <circle
-                  ref={ledLightBeamRef}
-                  cx="42"
-                  cy="27"
-                  r="75"
-                  fill="url(#ledActiveGrad)"
-                  opacity="0"
-                  filter="url(#circuitGlow)"
-                />
-
-                {/* Ambient Radial Glowing Halo */}
-                <circle
-                  ref={ledGlowRef}
-                  cx="42"
-                  cy="27"
-                  r="50"
-                  fill="#ef4444"
-                  opacity="0"
-                  filter="url(#circuitGlow)"
-                />
-
-                {/* Lower Flanged Rim with Flat Cathode Notch */}
-                <ellipse cx="42" cy="38" rx="22" ry="6" fill="#991b1b" stroke="#ef4444" strokeWidth="1.5" />
-                <line x1="62" y1="34" x2="62" y2="42" stroke="#7f1d1d" strokeWidth="2.5" />
-
-                {/* Ruby Red Translucent Epoxy Bulb Dome */}
-                <circle
-                  ref={ledCoreRef}
-                  cx="42"
-                  cy="27"
-                  r="21"
-                  fill="#b91c1c"
-                  stroke="#ef4444"
-                  strokeWidth="1.8"
-                />
-
-                {/* Visible Internal Metallic Leadframe (Anvil & Post) */}
-                <path d="M 37 36 L 37 25 L 32 20 L 42 20" stroke="#fca5a5" strokeWidth="1.6" fill="#fca5a5" opacity="0.75" />
-                <path d="M 47 36 L 47 22 L 43 20" stroke="#fca5a5" strokeWidth="1.2" fill="none" opacity="0.75" />
-
-                {/* 3D Glass Specular Reflection Crescent */}
-                <ellipse cx="35" cy="20" rx="8" ry="4" fill="#ffffff" opacity="0.65" transform="rotate(-30, 35, 20)" />
-
-                <text x="42" y="60" fill="#fca5a5" fontSize="8.5" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
-                  5mm RED LED
-                </text>
-              </g>
-            </svg>
+                </div>
+              </div>
+            </div>
 
             {/* Bottom Diagnostic HUD (Inside Canvas) */}
             <div
               ref={terminalHudRef}
-              className="absolute bottom-2.5 sm:bottom-4 left-3 sm:left-6 right-3 sm:right-6 p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-[#140e1b]/95 border border-amber-500/40 shadow-xl flex items-center justify-between gap-2 z-30 backdrop-blur-md"
+              className="h-10 sm:h-12 px-3 sm:px-6 bg-[#130d19]/95 border-t border-amber-500/30 flex items-center justify-between gap-2 z-30 backdrop-blur-md shrink-0"
             >
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                 <span className="text-[10px] sm:text-[11px] font-mono text-emerald-400 font-bold truncate">
                   AUTONOMOUS NETLIST VERIFIED
                 </span>
@@ -1122,7 +993,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
             {/* Corner Verification Stamp */}
             <div
               ref={verifiedBadgeRef}
-              className="absolute top-11 sm:top-14 right-3 sm:right-6 px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] sm:text-[10px] font-mono font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.2)] z-30"
+              className="absolute top-12 sm:top-14 right-3 sm:right-6 px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] sm:text-[10px] font-mono font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.2)] z-30"
             >
               <ShieldCheck size={12} />
               <span>AI SYNTHESIS READY</span>

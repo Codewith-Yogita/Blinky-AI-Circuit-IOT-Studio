@@ -197,28 +197,41 @@ function App() {
       } flex flex-col antialiased selection:bg-amber-500/30 selection:text-white w-full`}
     >
       {/* Background Ambient Glow Mesh */}
+      {/* Background Ambient Glow Mesh */}
       <div className="ambient-glow" />
+
+      {/* Global Studio SVG Brush Gradient */}
+      <svg className="absolute w-0 h-0 overflow-hidden" aria-hidden="true">
+        <defs>
+          <linearGradient id="brushGradientStudio" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ef4444" />
+            <stop offset="50%" stopColor="#f97316" />
+            <stop offset="100%" stopColor="#f59e0b" />
+          </linearGradient>
+        </defs>
+      </svg>
 
       {/* ================= STUDIO TOP BAR (MATCHING LANDING PAGE AESTHETICS) ================= */}
       <header
-        className={`sticky top-0 z-40 w-full px-3 sm:px-6 lg:px-8 py-3 border-b backdrop-blur-xl flex flex-wrap items-center justify-between gap-4 transition-colors duration-300 ${
+        className={`sticky top-0 z-40 w-full px-4 sm:px-8 lg:px-12 py-3.5 border-b backdrop-blur-xl flex flex-wrap items-center justify-between gap-4 transition-colors duration-300 ${
           isDark
             ? "bg-[#080709]/90 border-white/[0.08]"
             : "bg-[#fbf9f6]/90 border-amber-900/10 shadow-sm"
         }`}
       >
         {/* Left: Brand + Back to Dashboard */}
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-5 sm:gap-6">
           <button
             type="button"
             onClick={() => setViewMode("landing")}
-            className="group flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl border border-white/10 hover:border-amber-500/40 bg-[#120f15] hover:bg-[#18131c] text-xs font-semibold text-zinc-300 hover:text-white transition-all shadow-[0_2px_10px_rgba(0,0,0,0.4)] hover:scale-[1.02] active:scale-95"
+            className="group flex items-center gap-2 text-xs sm:text-sm font-bold font-outfit text-zinc-300 hover:text-white transition-all duration-300 py-1 cursor-pointer hover:scale-105 active:scale-95"
             title="Return to Landing Page"
           >
-            <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-              <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5" />
-            </div>
-            <span className="font-outfit">Dashboard</span>
+            <ArrowLeft size={15} className="text-amber-400 transition-transform duration-300 group-hover:-translate-x-1.5" />
+            <span className="relative">
+              Dashboard
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-amber-400 to-orange-500 group-hover:w-full transition-all duration-300 rounded-full" />
+            </span>
           </button>
 
           <div
@@ -235,59 +248,54 @@ function App() {
         </div>
 
         {/* Right: Quick Hardware Switcher + Day/Night + Star on GitHub */}
-        <div className="flex items-center gap-2.5">
-          {/* Preset Switcher Pills */}
-          <div className="hidden lg:flex items-center gap-1 bg-[#141018] p-1 rounded-xl border border-white/[0.08] text-xs font-mono">
-            <button
-              type="button"
-              onClick={() => handleSelectPreset("flagship")}
-              className={`px-2 py-0.5 rounded-lg transition-colors ${
-                activePreset === "flagship" ? "bg-amber-500 text-black font-bold" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              HC-SR04
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectPreset("preset1")}
-              className={`px-2 py-0.5 rounded-lg transition-colors ${
-                activePreset === "preset1" ? "bg-amber-500 text-black font-bold" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              LED
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectPreset("oled_display")}
-              className={`px-2 py-0.5 rounded-lg transition-colors ${
-                activePreset === "oled_display" ? "bg-amber-500 text-black font-bold" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              OLED
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectPreset("joystick")}
-              className={`px-2 py-0.5 rounded-lg transition-colors ${
-                activePreset === "joystick" ? "bg-amber-500 text-black font-bold" : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              Joystick
-            </button>
+        <div className="flex items-center gap-6 sm:gap-8">
+          {/* Preset Switcher (Minimalist handwritten style without heavy pill boxes) */}
+          <div className="hidden lg:flex items-center gap-4 text-xs font-mono text-zinc-400 select-none">
+            <span className="text-[11px] text-zinc-500 uppercase tracking-widest font-handwriting text-sm">// presets:</span>
+            {[
+              { id: "flagship", label: "HC-SR04" },
+              { id: "preset1", label: "LED" },
+              { id: "oled_display", label: "OLED" },
+              { id: "joystick", label: "Joystick" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => handleSelectPreset(p.id)}
+                className={`group relative text-xs font-mono transition-all duration-300 cursor-pointer ${
+                  activePreset === p.id
+                    ? "text-amber-400 font-bold"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <span>{p.label}</span>
+                {activePreset === p.id ? (
+                  <svg
+                    className="w-full h-1.5 -mt-0.5 text-amber-400 overflow-visible"
+                    viewBox="0 0 40 6"
+                    fill="none"
+                  >
+                    <path d="M1 3 C10 1, 25 5, 39 3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <span className="absolute -bottom-0.5 left-0 w-0 h-[1.5px] bg-amber-500/40 group-hover:w-full transition-all duration-300" />
+                )}
+              </button>
+            ))}
           </div>
 
           {/* Theme Toggle */}
           <button
             type="button"
             onClick={toggleTheme}
-            className={`p-2 rounded-full border transition-all ${
-              isDark
-                ? "border-amber-500/25 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                : "border-amber-900/20 bg-amber-100 text-amber-700 hover:bg-amber-200"
-            }`}
+            className="p-1.5 text-zinc-400 hover:text-amber-400 hover:scale-110 active:scale-90 transition-all duration-300 cursor-pointer"
             title={isDark ? "Switch to Day Mode" : "Switch to Night Mode"}
           >
-            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-amber-600" />}
+            {isDark ? (
+              <Sun className="w-4 h-4 text-amber-400 hover:rotate-90 transition-transform duration-500 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+            ) : (
+              <Moon className="w-4 h-4 text-amber-600 hover:-rotate-45 transition-transform duration-500" />
+            )}
           </button>
 
           {/* Star on GitHub */}
@@ -295,10 +303,13 @@ function App() {
             href="https://github.com/Codewith-Yogita/Blinky-AI-Circuit-IOT-Studio"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-red-500/15 hover:from-amber-500/25 hover:to-red-500/25 text-amber-400 hover:text-amber-300 text-xs font-semibold transition-all shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+            className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-bold font-outfit text-zinc-200 hover:text-amber-300 transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95"
           >
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="font-outfit">Star</span>
+            <Star className="w-3.5 h-3.5 fill-amber-400/90 text-amber-400 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 drop-shadow-[0_0_8px_rgba(245,158,11,0.7)]" />
+            <span className="font-outfit relative">
+              Star
+              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-amber-400 to-orange-500 group-hover:w-full transition-all duration-300 rounded-full" />
+            </span>
           </a>
         </div>
       </header>
@@ -319,17 +330,37 @@ function App() {
               <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Real-time ESP32 hardware simulation, interactive sensors, and pinout wiring.
               </p>
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-6">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CODE)}
-                  className="group px-6 py-2.5 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2.5"
+                  className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                    <Code2 size={12} />
+                  <div className="flex items-center gap-2.5 text-base sm:text-lg font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <Code2 size={16} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Proceed to Firmware Code</span>
+                    <ArrowRight size={16} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
                   </div>
-                  <span className="font-outfit">Proceed to Firmware Code</span>
-                  <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                  {/* Organic Hand-Drawn Brush Stroke Underline */}
+                  <svg
+                    className="w-full h-3 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_12px_rgba(249,115,22,0.85)]"
+                    viewBox="0 0 160 10"
+                    fill="none"
+                  >
+                    <path
+                      d="M3 6 C35 2, 85 8, 155 5"
+                      stroke="url(#brushGradientStudio)"
+                      strokeWidth="3.8"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M10 8 C45 4, 95 8, 145 6"
+                      stroke="url(#brushGradientStudio)"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      opacity="0.8"
+                    />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -356,13 +387,20 @@ function App() {
               <button
                 type="button"
                 onClick={() => setActiveStage(STAGES.CODE)}
-                className="group px-5 py-2 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_2px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_16px_rgba(245,158,11,0.2)] hover:scale-[1.02] transition-all flex items-center gap-2"
+                className="group relative inline-flex flex-col items-start sm:items-end cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               >
-                <div className="w-4 h-4 rounded-md border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                  <Zap size={11} />
+                <div className="flex items-center gap-2 text-sm sm:text-base font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300">
+                  <Zap size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                  <span>Synthesize Firmware Code</span>
+                  <ArrowRight size={15} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all duration-300" />
                 </div>
-                <span className="font-outfit">Synthesize Firmware Code</span>
-                <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                <svg
+                  className="w-full h-2.5 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 transition-all duration-300 filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_10px_rgba(249,115,22,0.85)]"
+                  viewBox="0 0 140 8"
+                  fill="none"
+                >
+                  <path d="M2 5 C35 2, 80 7, 136 4" stroke="url(#brushGradientStudio)" strokeWidth="3" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
           </div>
@@ -382,27 +420,35 @@ function App() {
               <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Verified pin mappings, non-blocking loops, and compiled firmware routines.
               </p>
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-8 sm:gap-10">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CIRCUIT)}
-                  className="group px-4 py-2.5 rounded-2xl border border-white/10 hover:border-amber-500/40 text-zinc-300 hover:text-white bg-[#120f15] hover:bg-[#18131c] text-xs font-semibold flex items-center gap-2.5 transition-all hover:scale-[1.02]"
+                  className="group flex items-center gap-2 text-sm sm:text-base font-bold font-handwriting text-zinc-300 hover:text-white transition-all duration-300 cursor-pointer py-1 hover:scale-105 active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-                    <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5" />
-                  </div>
-                  <span>Back to Circuit</span>
+                  <ArrowLeft size={14} className="text-zinc-400 group-hover:text-amber-400 group-hover:-translate-x-1.5 transition-all duration-300" />
+                  <span className="underline decoration-zinc-500/60 group-hover:decoration-amber-400 decoration-[2.5px] decoration-wavy underline-offset-6 transition-colors duration-300">
+                    Back to Circuit
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.FLASH)}
-                  className="group px-6 py-2.5 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2.5"
+                  className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                    <Cpu size={12} />
+                  <div className="flex items-center gap-2.5 text-base sm:text-lg font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <Cpu size={16} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Proceed to Hardware Flash</span>
+                    <ArrowRight size={16} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
                   </div>
-                  <span className="font-outfit">Proceed to Hardware Flash</span>
-                  <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                  <svg
+                    className="w-full h-3 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_12px_rgba(249,115,22,0.85)]"
+                    viewBox="0 0 160 10"
+                    fill="none"
+                  >
+                    <path d="M3 6 C35 2, 85 8, 155 5" stroke="url(#brushGradientStudio)" strokeWidth="3.8" strokeLinecap="round" />
+                    <path d="M10 8 C45 4, 95 8, 145 6" stroke="url(#brushGradientStudio)" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -420,13 +466,20 @@ function App() {
               <button
                 type="button"
                 onClick={() => setActiveStage(STAGES.FLASH)}
-                className="group px-5 py-2 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_2px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_16px_rgba(245,158,11,0.2)] hover:scale-[1.02] transition-all flex items-center gap-2"
+                className="group relative inline-flex flex-col items-start sm:items-end cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               >
-                <div className="w-4 h-4 rounded-md border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                  <Cpu size={11} />
+                <div className="flex items-center gap-2 text-sm sm:text-base font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300">
+                  <Cpu size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                  <span>Upload to ESP32</span>
+                  <ArrowRight size={15} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all duration-300" />
                 </div>
-                <span className="font-outfit">Upload to ESP32</span>
-                <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                <svg
+                  className="w-full h-2.5 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 transition-all duration-300 filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_10px_rgba(249,115,22,0.85)]"
+                  viewBox="0 0 140 8"
+                  fill="none"
+                >
+                  <path d="M2 5 C35 2, 80 7, 136 4" stroke="url(#brushGradientStudio)" strokeWidth="3" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
           </div>
@@ -446,27 +499,35 @@ function App() {
               <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Direct browser-to-chip WebSerial upload via esptool and PySerial channel.
               </p>
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-8 sm:gap-10">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CODE)}
-                  className="group px-4 py-2.5 rounded-2xl border border-white/10 hover:border-amber-500/40 text-zinc-300 hover:text-white bg-[#120f15] hover:bg-[#18131c] text-xs font-semibold flex items-center gap-2.5 transition-all hover:scale-[1.02]"
+                  className="group flex items-center gap-2 text-sm sm:text-base font-bold font-handwriting text-zinc-300 hover:text-white transition-all duration-300 cursor-pointer py-1 hover:scale-105 active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-                    <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5" />
-                  </div>
-                  <span>Back to Code</span>
+                  <ArrowLeft size={14} className="text-zinc-400 group-hover:text-amber-400 group-hover:-translate-x-1.5 transition-all duration-300" />
+                  <span className="underline decoration-zinc-500/60 group-hover:decoration-amber-400 decoration-[2.5px] decoration-wavy underline-offset-6 transition-colors duration-300">
+                    Back to Code
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.AI_TEST)}
-                  className="group px-6 py-2.5 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2.5"
+                  className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                    <Bot size={12} />
+                  <div className="flex items-center gap-2.5 text-base sm:text-lg font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <Bot size={16} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Launch AI Self-Healing</span>
+                    <ArrowRight size={16} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
                   </div>
-                  <span className="font-outfit">Launch AI Self-Healing</span>
-                  <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                  <svg
+                    className="w-full h-3 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_12px_rgba(249,115,22,0.85)]"
+                    viewBox="0 0 160 10"
+                    fill="none"
+                  >
+                    <path d="M3 6 C35 2, 85 8, 155 5" stroke="url(#brushGradientStudio)" strokeWidth="3.8" strokeLinecap="round" />
+                    <path d="M10 8 C45 4, 95 8, 145 6" stroke="url(#brushGradientStudio)" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -478,13 +539,20 @@ function App() {
               <button
                 type="button"
                 onClick={() => setActiveStage(STAGES.AI_TEST)}
-                className="group px-4 py-2 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_2px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_0_16px_rgba(245,158,11,0.2)] hover:scale-[1.02] transition-all flex items-center gap-2"
+                className="group relative inline-flex flex-col items-start sm:items-end cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               >
-                <div className="w-4 h-4 rounded-md border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                  <Bot size={11} />
+                <div className="flex items-center gap-2 text-sm sm:text-base font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300">
+                  <Bot size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                  <span>Autonomous AI Testing Loop</span>
+                  <ArrowRight size={15} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all duration-300" />
                 </div>
-                <span className="font-outfit">Autonomous AI Testing Loop</span>
-                <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                <svg
+                  className="w-full h-2.5 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 transition-all duration-300 filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_10px_rgba(249,115,22,0.85)]"
+                  viewBox="0 0 140 8"
+                  fill="none"
+                >
+                  <path d="M2 5 C35 2, 80 7, 136 4" stroke="url(#brushGradientStudio)" strokeWidth="3" strokeLinecap="round" />
+                </svg>
               </button>
             </div>
           </div>
@@ -504,17 +572,25 @@ function App() {
               <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Autonomous loop: diagnose signal noise, calculate corrections, and hot-patch firmware.
               </p>
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-6">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.SUCCESS)}
-                  className="group px-6 py-2.5 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-xs shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)] hover:scale-[1.02] transition-all flex items-center gap-2.5"
+                  className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                    <CheckCircle2 size={12} />
+                  <div className="flex items-center gap-2.5 text-base sm:text-lg font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <CheckCircle2 size={16} className="text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
+                    <span>Skip to Verified Success</span>
+                    <ArrowRight size={16} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
                   </div>
-                  <span className="font-outfit">Skip to Verified Success</span>
-                  <ArrowRight size={13} className="text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                  <svg
+                    className="w-full h-3 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_12px_rgba(249,115,22,0.85)]"
+                    viewBox="0 0 160 10"
+                    fill="none"
+                  >
+                    <path d="M3 6 C35 2, 85 8, 155 5" stroke="url(#brushGradientStudio)" strokeWidth="3.8" strokeLinecap="round" />
+                    <path d="M10 8 C45 4, 95 8, 145 6" stroke="url(#brushGradientStudio)" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -544,17 +620,25 @@ function App() {
               <p className="text-xs sm:text-sm text-zinc-400 font-medium text-center max-w-xl mx-auto leading-relaxed">
                 Hardware loop verified. Real-time sensor metrics synchronized with TigerData / PostgreSQL.
               </p>
-              <div className="pt-1 flex flex-wrap items-center justify-center gap-3">
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-6">
                 <button
                   type="button"
                   onClick={() => setActiveStage(STAGES.CIRCUIT)}
-                  className="group px-5 py-2.5 rounded-2xl border border-white/10 hover:border-amber-500/40 text-zinc-300 hover:text-white bg-[#120f15] hover:bg-[#18131c] text-xs font-semibold flex items-center gap-2.5 transition-all hover:scale-[1.02]"
+                  className="group relative inline-flex flex-col items-center cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95"
                 >
-                  <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-                    <RotateCcw size={12} />
+                  <div className="flex items-center gap-2.5 text-base sm:text-lg font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                    <RotateCcw size={16} className="text-amber-400 group-hover:-rotate-90 transition-transform duration-300" />
+                    <span>Restart Complete Flow</span>
+                    <ArrowRight size={16} className="text-red-500 group-hover:text-amber-400 group-hover:translate-x-2 transition-all duration-300 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]" />
                   </div>
-                  <span className="font-outfit">Restart Complete Flow</span>
-                  <ArrowRight size={13} className="text-zinc-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-0.5" />
+                  <svg
+                    className="w-full h-3 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_12px_rgba(249,115,22,0.85)]"
+                    viewBox="0 0 160 10"
+                    fill="none"
+                  >
+                    <path d="M3 6 C35 2, 85 8, 155 5" stroke="url(#brushGradientStudio)" strokeWidth="3.8" strokeLinecap="round" />
+                    <path d="M10 8 C45 4, 95 8, 145 6" stroke="url(#brushGradientStudio)" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -576,18 +660,18 @@ function App() {
 
             {/* Bottom Actions */}
             <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-4 border-t border-white/[0.06]">
-              <div className="font-handwriting text-amber-400 text-xl">
+              <div className="font-handwriting text-amber-400 text-2xl select-none">
                 Keep building :)
               </div>
               <button
                 type="button"
                 onClick={() => setViewMode("landing")}
-                className="group px-4 py-2 rounded-2xl border border-white/10 hover:border-amber-500/40 bg-[#120f15] hover:bg-[#18131c] text-xs font-semibold text-zinc-300 hover:text-white transition-all shadow-[0_2px_10px_rgba(0,0,0,0.4)] flex items-center gap-2 hover:scale-[1.02]"
+                className="group flex items-center gap-2 text-sm sm:text-base font-bold font-handwriting text-zinc-300 hover:text-white transition-all duration-300 cursor-pointer py-1 hover:scale-105 active:scale-95"
               >
-                <div className="w-5 h-5 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-                  <ArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5" />
-                </div>
-                <span className="font-outfit">Return to Dashboard</span>
+                <ArrowLeft size={14} className="text-zinc-400 group-hover:text-amber-400 group-hover:-translate-x-1.5 transition-all duration-300" />
+                <span className="underline decoration-zinc-500/60 group-hover:decoration-amber-400 decoration-[2.5px] decoration-wavy underline-offset-6 transition-colors duration-300">
+                  Return to Dashboard
+                </span>
               </button>
             </div>
           </div>

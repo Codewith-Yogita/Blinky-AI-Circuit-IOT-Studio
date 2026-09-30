@@ -394,7 +394,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       {/* Pinned Viewport Container */}
       <div
         ref={pinTargetRef}
-        className="w-full min-h-[520px] sm:min-h-screen flex items-center justify-center py-4 sm:py-8 lg:py-12 px-3 sm:px-6 lg:px-12 bg-[#070509] overflow-hidden border-t border-white/[0.08]"
+        className="w-full min-h-[500px] lg:h-screen lg:max-h-[820px] flex items-center justify-center py-4 sm:py-6 lg:py-8 px-4 sm:px-8 lg:px-12 bg-[#070509] overflow-hidden border-t border-white/[0.08]"
       >
         <div className="w-full max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-10 items-center">
           

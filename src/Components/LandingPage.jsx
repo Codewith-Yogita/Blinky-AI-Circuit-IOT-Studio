@@ -225,7 +225,7 @@ export default function LandingPage({
       if (circuitToAboutConduitRef.current) {
         aboutTl.fromTo(
           circuitToAboutConduitRef.current,
-          { strokeDasharray: 240, strokeDashoffset: 240 },
+          { strokeDasharray: 180, strokeDashoffset: 180 },
           { strokeDashoffset: 0, ease: "none" }
         );
       }
@@ -409,13 +409,13 @@ export default function LandingPage({
       {/* ================= RESPONSIVE HEADER ================= */}
       <header
         ref={headerRef}
-        className={`sticky top-0 z-50 w-full px-4 sm:px-8 lg:px-16 py-3 sm:py-4 border-b backdrop-blur-xl transition-colors duration-300 ${
+        className={`sticky top-0 z-50 w-full border-b backdrop-blur-xl transition-colors duration-300 ${
           isDark
             ? "bg-[#080709]/90 border-white/[0.08]"
             : "bg-[#fbf9f6]/90 border-amber-900/10 shadow-sm"
         }`}
       >
-        <div className="w-full flex items-center justify-between">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-3 sm:py-4 flex items-center justify-between">
           {/* Brand Logo */}
           <div
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
@@ -634,7 +634,7 @@ export default function LandingPage({
         {/* Hero Content Container */}
         <div
           ref={heroContentRef}
-          className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-10 lg:px-14 py-12 sm:py-20 lg:py-24 will-change-transform"
+          className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-12 sm:py-20 lg:py-24 will-change-transform"
         >
           <div className="max-w-2xl space-y-5 sm:space-y-7">
             {/* Step 3: AI Assistant Tag */}
@@ -766,28 +766,28 @@ export default function LandingPage({
         />
 
         {/* Connective Conduit: Circuit Story down into Section 2 */}
-        <div className="w-full flex flex-col items-center pointer-events-none -mt-4 mb-2 z-20">
-          <svg className="w-4 sm:w-6 h-10 sm:h-16 overflow-visible" viewBox="0 0 24 64" fill="none">
+        <div className="w-full flex flex-col items-center pointer-events-none -my-1 z-20">
+          <svg className="w-4 sm:w-6 h-8 sm:h-12 overflow-visible" viewBox="0 0 24 48" fill="none">
             <path
               ref={circuitToAboutConduitRef}
-              d="M 12 0 L 12 64"
+              d="M 12 0 L 12 48"
               stroke="#f59e0b"
               strokeWidth="2.5"
               strokeLinecap="round"
-              strokeDasharray="240"
-              strokeDashoffset="240"
+              strokeDasharray="180"
+              strokeDashoffset="180"
             />
           </svg>
         </div>
       </section>
 
       {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
-      <main className="flex-1 w-full px-4 sm:px-8 lg:px-14 py-6 sm:py-16 space-y-16 sm:space-y-28 overflow-x-hidden">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 pt-2 sm:pt-4 pb-12 sm:pb-20 space-y-12 sm:space-y-20 overflow-x-hidden">
 
         {/* ================= SECTION 2: ABOUT BLINKY ("PHYSICAL CIRCUITS. AI BRAIN.") ================= */}
         <section ref={aboutSectionRef} id="about" className="scroll-mt-20 w-full">
           {/* Central AI Neural Distributor Node */}
-          <div className="w-full flex justify-center mb-6 sm:mb-8 px-2">
+          <div className="w-full flex justify-center mb-4 sm:mb-6 px-2">
             <div
               ref={neuralDistributorRef}
               className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-400 font-mono text-[10px] sm:text-xs font-bold tracking-wider uppercase shadow-[0_0_16px_rgba(245,158,11,0.2)] max-w-full truncate"

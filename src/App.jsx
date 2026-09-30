@@ -375,7 +375,10 @@ function App() {
 
             {/* Circuit Diagram Component */}
             <div className="circuit-container">
-              <CircuitDiagram circuit={circuit} />
+              <CircuitDiagram
+                circuit={circuit}
+                onProceedToCode={() => setActiveStage(STAGES.CODE)}
+              />
             </div>
 
             {/* Stage Action Bar */}

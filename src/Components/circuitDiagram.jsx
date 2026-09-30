@@ -15,6 +15,7 @@ import Wire from "./wires";
 import ComponentRenderer from "./ComponentRenderer";
 import WokwiCircuitCanvas from "./WokwiCircuitCanvas";
 import HardwareSimulator from "./HardwareSimulator";
+import StudioCircuitStory from "./StudioCircuitStory";
 import { resolveCircuitLayout, calculateCanvasBounds } from "../utils/layoutEngine";
 import { exportToWokwiDiagram } from "../utils/wokwiExporter";
 
@@ -27,8 +28,8 @@ const WOKWI_PRESET_MAP = {
 };
 
 
-function CircuitDiagram({ circuit }) {
-  const [viewMode, setViewMode] = useState("wokwi_circuit"); // 'wokwi_circuit' | 'schematic' | 'diagram_json' | 'wokwi_cloud'
+function CircuitDiagram({ circuit, onProceedToCode }) {
+  const [viewMode, setViewMode] = useState("circuit_story"); // 'circuit_story' | 'wokwi_circuit' | 'schematic' | 'diagram_json' | 'simulator' | 'wokwi_cloud'
   const [zoomLevel, setZoomLevel] = useState(1);
   const [copiedJson, setCopiedJson] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -271,6 +272,15 @@ function CircuitDiagram({ circuit }) {
         <div className="wokwi-view-toggle">
           <button
             type="button"
+            className={`wokwi-toggle-btn ${viewMode === "circuit_story" ? "active" : ""}`}
+            onClick={() => setViewMode("circuit_story")}
+            title="Interactive Circuit Build Story: watch the circuit assemble itself with animated Dupont wires and live current"
+          >
+            <Sparkles size={13} className="text-amber-400" />
+            <span>Circuit Build Story</span>
+          </button>
+          <button
+            type="button"
             className={`wokwi-toggle-btn ${viewMode === "wokwi_circuit" ? "active" : ""}`}
             onClick={() => setViewMode("wokwi_circuit")}
             title="Clean Wokwi hardware circuit diagram rendered directly from backend JSON"
@@ -395,6 +405,15 @@ function CircuitDiagram({ circuit }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* ================= MODE 0: INTERACTIVE CIRCUIT BUILD STORY ================= */}
+      {viewMode === "circuit_story" && (
+        <StudioCircuitStory
+          circuit={circuit}
+          onProceedToCode={onProceedToCode}
+          onSwitchToWokwi={() => setViewMode("wokwi_circuit")}
+        />
       )}
 
       {/* ================= MODE 1: EXACT WOKWI CIRCUIT CANVAS ================= */}

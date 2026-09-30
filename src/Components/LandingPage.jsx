@@ -165,13 +165,6 @@ export default function LandingPage({
             >
               How It Works
             </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection("circuits")}
-              className="text-zinc-400 hover:text-amber-400 transition-colors"
-            >
-              Circuits
-            </button>
           </nav>
 
           {/* Right Header Actions */}
@@ -534,85 +527,7 @@ export default function LandingPage({
           </div>
         </section>
 
-        {/* ================= SECTION 4: CIRCUITS & SENSORS ================= */}
-        <section id="circuits" className="scroll-mt-24 w-full space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
-                ✦ Hardware Library
-              </span>
-              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight">
-                Featured Circuits
-              </h2>
-            </div>
-
-            {/* Open Blinky Studio - Organic Brush Stroke */}
-            <button
-              type="button"
-              onClick={onLaunchStudio}
-              className="group relative inline-flex flex-col items-start cursor-pointer transition-transform duration-300 hover:scale-[1.04] active:scale-95 py-1 self-start sm:self-auto"
-            >
-              <div className="flex items-center gap-2 text-sm sm:text-base font-black font-outfit text-white group-hover:text-amber-200 transition-colors duration-300">
-                <Sparkles className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
-                <span>Open Blinky Studio</span>
-                <ArrowRight className="w-4 h-4 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all duration-300" />
-              </div>
-              <svg
-                className="w-full h-2.5 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 transition-all duration-300 filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_10px_rgba(249,115,22,0.85)]"
-                viewBox="0 0 130 8"
-                fill="none"
-              >
-                <path d="M2 5 C35 2, 80 7, 126 4" stroke="url(#brushGradientHero)" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {circuitsList.map((c) => (
-              <div
-                key={c.id}
-                onClick={() => handleLaunchProject(c.circuitKey)}
-                className={`group rounded-3xl border p-4 cursor-pointer transition-all duration-300 flex flex-col justify-between hover:scale-[1.02] ${
-                  isDark
-                    ? "border-white/[0.08] hover:border-amber-500/50 bg-[#0e0c10] hover:shadow-[0_0_25px_rgba(245,158,11,0.2)]"
-                    : "border-zinc-200 hover:border-amber-500/50 bg-white shadow-sm hover:shadow-md"
-                }`}
-              >
-                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-4 bg-black">
-                  <img
-                    src={c.image}
-                    alt={c.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <span className={`absolute top-3 right-3 text-[10px] font-mono px-2.5 py-0.5 rounded-full border backdrop-blur-md ${c.badgeColor}`}>
-                    {c.tag}
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-base font-bold font-outfit mb-1.5 group-hover:text-amber-400 transition-colors">
-                    {c.title}
-                  </h3>
-                  <p className="text-xs text-zinc-400 line-clamp-2 mb-4 leading-relaxed">
-                    {c.description}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-amber-500 font-semibold pt-2 border-t border-white/[0.06] group-hover:text-amber-400">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-md border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                        <Zap className="w-2.5 h-2.5" />
-                      </div>
-                      <span>Launch in Studio</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-zinc-400 group-hover:text-amber-400" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ================= SECTION 6: UNBOXED, BOLD IMPACT CTA ================= */}
+        {/* ================= SECTION 5: UNBOXED, BOLD IMPACT CTA ================= */}
         <section className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full">
           <h2 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter text-white leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]">
             Ready to dig in?

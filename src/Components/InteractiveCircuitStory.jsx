@@ -394,7 +394,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
       {/* Pinned Viewport Container */}
       <div
         ref={pinTargetRef}
-        className="w-full min-h-[500px] lg:h-screen lg:max-h-[820px] flex items-center justify-center py-4 sm:py-6 lg:py-8 px-4 sm:px-8 lg:px-12 bg-[#070509] overflow-hidden border-t border-white/[0.08]"
+        className="w-full min-h-[520px] lg:min-h-screen flex items-center justify-center py-6 sm:py-8 lg:py-10 px-4 sm:px-8 lg:px-12 bg-[#070509] border-t border-white/[0.08]"
       >
         <div className="w-full max-w-7xl mx-auto flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-10 items-center">
           
@@ -474,12 +474,12 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
             </div>
           </div>
 
-          {/* ================= DESPORT STORY HUD & CHOREOGRAPHY (Left Column) ================= */}
-          <div className="hidden lg:flex lg:col-span-5 flex-col justify-center space-y-5 z-20">
+          {/* ================= DESKTOP STORY HUD & CHOREOGRAPHY (Left Column) ================= */}
+          <div className="hidden lg:flex lg:col-span-5 flex-col justify-center space-y-3.5 xl:space-y-4.5 z-20">
             {/* Tagline Badge */}
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-mono font-bold tracking-wider uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                 <span>Scene 02 // Circuit Synthesis</span>
               </span>
               <span className="text-xs font-mono text-zinc-400">
@@ -488,20 +488,20 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
             </div>
 
             {/* Narrative Headline */}
-            <div className="space-y-2">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-outfit text-white tracking-tight leading-[1.1]">
+            <div className="space-y-1">
+              <h2 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-black font-outfit text-white tracking-tight leading-tight">
                 Watch Your Circuit{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-4xl sm:text-5xl lg:text-6xl font-normal block mt-1">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-3xl sm:text-4xl lg:text-4xl xl:text-5xl font-normal block mt-0.5">
                   Build Itself.
                 </span>
               </h2>
-              <p className="text-sm sm:text-base text-zinc-400 font-normal leading-relaxed max-w-md">
+              <p className="text-xs sm:text-sm text-zinc-400 font-normal leading-relaxed max-w-md">
                 Scroll down to assemble authentic physical hardware, route real Dupont jumpers, and synthesize Arduino firmware in real-time.
               </p>
             </div>
 
             {/* Linear Phase Progress Track */}
-            <div className="w-full h-1.5 bg-white/[0.08] rounded-full overflow-hidden my-1">
+            <div className="w-full h-1 bg-white/[0.08] rounded-full overflow-hidden my-0.5">
               <div
                 ref={progressFillRef}
                 className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-400 rounded-full transition-all duration-100 ease-out"
@@ -510,22 +510,22 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
             </div>
 
             {/* 4 Sequential Choreography Beat Cards */}
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {/* Phase 1 */}
               <div
                 ref={phase1Ref}
-                className="p-3.5 sm:p-4 rounded-2xl border bg-[#100b16]/90 transition-all duration-300"
+                className="p-2.5 sm:p-3 rounded-xl border bg-[#100b16]/90 transition-all duration-300"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-mono text-xs font-bold shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-mono text-xs font-bold shrink-0">
                     01
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-white font-outfit">ESP32-WROOM-32 Placed</h4>
+                      <h4 className="text-xs sm:text-sm font-bold text-white font-outfit">ESP32-WROOM-32 Placed</h4>
                       <span className="text-[10px] font-mono text-amber-400 font-semibold">DevKit V1</span>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-0.5">Obsidian PCB with brushed RF shield, MIFA antenna &amp; gold pin headers.</p>
+                    <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 leading-snug">Obsidian PCB with brushed RF shield, MIFA antenna &amp; gold pin headers.</p>
                   </div>
                 </div>
               </div>
@@ -533,18 +533,18 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
               {/* Phase 2 */}
               <div
                 ref={phase2Ref}
-                className="p-3.5 sm:p-4 rounded-2xl border bg-[#100b16]/90 transition-all duration-300"
+                className="p-2.5 sm:p-3 rounded-xl border bg-[#100b16]/90 transition-all duration-300"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 font-mono text-xs font-bold shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 font-mono text-xs font-bold shrink-0">
                     02
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-white font-outfit">Peripherals Mounted</h4>
+                      <h4 className="text-xs sm:text-sm font-bold text-white font-outfit">Peripherals Mounted</h4>
                       <span className="text-[10px] font-mono text-orange-400 font-semibold">Sonar + Resistor + LED</span>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-0.5">Aluminum acoustic transducers, ceramic 220Ω resistor &amp; ruby LED placed.</p>
+                    <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 leading-snug">Aluminum acoustic transducers, ceramic 220Ω resistor &amp; ruby LED placed.</p>
                   </div>
                 </div>
               </div>
@@ -552,18 +552,18 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
               {/* Phase 3 */}
               <div
                 ref={phase3Ref}
-                className="p-3.5 sm:p-4 rounded-2xl border bg-[#100b16]/90 transition-all duration-300"
+                className="p-2.5 sm:p-3 rounded-xl border bg-[#100b16]/90 transition-all duration-300"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-mono text-xs font-bold shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 font-mono text-xs font-bold shrink-0">
                     03
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-white font-outfit">Physical Dupont Wires Routed</h4>
+                      <h4 className="text-xs sm:text-sm font-bold text-white font-outfit">Physical Dupont Wires Routed</h4>
                       <span className="text-[10px] font-mono text-red-400 font-semibold">4 Nets • 0 Short Circuits</span>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-0.5">Colored jumper leads with crimp boots auto-route to pinout coordinates.</p>
+                    <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 leading-snug">Colored jumper leads with crimp boots auto-route to pinout coordinates.</p>
                   </div>
                 </div>
               </div>
@@ -571,37 +571,37 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
               {/* Phase 4 */}
               <div
                 ref={phase4Ref}
-                className="p-3.5 sm:p-4 rounded-2xl border bg-[#100b16]/90 transition-all duration-300"
+                className="p-2.5 sm:p-3 rounded-xl border bg-[#100b16]/90 transition-all duration-300"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-mono text-xs font-bold shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-mono text-xs font-bold shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
                     04
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-white font-outfit">Live Current &amp; Firmware Verified</h4>
+                      <h4 className="text-xs sm:text-sm font-bold text-white font-outfit">Live Current &amp; Firmware Verified</h4>
                       <span className="text-[10px] font-mono text-emerald-400 font-semibold">3.3V Rails Active</span>
                     </div>
-                    <p className="text-xs text-zinc-400 mt-0.5">Electrons flow, LED filament illuminates, C++ firmware compiles 100% OK.</p>
+                    <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5 leading-snug">Electrons flow, LED filament illuminates, C++ firmware compiles 100% OK.</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Desktop Launch CTA */}
-            <div ref={launchCtaRef} className="pt-1">
+            <div ref={launchCtaRef} className="pt-0.5">
               <button
                 type="button"
                 onClick={onLaunchStudio}
                 className="group relative inline-flex flex-col items-start cursor-pointer hover:scale-[1.03] active:scale-95 transition-all"
               >
-                <div className="flex items-center gap-3 text-lg sm:text-xl font-black font-outfit text-white group-hover:text-amber-200 transition-colors">
-                  <Sparkles className="w-5 h-5 text-amber-400 group-hover:rotate-45 transition-transform" />
+                <div className="flex items-center gap-2.5 text-base sm:text-lg font-black font-outfit text-white group-hover:text-amber-200 transition-colors">
+                  <Sparkles className="w-4 h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
                   <span>Open This Live Circuit in Blinky Studio</span>
-                  <ArrowRight className="w-5 h-5 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all" />
+                  <ArrowRight className="w-4 h-4 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all" />
                 </div>
                 {/* Organic brush stroke underline */}
-                <svg className="w-full h-3 -mt-0.5 overflow-visible" viewBox="0 0 160 10" fill="none">
+                <svg className="w-full h-2.5 -mt-0.5 overflow-visible" viewBox="0 0 160 10" fill="none">
                   <path d="M2 6 C40 2, 95 8, 158 5" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" />
                 </svg>
               </button>
@@ -611,7 +611,7 @@ export default function InteractiveCircuitStory({ isDark = true, onLaunchStudio 
           {/* ================= ULTRA-REALISTIC WOKWI ELECTRONICS WORKBENCH CANVAS ================= */}
           <div
             ref={workbenchContainerRef}
-            className="w-full lg:col-span-7 relative h-[280px] sm:h-[350px] md:h-[420px] lg:h-[530px] rounded-2xl sm:rounded-3xl bg-[#09070c] border border-amber-500/35 shadow-[0_20px_60px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.08),0_0_40px_rgba(245,158,11,0.12)] overflow-hidden flex flex-col"
+            className="w-full lg:col-span-7 relative h-[280px] sm:h-[340px] md:h-[400px] lg:h-[460px] xl:h-[490px] rounded-2xl sm:rounded-3xl bg-[#09070c] border border-amber-500/35 shadow-[0_20px_60px_rgba(0,0,0,0.9),inset_0_1px_2px_rgba(255,255,255,0.08),0_0_40px_rgba(245,158,11,0.12)] overflow-hidden flex flex-col"
           >
             {/* Top Workspace Header Bar */}
             <div className="h-9 sm:h-11 px-3 sm:px-6 bg-[#130d19]/90 border-b border-white/[0.08] flex items-center justify-between z-30 backdrop-blur-md shrink-0">

@@ -28,7 +28,6 @@ import {
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import InteractiveCircuitStory from "./InteractiveCircuitStory";
-import LivingCircuitLayer from "./LivingCircuitLayer";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -610,26 +609,23 @@ export default function LandingPage({
         <div className="absolute inset-0 z-0 select-none overflow-hidden">
           <img
             ref={heroBgRef}
-            src="/images/blinky_hero_bg.jpg"
+            src="/images/blinky_hero_bg.png"
             alt="Blinky AI Electronics IoT Workbench"
-            className="w-full h-full object-cover object-[70%_center] md:object-right lg:object-center transform will-change-transform"
+            className="w-full h-full object-cover object-[75%_center] md:object-right lg:object-[80%_center] transform will-change-transform"
           />
 
           {/* Left-to-Right / Top-to-Bottom Gradient Fades for Flawless Text Legibility on all viewports */}
           <div
             className={`absolute inset-0 ${
               isDark
-                ? "bg-gradient-to-b from-[#080709]/80 via-[#080709]/95 to-[#080709] sm:bg-gradient-to-r sm:from-[#080709] sm:via-[#080709]/90 sm:to-[#080709]/30"
-                : "bg-gradient-to-b from-[#fbf9f6]/85 via-[#fbf9f6]/95 to-[#fbf9f6] sm:bg-gradient-to-r sm:from-[#fbf9f6] sm:via-[#fbf9f6]/95 sm:to-[#fbf9f6]/40"
+                ? "bg-gradient-to-b from-[#080709]/75 via-[#080709]/90 to-[#080709] sm:bg-gradient-to-r sm:from-[#080709] sm:via-[#080709]/80 sm:to-transparent"
+                : "bg-gradient-to-b from-[#fbf9f6]/80 via-[#fbf9f6]/92 to-[#fbf9f6] sm:bg-gradient-to-r sm:from-[#fbf9f6] sm:via-[#fbf9f6]/85 sm:to-transparent"
             }`}
           />
 
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute top-1/4 left-1/4 w-[320px] sm:w-[500px] h-[320px] sm:h-[500px] bg-amber-500/10 rounded-full blur-[100px] sm:blur-[140px] pointer-events-none" />
         </div>
-
-        {/* Living Circuit Micro-Characters Layer (Responsive, Zero Interference) */}
-        <LivingCircuitLayer isDark={isDark} />
 
         {/* Hero Content Container */}
         <div

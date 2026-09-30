@@ -79,7 +79,7 @@ function LEDNode({ component, layout }) {
       <text
         x={cathode.x}
         y={cathode.y - 8}
-        fill="#94a3b8"
+        fill="#fbbf24"
         fontSize="10"
         fontWeight="bold"
         textAnchor="middle"
@@ -92,9 +92,9 @@ function LEDNode({ component, layout }) {
       <text
         x="0"
         y="36"
-        fill="#f1f5f9"
+        fill="#fef3c7"
         fontSize="12"
-        fontWeight="600"
+        fontWeight="bold"
         textAnchor="middle"
         fontFamily="sans-serif"
       >

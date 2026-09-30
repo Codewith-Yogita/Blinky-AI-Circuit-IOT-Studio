@@ -47,13 +47,13 @@ function ResistorNode({ component, layout }) {
 
       {/* Pin 1 Terminal */}
       <circle cx={pin1.x} cy={pin1.y} r="4" fill="#f8fafc" stroke="#475569" strokeWidth="1.5" />
-      <text x={pin1.x} y={pin1.y + 14} fill="#94a3b8" fontSize="10" textAnchor="middle" fontFamily="sans-serif">
+      <text x={pin1.x} y={pin1.y + 14} fill="#fbbf24" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
         1
       </text>
 
       {/* Pin 2 Terminal */}
       <circle cx={pin2.x} cy={pin2.y} r="4" fill="#f8fafc" stroke="#475569" strokeWidth="1.5" />
-      <text x={pin2.x} y={pin2.y + 14} fill="#94a3b8" fontSize="10" textAnchor="middle" fontFamily="sans-serif">
+      <text x={pin2.x} y={pin2.y + 14} fill="#fbbf24" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
         2
       </text>
 
@@ -61,9 +61,9 @@ function ResistorNode({ component, layout }) {
       <text
         x="50"
         y="-3"
-        fill="#f1f5f9"
+        fill="#fef3c7"
         fontSize="12"
-        fontWeight="600"
+        fontWeight="bold"
         textAnchor="middle"
         fontFamily="sans-serif"
       >

@@ -707,10 +707,10 @@ export default function WokwiCircuitCanvas({ circuit }) {
             <span className="wokwi-chip-dot" />
             <span>CIRCUIT BLUEPRINT</span>
           </span>
-          <h2 className="text-sm font-semibold text-white tracking-wide truncate max-w-sm">
+          <h2 className="text-sm font-bold text-amber-200/95 tracking-wide truncate max-w-sm drop-shadow-[0_1px_8px_rgba(245,158,11,0.2)]">
             {circuit?.title || "ESP32 Hardware Circuit Diagram"}
           </h2>
-          <span className="text-[11px] text-zinc-400 font-mono hidden sm:inline">
+          <span className="text-[11px] text-amber-500/80 font-mono font-semibold hidden sm:inline">
             • {activeComponents.length} Components • {wires.length} Connections
           </span>
         </div>
@@ -753,10 +753,10 @@ export default function WokwiCircuitCanvas({ circuit }) {
         <div className="flex items-center gap-2.5">
           <div className="live-status-pill">
             <span className={`live-pulse-dot ${isLedOn ? "active" : ""}`} />
-            <span className="text-xs font-semibold text-white">LIVE HARDWARE RUNTIME:</span>
+            <span className="text-xs font-bold text-amber-300">LIVE HARDWARE RUNTIME:</span>
             <span
               className={`text-xs font-bold font-mono ${
-                isLedOn ? "text-emerald-400" : "text-zinc-400"
+                isLedOn ? "text-emerald-400" : "text-amber-500/70"
               }`}
             >
               {isLedOn ? "LED [ON 🟢]" : "LED [OFF ⚫]"}
@@ -764,8 +764,8 @@ export default function WokwiCircuitCanvas({ circuit }) {
           </div>
 
           {isBuzzerOn && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-mono font-bold animate-pulse">
-              <Volume2 size={13} className="text-blue-400" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold animate-pulse">
+              <Volume2 size={13} className="text-red-400" />
               <span>BUZZER ALARM ACTIVE (85dB)</span>
             </div>
           )}
@@ -794,8 +794,8 @@ export default function WokwiCircuitCanvas({ circuit }) {
           )}
 
           {isUltrasonicCircuit && (
-            <div className="flex items-center gap-2.5 bg-zinc-900/90 border border-white/10 px-3 py-1 rounded-md text-xs">
-              <span className="text-zinc-400 font-mono">Sonar Distance:</span>
+            <div className="flex items-center gap-2.5 bg-[#17101e] border border-amber-500/25 px-3 py-1 rounded-md text-xs">
+              <span className="text-amber-400 font-mono font-semibold">Sonar Distance:</span>
               <span
                 className={`font-bold font-mono ${
                   ultrasonicDistance < 15 ? "text-red-400" : "text-emerald-400"
@@ -816,12 +816,12 @@ export default function WokwiCircuitCanvas({ circuit }) {
           )}
 
           {isJoystickCircuit && (
-            <div className="flex items-center gap-2 text-xs font-mono bg-zinc-900/90 border border-white/10 px-2.5 py-1 rounded-md">
-              <span className="text-purple-400 font-semibold flex items-center gap-1">
+            <div className="flex items-center gap-2 text-xs font-mono bg-[#17101e] border border-amber-500/25 px-2.5 py-1 rounded-md">
+              <span className="text-amber-400 font-semibold flex items-center gap-1">
                 <Gamepad2 size={13} />
                 <span>Thumbstick:</span>
               </span>
-              <span className="text-zinc-300">
+              <span className="text-amber-200 font-medium">
                 X:{Math.round(joystickState.x * 100)}% Y:
                 {Math.round(joystickState.y * 100)}%
               </span>
@@ -830,7 +830,7 @@ export default function WokwiCircuitCanvas({ circuit }) {
                 className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all ${
                   joystickState.pressed
                     ? "bg-amber-400 text-black shadow-sm"
-                    : "bg-zinc-800 text-zinc-300 hover:text-white"
+                    : "bg-zinc-800 text-amber-300 hover:text-white"
                 }`}
                 onClick={() =>
                   setJoystickState((s) => ({ ...s, pressed: !s.pressed }))
@@ -1130,8 +1130,8 @@ export default function WokwiCircuitCanvas({ circuit }) {
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: activeWireObj.color }}
               />
-              <span className="text-white font-bold">Net #{activeWireObj.num}:</span>
-              <span className="text-amber-300 font-mono font-semibold">
+              <span className="text-amber-300 font-extrabold">Net #{activeWireObj.num}:</span>
+              <span className="text-amber-100 font-mono font-bold">
                 {activeWireObj.fullLabel}
               </span>
             </div>
@@ -1143,12 +1143,12 @@ export default function WokwiCircuitCanvas({ circuit }) {
       <div className="wokwi-netlist-drawer">
         <div className="netlist-drawer-header">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} className="text-emerald-400" />
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
+            <CheckCircle2 size={14} className="text-amber-400" />
+            <span className="text-xs font-black text-amber-300 uppercase tracking-wider">
               Verified Pinout Netlist Guide
             </span>
           </div>
-          <span className="text-[11px] text-zinc-400 font-mono">
+          <span className="text-[11px] text-amber-500/80 font-mono font-medium">
             Hover any row to highlight the wire on the diagram
           </span>
         </div>
@@ -1177,7 +1177,7 @@ export default function WokwiCircuitCanvas({ circuit }) {
                     onMouseEnter={() => setHoveredWireId(wire.id)}
                     onMouseLeave={() => setHoveredWireId(null)}
                   >
-                    <td className="font-mono text-zinc-400 font-bold">#{wire.num}</td>
+                    <td className="font-mono text-amber-500 font-bold">#{wire.num}</td>
                     <td>
                       <span className="flex items-center gap-1.5">
                         <span
@@ -1187,15 +1187,15 @@ export default function WokwiCircuitCanvas({ circuit }) {
                       </span>
                     </td>
                     <td>
-                      <span className="font-semibold text-white">{wire.fromComp}</span>{" "}
+                      <span className="font-bold text-amber-100">{wire.fromComp}</span>{" "}
                       <span className="pin-highlight-chip">{wire.fromPin}</span>
                     </td>
-                    <td className="text-zinc-500 font-mono text-center">➔</td>
+                    <td className="text-amber-500 font-mono text-center font-bold">➔</td>
                     <td>
-                      <span className="font-semibold text-white">{wire.toComp}</span>{" "}
+                      <span className="font-bold text-amber-100">{wire.toComp}</span>{" "}
                       <span className="pin-highlight-chip">{wire.toPin}</span>
                     </td>
-                    <td className="text-zinc-400 text-xs">
+                    <td className="text-amber-200/85 text-xs font-medium">
                       {wire.fromPin.includes("GND") || wire.toPin.includes("GND")
                         ? "Common Ground Return (0.0V GND)"
                         : wire.fromPin.includes("5V") ||

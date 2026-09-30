@@ -17,14 +17,14 @@ function GenericNode({ component, layout }) {
       />
 
       {/* Header Badge */}
-      <rect x="0" y="0" width={width} height="20" rx="8" fill="#334155" />
-      <rect x="0" y="12" width={width} height="8" fill="#334155" />
+      <rect x="0" y="0" width={width} height="20" rx="8" fill="#2d170a" stroke="#f59e0b" strokeWidth="0.8" />
+      <rect x="0" y="12" width={width} height="8" fill="#2d170a" />
       <text
         x={width / 2}
         y="14"
-        fill="#94a3b8"
+        fill="#fbbf24"
         fontSize="10"
-        fontWeight="600"
+        fontWeight="bold"
         textAnchor="middle"
         fontFamily="sans-serif"
       >
@@ -35,7 +35,7 @@ function GenericNode({ component, layout }) {
       <text
         x={width / 2}
         y="42"
-        fill="#f8fafc"
+        fill="#fef3c7"
         fontSize="12"
         fontWeight="bold"
         textAnchor="middle"
@@ -51,15 +51,16 @@ function GenericNode({ component, layout }) {
             cx={pos.x}
             cy={pos.y}
             r="4"
-            fill="#38bdf8"
+            fill="#f59e0b"
             stroke="#ffffff"
             strokeWidth="1.5"
           />
           <text
             x={pos.x}
             y={pos.y > height / 2 ? pos.y + 12 : pos.y - 6}
-            fill="#cbd5e1"
+            fill="#fef3c7"
             fontSize="9"
+            fontWeight="bold"
             textAnchor="middle"
             fontFamily="sans-serif"
           >

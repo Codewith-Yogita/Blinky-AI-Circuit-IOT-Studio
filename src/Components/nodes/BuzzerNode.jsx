@@ -78,7 +78,7 @@ function BuzzerNode({ component, layout }) {
       <text
         x="14"
         y="-12"
-        fill="#94a3b8"
+        fill="#fbbf24"
         fontSize="12"
         fontWeight="bold"
         textAnchor="middle"
@@ -105,7 +105,7 @@ function BuzzerNode({ component, layout }) {
       <text
         x={pinNeg.x}
         y={pinNeg.y + 14}
-        fill="#cbd5e1"
+        fill="#fef3c7"
         fontSize="9"
         fontWeight="bold"
         textAnchor="middle"
@@ -118,9 +118,9 @@ function BuzzerNode({ component, layout }) {
       <text
         x="0"
         y="40"
-        fill="#e4e4e7"
+        fill="#fef3c7"
         fontSize="11"
-        fontWeight="600"
+        fontWeight="bold"
         textAnchor="middle"
         fontFamily="sans-serif"
       >

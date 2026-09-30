@@ -10,8 +10,8 @@ function ESP32Node({ component, layout }) {
         width={width}
         height={height}
         rx="10"
-        fill="#1e293b"
-        stroke="#38bdf8"
+        fill="#18121e"
+        stroke="#f59e0b"
         strokeWidth="2.5"
       />
 
@@ -22,10 +22,10 @@ function ESP32Node({ component, layout }) {
       <circle cx={width - 12} cy={height - 12} r="4" fill="#0f172a" stroke="#64748b" strokeWidth="1" />
 
       {/* PCB Antenna at top */}
-      <rect x="25" y="8" width="50" height="24" rx="2" fill="#334155" />
+      <rect x="25" y="8" width="50" height="24" rx="2" fill="#2d1b10" stroke="#f59e0b" strokeWidth="0.8" />
       <path
         d="M 30 24 L 30 14 L 40 14 L 40 24 L 50 24 L 50 14 L 60 14 L 60 24 L 70 24"
-        stroke="#e2e8f0"
+        stroke="#fbbf24"
         strokeWidth="1.5"
         fill="none"
       />
@@ -37,14 +37,14 @@ function ESP32Node({ component, layout }) {
         width="115"
         height="110"
         rx="6"
-        fill="#0f172a"
-        stroke="#94a3b8"
+        fill="#120c18"
+        stroke="#f59e0b"
         strokeWidth="1.5"
       />
       <text
         x="82"
         y="75"
-        fill="#e2e8f0"
+        fill="#fef3c7"
         textAnchor="middle"
         fontSize="12"
         fontWeight="bold"
@@ -55,9 +55,10 @@ function ESP32Node({ component, layout }) {
       <text
         x="82"
         y="95"
-        fill="#94a3b8"
+        fill="#f59e0b"
         textAnchor="middle"
         fontSize="10"
+        fontWeight="bold"
         fontFamily="sans-serif"
       >
         Wi-Fi + BT SoC
@@ -65,10 +66,10 @@ function ESP32Node({ component, layout }) {
       <text
         x="82"
         y="125"
-        fill="#38bdf8"
+        fill="#fbbf24"
         textAnchor="middle"
         fontSize="11"
-        fontWeight="600"
+        fontWeight="700"
         fontFamily="sans-serif"
       >
         {component.model || "ESP32 DevKit V1"}
@@ -81,8 +82,8 @@ function ESP32Node({ component, layout }) {
         width="36"
         height="18"
         rx="3"
-        fill="#64748b"
-        stroke="#cbd5e1"
+        fill="#451a03"
+        stroke="#f59e0b"
         strokeWidth="1"
       />
 
@@ -109,7 +110,7 @@ function ESP32Node({ component, layout }) {
             <text
               x={pos.x - 12}
               y={pos.y + 4}
-              fill="#ffffff"
+              fill="#fef3c7"
               fontSize="12"
               fontWeight="bold"
               textAnchor="end"
@@ -125,8 +126,9 @@ function ESP32Node({ component, layout }) {
       <text
         x="100"
         y={height - 8}
-        fill="#64748b"
+        fill="#f59e0b"
         fontSize="10"
+        fontWeight="bold"
         textAnchor="middle"
         fontFamily="sans-serif"
       >

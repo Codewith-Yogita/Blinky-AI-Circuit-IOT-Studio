@@ -63,7 +63,7 @@ function UltrasonicNode({ layout }) {
       <text
         x={width / 2}
         y="12"
-        fill="#93c5fd"
+        fill="#fbbf24"
         fontSize="10"
         fontWeight="bold"
         textAnchor="middle"
@@ -92,7 +92,7 @@ function UltrasonicNode({ layout }) {
 
       {/* Pin 4: GND */}
       <circle cx={pinGND.x} cy={pinGND.y} r="4" fill="#64748b" stroke="#ffffff" strokeWidth="1.5" />
-      <text x={pinGND.x} y={pinGND.y - 8} fill="#cbd5e1" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
+      <text x={pinGND.x} y={pinGND.y - 8} fill="#fef3c7" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">
         GND
       </text>
     </g>

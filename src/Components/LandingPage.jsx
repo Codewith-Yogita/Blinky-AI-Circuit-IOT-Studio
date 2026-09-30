@@ -238,93 +238,140 @@ export default function LandingPage({
         </div>
       </header>
 
-      {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
-      <main className="flex-1 w-full px-6 sm:px-10 lg:px-14 py-8 sm:py-10 space-y-16 sm:space-y-24">
-        {/* ================= HERO SECTION (LARGE HEADINGS, SINGLE CLEAR FOCAL POINT) ================= */}
-        <section id="hero" className="scroll-mt-24 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* Left Content (7 Cols) */}
-            <div className="lg:col-span-7 space-y-5">
-              <div className="inline-flex items-center gap-2 text-xs font-mono font-semibold tracking-widest text-amber-500 uppercase">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                <span>AI-Powered Electronics Assistant</span>
-              </div>
+      {/* ================= FULL-BLEED HERO BACKGROUND SECTION ================= */}
+      <section
+        id="hero"
+        className="relative w-full min-h-[640px] sm:min-h-[700px] lg:min-h-[760px] flex items-center overflow-hidden border-b border-white/[0.08]"
+      >
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0 select-none">
+          <img
+            src="/images/blinky_hero_bg.jpg"
+            alt="Blinky AI Electronics IoT Workbench"
+            className="w-full h-full object-cover object-[75%_center] md:object-right lg:object-center transform scale-[1.02]"
+          />
 
+          {/* Left-to-Right Gradient Fade for Superior Text Legibility */}
+          <div
+            className={`absolute inset-0 ${
+              isDark
+                ? "bg-gradient-to-r from-[#080709] via-[#080709]/90 md:via-60% to-[#080709]/30"
+                : "bg-gradient-to-r from-[#fbf9f6] via-[#fbf9f6]/95 md:via-60% to-[#fbf9f6]/40"
+            }`}
+          />
+
+          {/* Top Fade (Header Integration) and Bottom Fade (Transition into About Section) */}
+          <div
+            className={`absolute inset-0 ${
+              isDark
+                ? "bg-gradient-to-b from-[#080709]/70 via-transparent to-[#080709]"
+                : "bg-gradient-to-b from-[#fbf9f6]/70 via-transparent to-[#fbf9f6]"
+            }`}
+          />
+
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+        </div>
+
+        {/* Hero Content Container */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
+          <div className="max-w-2xl space-y-6 sm:space-y-7">
+            {/* AI Assistant Pill Tag */}
+            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-amber-500/35 bg-amber-500/10 backdrop-blur-md text-xs font-mono font-semibold tracking-widest text-amber-400 uppercase shadow-lg shadow-amber-500/5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span>AI-Powered Electronics Assistant</span>
+            </div>
+
+            {/* Main Headline - Bold & Expressive */}
+            <div className="space-y-3">
               <h1
-                className={`text-3xl sm:text-5xl lg:text-6xl font-black font-outfit tracking-tight leading-[1.1] ${
+                className={`text-4xl sm:text-6xl lg:text-7xl font-black font-outfit tracking-tight leading-[1.08] ${
                   isDark ? "text-white" : "text-zinc-950"
                 }`}
               >
-                From circuit to working IoT project.{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-handwriting text-4xl sm:text-5xl lg:text-6xl font-normal block mt-1">
-                  Powered by AI.
+                Point. Understand.{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 font-handwriting text-5xl sm:text-7xl lg:text-8xl font-normal block sm:inline">
+                  Build.
                 </span>
               </h1>
-
               <p
-                className={`text-sm sm:text-base lg:text-lg font-normal leading-relaxed max-w-xl ${
-                  isDark ? "text-zinc-400" : "text-zinc-600"
+                className={`text-base sm:text-xl font-medium font-outfit leading-relaxed ${
+                  isDark ? "text-amber-200/90" : "text-amber-800"
                 }`}
               >
-                Capture your components with your phone camera, describe what you want to build, and Blinky synthesizes verified circuit wiring with production Arduino C++ firmware.
+                From physical circuit to working IoT project — powered by AI.
               </p>
-
-              {/* Tagline */}
-              <div className="text-xs sm:text-sm font-mono tracking-widest uppercase text-amber-400/90 font-semibold pt-1">
-                Capture &bull; Understand &bull; Connect &bull; Create
-              </div>
-
-              {/* CTAs */}
-              <div className="pt-2 flex flex-wrap items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowNewProjectModal(true)}
-                  className="group px-7 py-3.5 rounded-2xl border border-amber-500/35 hover:border-amber-500/70 bg-[#131117] hover:bg-[#1a141e] text-white font-bold text-sm tracking-wide shadow-[0_4px_20px_rgba(0,0,0,0.6)] hover:shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
-                >
-                  <div className="w-6 h-6 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                  </div>
-                  <span className="font-outfit">Start New Project</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => scrollToSection("about")}
-                  className="group px-6 py-3.5 rounded-2xl border border-white/10 hover:border-amber-500/40 bg-[#100d14] hover:bg-[#161219] text-zinc-200 hover:text-white text-sm font-semibold shadow-[0_2px_12px_rgba(0,0,0,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2.5"
-                >
-                  <div className="w-6 h-6 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
-                    <BookOpen className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="font-outfit">Explore Architecture</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
-                </button>
-              </div>
             </div>
 
-            {/* Right Realistic Image Focal Point (5 Cols) */}
-            <div className="lg:col-span-5 relative flex items-center justify-center">
-              <div className="relative rounded-3xl overflow-hidden border border-amber-500/30 shadow-[0_0_40px_rgba(245,158,11,0.18)] max-h-[380px] lg:max-h-[420px] w-full group">
-                <img
-                  src="/images/blinky_vision_scan.jpg"
-                  alt="Phone Camera Vision AI Component Scanning"
-                  className="w-full h-full max-h-[380px] lg:max-h-[420px] object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-5">
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-semibold flex items-center gap-1.5">
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>Gemini Vision AI Component Detection</span>
-                    </span>
-                    <p className="text-xs text-zinc-300">
-                      Instantly identifies ESP32, ultrasonic sensors, potentiometers, and resistors from live camera frames.
-                    </p>
-                  </div>
+            {/* Description Subtitle */}
+            <p
+              className={`text-sm sm:text-base lg:text-lg font-normal leading-relaxed max-w-xl ${
+                isDark ? "text-zinc-300" : "text-zinc-700"
+              }`}
+            >
+              Capture your components with your phone camera, describe what you want to build, and Blinky synthesizes verified circuit wiring with production Arduino C++ firmware.
+            </p>
+
+            {/* CTAs */}
+            <div className="pt-2 flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setShowNewProjectModal(true)}
+                className="group px-7 py-3.5 rounded-2xl border border-amber-500/40 hover:border-amber-400 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-zinc-950 font-bold text-sm tracking-wide shadow-[0_0_25px_rgba(245,158,11,0.35)] hover:shadow-[0_0_35px_rgba(245,158,11,0.5)] hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3"
+              >
+                <div className="w-6 h-6 rounded-lg bg-black/20 flex items-center justify-center text-zinc-950">
+                  <Play className="w-3.5 h-3.5 fill-current" />
                 </div>
-              </div>
+                <span className="font-outfit font-extrabold">Start New Project</span>
+                <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollToSection("about")}
+                className="group px-6 py-3.5 rounded-2xl border border-white/15 hover:border-amber-500/40 bg-black/40 hover:bg-black/60 backdrop-blur-xl text-zinc-200 hover:text-white text-sm font-semibold shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2.5"
+              >
+                <div className="w-6 h-6 rounded-lg border border-white/10 bg-white/[0.06] flex items-center justify-center text-zinc-400 group-hover:text-amber-400">
+                  <BookOpen className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-outfit">Explore Architecture</span>
+                <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-400 transition-transform group-hover:translate-x-1" />
+              </button>
+            </div>
+
+            {/* Hand-drawn style note with curved arrow pointing towards the hardware in background */}
+            <div className="pt-3 flex items-center gap-3 text-sm sm:text-base font-handwriting text-amber-300/90 select-none">
+              <span>Works with ESP32, Arduino, sensors &amp; more</span>
+              <svg
+                className="w-10 h-6 text-amber-400/80 -rotate-6 hidden sm:block"
+                viewBox="0 0 45 25"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 12 C18 20, 28 18, 38 7" />
+                <path d="M30 6 L39 7 L37 15" />
+              </svg>
             </div>
           </div>
-        </section>
+        </div>
+
+        {/* Floating Bottom-Right Vision AI Badge */}
+        <div className="absolute right-6 sm:right-10 lg:right-14 bottom-8 hidden md:flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-amber-500/25 bg-black/70 backdrop-blur-xl shadow-2xl text-xs">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          <span className="font-mono text-[11px] uppercase tracking-wider font-semibold text-amber-400 flex items-center gap-1.5">
+            <Camera className="w-3.5 h-3.5" />
+            <span>Gemini Vision AI</span>
+          </span>
+          <span className="text-zinc-600">•</span>
+          <span className="text-zinc-300 font-medium">Real-Time Component Detection</span>
+        </div>
+      </section>
+
+      {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
+      <main className="flex-1 w-full px-6 sm:px-10 lg:px-14 py-8 sm:py-12 space-y-16 sm:space-y-24">
 
         {/* ================= SECTION 2: ABOUT BLINKY (RECONSTRUCTED EXACTLY FROM YOUR IMAGE LAYOUT!) ================= */}
         <section id="about" className="scroll-mt-24 w-full">

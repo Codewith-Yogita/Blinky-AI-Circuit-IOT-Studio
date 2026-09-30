@@ -24,6 +24,7 @@ import {
   Database,
   Flame,
 } from "lucide-react";
+import LivingCircuitLayer from "./LivingCircuitLayer";
 
 export default function LandingPage({
   onLaunchStudio,
@@ -298,6 +299,9 @@ export default function LandingPage({
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
         </div>
+
+        {/* Living Circuit Micro-Creatures Layer (Non-interfering, subtle living electronics) */}
+        <LivingCircuitLayer isDark={isDark} />
 
         {/* Hero Content Container */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">

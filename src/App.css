@@ -3943,3 +3943,96 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #94a3b8;
 }
+
+/* ==========================================================================
+   LIVING CIRCUIT MICRO-CREATURES LAYER (Subtle Organic Electronics)
+   ========================================================================== */
+
+/* Hero Floating Probe - Gentle, soothing 60fps drift */
+.living-hero-probe-float {
+  animation: probeFloat 8.5s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  will-change: transform;
+}
+
+@keyframes probeFloat {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  35% {
+    transform: translateY(-8px) rotate(-1.5deg);
+  }
+  70% {
+    transform: translateY(5px) rotate(1deg);
+  }
+  100% {
+    transform: translateY(-3px) rotate(-0.5deg);
+  }
+}
+
+/* Hero Probe Optical Eye - Subtle periodic double-blink */
+.living-probe-eye {
+  animation: probeEyeBlink 6.5s ease-in-out infinite;
+}
+
+@keyframes probeEyeBlink {
+  0%, 86%, 92%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px #f59e0b);
+  }
+  88% {
+    opacity: 0.2;
+    filter: none;
+  }
+  90% {
+    opacity: 1;
+  }
+}
+
+/* Trace Crawler - Slow SMD bug crawling along circuit line with pauses */
+.living-crawler-patrol {
+  animation: crawlerCrawl 13s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  will-change: transform;
+}
+
+@keyframes crawlerCrawl {
+  0%, 22% {
+    transform: translateX(0px);
+  }
+  40%, 65% {
+    transform: translateX(28px);
+  }
+  80%, 100% {
+    transform: translateX(52px);
+  }
+}
+
+/* Crawler Dual Optical Sensors - Soft blink */
+.living-crawler-eye {
+  animation: crawlerEyeBlink 7s ease-in-out infinite;
+}
+
+@keyframes crawlerEyeBlink {
+  0%, 78%, 84%, 100% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 3px #f59e0b);
+  }
+  80% {
+    opacity: 0.15;
+    filter: none;
+  }
+  82% {
+    opacity: 0.95;
+  }
+}
+
+/* Respect user accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .living-hero-probe-float,
+  .living-probe-eye,
+  .living-crawler-patrol,
+  .living-crawler-eye {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}

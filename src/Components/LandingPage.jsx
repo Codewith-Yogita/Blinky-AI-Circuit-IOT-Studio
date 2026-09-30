@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import {
   Play,
   ArrowRight,
@@ -24,6 +24,11 @@ import {
   Database,
   Flame,
 } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import InteractiveCircuitStory from "./InteractiveCircuitStory";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPage({
   onLaunchStudio,
@@ -37,6 +42,33 @@ export default function LandingPage({
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [customPrompt, setCustomPrompt] = useState("");
 
+  // Master container & element refs for GSAP ScrollTrigger
+  const pageRef = useRef(null);
+  const headerRef = useRef(null);
+  const heroSectionRef = useRef(null);
+  const heroBgRef = useRef(null);
+  const heroContentRef = useRef(null);
+  const heroTagRef = useRef(null);
+  const heroTitlePart1Ref = useRef(null);
+  const heroTitlePart2Ref = useRef(null);
+  const heroSubheadRef = useRef(null);
+  const heroDescRef = useRef(null);
+  const heroCtasRef = useRef(null);
+  const heroTraceRef = useRef(null);
+
+  // Section 2 refs
+  const aboutSectionRef = useRef(null);
+  const aboutWord1Ref = useRef(null);
+  const aboutWord2Ref = useRef(null);
+  const aboutWord3Ref = useRef(null);
+  const aboutContentRef = useRef(null);
+
+  // Section 3 refs
+  const howItWorksSectionRef = useRef(null);
+
+  // Bottom CTA ref
+  const bottomCtaRef = useRef(null);
+
   // Sync theme with document root
   useEffect(() => {
     if (theme === "light") {
@@ -49,49 +81,227 @@ export default function LandingPage({
     localStorage.setItem("blinky-theme", theme);
   }, [theme]);
 
+  // Master GSAP Animation & Scroll-Driven Storytelling Sequence
+  useLayoutEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const ctx = gsap.context(() => {
+      if (prefersReducedMotion) {
+        // If reduced motion is requested, reveal all elements immediately without pin or stagger
+        gsap.set(
+          [
+            headerRef.current,
+            heroBgRef.current,
+            heroTagRef.current,
+            heroTitlePart1Ref.current,
+            heroTitlePart2Ref.current,
+            heroSubheadRef.current,
+            heroDescRef.current,
+            heroCtasRef.current,
+            aboutWord1Ref.current,
+            aboutWord2Ref.current,
+            aboutWord3Ref.current,
+            aboutContentRef.current,
+            bottomCtaRef.current,
+          ],
+          { opacity: 1, y: 0, x: 0, scale: 1 }
+        );
+        return;
+      }
+
+      // ================= 1. CINEMATIC ENTRANCE TIMELINE (ON PAGE ARRIVAL) =================
+      const enterTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      // Step 1: Dark background is present; header gently lowers
+      enterTl.fromTo(
+        headerRef.current,
+        { y: -24, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.85 }
+      );
+
+      // Step 2: Hero background image shifts smoothly into focus
+      enterTl.fromTo(
+        heroBgRef.current,
+        { scale: 1.08, opacity: 0.5 },
+        { scale: 1.02, opacity: 1, duration: 1.6, ease: "power2.out" },
+        0.15
+      );
+
+      // Step 3: Tiny amber pulse & AI tag reveal
+      enterTl.fromTo(
+        heroTagRef.current,
+        { opacity: 0, scale: 0.88, y: 12 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: "back.out(1.4)" },
+        0.35
+      );
+
+      // Step 4: Controlled heading entrance: "Point. Understand." then "Build."
+      enterTl.fromTo(
+        heroTitlePart1Ref.current,
+        { opacity: 0, y: 35 },
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out" },
+        0.55
+      );
+
+      enterTl.fromTo(
+        heroTitlePart2Ref.current,
+        { opacity: 0, scale: 0.88, y: 20 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.9, ease: "back.out(1.5)" },
+        0.75
+      );
+
+      // Step 5: Supporting text appears
+      enterTl.fromTo(
+        heroSubheadRef.current,
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.75 },
+        0.95
+      );
+
+      // Step 6: Description subtitle
+      enterTl.fromTo(
+        heroDescRef.current,
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.75 },
+        1.1
+      );
+
+      // Step 7: CTAs appear with their hand-drawn brush stroke
+      enterTl.fromTo(
+        heroCtasRef.current,
+        { opacity: 0, y: 22 },
+        { opacity: 1, y: 0, duration: 0.85 },
+        1.25
+      );
+
+      // ================= 2. HERO SCROLL-DRIVEN SCRUB & PARALLAX =================
+      const heroScrollTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroSectionRef.current,
+          start: "top top",
+          end: "+=75%",
+          scrub: 0.65,
+        },
+      });
+
+      heroScrollTl
+        .to(
+          heroContentRef.current,
+          { y: -65, scale: 0.93, opacity: 0.15, ease: "none" },
+          0
+        )
+        .to(
+          heroBgRef.current,
+          { y: 70, scale: 1.07, ease: "none" },
+          0
+        );
+
+      if (heroTraceRef.current) {
+        heroScrollTl.fromTo(
+          heroTraceRef.current,
+          { strokeDashoffset: 400 },
+          { strokeDashoffset: 0, ease: "none" },
+          0
+        );
+      }
+
+      // ================= 3. SECTION 2: "PHYSICAL CIRCUITS. AI BRAIN." REVEAL =================
+      gsap.fromTo(
+        [aboutWord1Ref.current, aboutWord2Ref.current, aboutWord3Ref.current],
+        { y: 55, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          stagger: 0.14,
+          duration: 0.9,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: aboutSectionRef.current,
+            start: "top 78%",
+          },
+        }
+      );
+
+      gsap.fromTo(
+        aboutContentRef.current,
+        { y: 40, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: aboutSectionRef.current,
+            start: "top 72%",
+          },
+        }
+      );
+
+      // ================= 4. SECTION 3: "HOW BLINKY WORKS" STAGGERED WORKFLOW =================
+      gsap.fromTo(
+        ".workflow-card",
+        { y: 45, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          stagger: 0.13,
+          duration: 0.85,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: howItWorksSectionRef.current,
+            start: "top 80%",
+          },
+        }
+      );
+
+      // ================= 5. MONUMENTAL BOTTOM CTA =================
+      gsap.fromTo(
+        bottomCtaRef.current,
+        { y: 40, opacity: 0, scale: 0.96 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 1,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: bottomCtaRef.current,
+            start: "top 85%",
+          },
+        }
+      );
+    }, pageRef);
+
+    return () => ctx.revert();
+  }, []);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
   const isDark = theme === "dark";
 
-  // The 4 curated hardware projects
-  const circuitsList = [
+  // Starter templates preserved for modal
+  const starterCircuits = [
     {
       id: "flagship",
       circuitKey: "flagship",
       title: "HC-SR04 Water Level",
-      tag: "Sensors & Audio",
-      badgeColor: "border-amber-500/40 text-amber-400 bg-amber-950/30",
-      image: "/images/project_hcsr04.jpg",
-      description: "Ultrasonic transducer measuring distance with automated warning buzzer and alert LED.",
     },
     {
       id: "preset1",
       circuitKey: "preset1",
       title: "LED Blink Controller",
-      tag: "Digital GPIO",
-      badgeColor: "border-red-500/40 text-red-400 bg-red-950/30",
-      image: "/images/project_led.jpg",
-      description: "Digital GPIO2 pin pulse with 220Ω current-limiting resistor.",
     },
     {
       id: "oled_display",
       circuitKey: "oled_display",
       title: "SSD1306 0.96\" OLED",
-      tag: "Hardware I2C",
-      badgeColor: "border-amber-500/40 text-amber-400 bg-amber-950/30",
-      image: "/images/project_oled.jpg",
-      description: "Fast I2C graphics display on GPIO21/22 rendering live status.",
     },
     {
       id: "joystick",
       circuitKey: "joystick",
       title: "Dual-Axis Joystick",
-      tag: "Analog ADC",
-      badgeColor: "border-orange-500/40 text-orange-400 bg-orange-950/30",
-      image: "/images/project_joystick.jpg",
-      description: "Dual analog ADC channels with thumbstick push button alert trigger.",
     },
   ];
 
@@ -123,12 +333,14 @@ export default function LandingPage({
 
   return (
     <div
+      ref={pageRef}
       className={`min-h-screen transition-colors duration-300 ${
         isDark ? "bg-[#080709] text-zinc-100" : "bg-[#fbf9f6] text-zinc-900"
       } antialiased selection:bg-amber-500/30 selection:text-white flex flex-col`}
     >
-      {/* ================= FULL-WIDTH HEADER (NO SIDEBAR) ================= */}
+      {/* ================= FULL-WIDTH HEADER (ENTRANCE TIMELINE) ================= */}
       <header
+        ref={headerRef}
         className={`sticky top-0 z-50 w-full px-6 sm:px-12 lg:px-16 py-4 border-b backdrop-blur-xl transition-colors duration-300 ${
           isDark
             ? "bg-[#080709]/85 border-white/[0.08]"
@@ -149,19 +361,27 @@ export default function LandingPage({
             </span>
           </div>
 
-          {/* Center Smooth-Scroll Links (Hidden on small mobile) */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-medium tracking-wide">
+          {/* Center Smooth-Scroll Narrative Links */}
+          <nav className="hidden md:flex items-center gap-7 text-xs font-medium tracking-wide">
+            <button
+              type="button"
+              onClick={() => scrollToSection("circuit-story")}
+              className="text-zinc-400 hover:text-amber-400 transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <span>Live Circuit Story</span>
+            </button>
             <button
               type="button"
               onClick={() => scrollToSection("about")}
-              className="text-zinc-400 hover:text-amber-400 transition-colors"
+              className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
             >
               About
             </button>
             <button
               type="button"
               onClick={() => scrollToSection("how-it-works")}
-              className="text-zinc-400 hover:text-amber-400 transition-colors"
+              className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
             >
               How It Works
             </button>
@@ -183,7 +403,7 @@ export default function LandingPage({
               )}
             </button>
 
-            {/* Star on GitHub (Bold Link with Animated Underline) */}
+            {/* Star on GitHub */}
             <a
               href="https://github.com/Codewith-Yogita/Blinky-AI-Circuit-IOT-Studio"
               target="_blank"
@@ -197,7 +417,7 @@ export default function LandingPage({
               </span>
             </a>
 
-            {/* Launch Studio CTA (Bold Handwritten / Brush Accent with Smooth Glow Transition) */}
+            {/* Launch Studio CTA with Glowing Handwritten Brush Stroke */}
             <button
               type="button"
               onClick={onLaunchStudio}
@@ -208,7 +428,6 @@ export default function LandingPage({
                 <span>Launch Studio</span>
                 <ArrowRight className="w-4 h-4 text-red-500 group-hover:text-amber-400 group-hover:translate-x-1.5 transition-all duration-300 drop-shadow-[0_0_6px_rgba(239,68,68,0.7)]" />
               </div>
-              {/* Bold organic brush stroke underline with gradient & glow */}
               <svg
                 className="w-full h-2.5 -mt-0.5 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_1px_6px_rgba(239,68,68,0.5)] group-hover:drop-shadow-[0_2px_10px_rgba(249,115,22,0.9)]"
                 viewBox="0 0 110 10"
@@ -240,17 +459,19 @@ export default function LandingPage({
         </div>
       </header>
 
-      {/* ================= FULL-BLEED HERO BACKGROUND SECTION ================= */}
+      {/* ================= HERO SECTION (ENTRANCE SEQUENCE & SCROLL SCRUB) ================= */}
       <section
+        ref={heroSectionRef}
         id="hero"
-        className="relative w-full min-h-[640px] sm:min-h-[700px] lg:min-h-[760px] flex items-center overflow-hidden border-b border-white/[0.08]"
+        className="relative w-full min-h-[640px] sm:min-h-[720px] lg:min-h-[780px] flex items-center overflow-hidden border-b border-white/[0.08]"
       >
-        {/* Background Image Layer */}
-        <div className="absolute inset-0 z-0 select-none">
+        {/* Background Image Layer with Cinematic Parallax */}
+        <div className="absolute inset-0 z-0 select-none overflow-hidden">
           <img
+            ref={heroBgRef}
             src="/images/blinky_hero_bg.jpg"
             alt="Blinky AI Electronics IoT Workbench"
-            className="w-full h-full object-cover object-[75%_center] md:object-right lg:object-center transform scale-[1.02]"
+            className="w-full h-full object-cover object-[75%_center] md:object-right lg:object-center transform will-change-transform"
           />
 
           {/* Left-to-Right Gradient Fade for Superior Text Legibility */}
@@ -262,7 +483,7 @@ export default function LandingPage({
             }`}
           />
 
-          {/* Top Fade (Header Integration) and Bottom Fade (Transition into About Section) */}
+          {/* Top & Bottom Cinematic Fade */}
           <div
             className={`absolute inset-0 ${
               isDark
@@ -275,30 +496,59 @@ export default function LandingPage({
           <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
         </div>
 
-        {/* Hero Content Container */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
+        {/* Conductive Scroll-Scrubbed Electrical Trace Line */}
+        <svg
+          className="absolute right-8 md:right-16 top-1/4 h-3/4 w-28 pointer-events-none z-10 hidden sm:block overflow-visible"
+          viewBox="0 0 100 600"
+          fill="none"
+        >
+          <path
+            ref={heroTraceRef}
+            d="M 60 0 L 60 180 L 25 240 L 25 440 L 70 520 L 70 600"
+            stroke="#f59e0b"
+            strokeWidth="1.2"
+            strokeDasharray="400"
+            strokeDashoffset="400"
+            opacity="0.35"
+          />
+        </svg>
+
+        {/* Hero Content Container (Controlled Entrance Sequence) */}
+        <div
+          ref={heroContentRef}
+          className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24 will-change-transform"
+        >
           <div className="max-w-2xl space-y-6 sm:space-y-7">
-            {/* AI Assistant Tag - Clean without rigid box */}
-            <div className="inline-flex items-center gap-2.5 text-xs font-mono font-bold tracking-widest text-amber-400 uppercase select-none">
+            {/* Step 3: AI Assistant Tag */}
+            <div
+              ref={heroTagRef}
+              className="inline-flex items-center gap-2.5 text-xs font-mono font-bold tracking-widest text-amber-400 uppercase select-none"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
               <span className="tracking-[0.2em] drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">
                 AI-POWERED ELECTRONICS ASSISTANT
               </span>
             </div>
 
-            {/* Main Headline - Bold & Expressive */}
+            {/* Step 4: Main Headline - Assembling in Controlled Sequence */}
             <div className="space-y-3">
-              <h1
-                className={`text-4xl sm:text-6xl lg:text-7xl font-black font-outfit tracking-tight leading-[1.08] ${
-                  isDark ? "text-white" : "text-zinc-950"
-                }`}
-              >
-                Point. Understand.{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 font-handwriting text-5xl sm:text-7xl lg:text-8xl font-normal block sm:inline drop-shadow-[0_2px_16px_rgba(239,68,68,0.4)]">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black font-outfit tracking-tight leading-[1.08] select-none">
+                <span
+                  ref={heroTitlePart1Ref}
+                  className={`inline-block ${isDark ? "text-white" : "text-zinc-950"}`}
+                >
+                  Point. Understand.
+                </span>{" "}
+                <span
+                  ref={heroTitlePart2Ref}
+                  className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-amber-400 font-handwriting text-5xl sm:text-7xl lg:text-8xl font-normal drop-shadow-[0_2px_16px_rgba(239,68,68,0.4)]"
+                >
                   Build.
                 </span>
               </h1>
+              {/* Step 5: Supporting Subhead */}
               <p
+                ref={heroSubheadRef}
                 className={`text-base sm:text-xl font-medium font-outfit leading-relaxed ${
                   isDark ? "text-amber-200/90" : "text-amber-800"
                 }`}
@@ -307,8 +557,9 @@ export default function LandingPage({
               </p>
             </div>
 
-            {/* Description Subtitle */}
+            {/* Step 6: Description Subtitle */}
             <p
+              ref={heroDescRef}
               className={`text-sm sm:text-base lg:text-lg font-normal leading-relaxed max-w-xl ${
                 isDark ? "text-zinc-300" : "text-zinc-700"
               }`}
@@ -316,8 +567,11 @@ export default function LandingPage({
               Capture your components with your phone camera, describe what you want to build, and Blinky synthesizes verified circuit wiring with production Arduino C++ firmware.
             </p>
 
-            {/* CTAs - Bold, Expressive, and Animated with Organic Brush Stroke */}
-            <div className="pt-3 flex flex-wrap items-center gap-8 sm:gap-12">
+            {/* Step 7: CTAs - Bold, Expressive, and Animated with Organic Brush Stroke */}
+            <div
+              ref={heroCtasRef}
+              className="pt-3 flex flex-wrap items-center gap-8 sm:gap-12"
+            >
               {/* Primary Callout: Bold Hand-Drawn Brush Underline CTA */}
               <button
                 type="button"
@@ -329,7 +583,7 @@ export default function LandingPage({
                   <ArrowRight className="w-6 h-6 sm:w-7 sm:h-7 text-red-500 group-hover:text-amber-400 group-hover:translate-x-3 transition-all duration-300 ease-out drop-shadow-[0_0_12px_rgba(239,68,68,0.7)]" />
                 </div>
 
-                {/* Bold Textured Organic Brush Stroke with Gradient & Transition Glow */}
+                {/* Bold Textured Organic Brush Stroke */}
                 <svg
                   className="w-full h-5 -mt-1 overflow-visible origin-left scale-x-95 group-hover:scale-x-105 group-hover:scale-y-125 transition-all duration-300 ease-out filter drop-shadow-[0_2px_8px_rgba(239,68,68,0.55)] group-hover:drop-shadow-[0_4px_20px_rgba(249,115,22,0.9)]"
                   viewBox="0 0 220 18"
@@ -343,7 +597,6 @@ export default function LandingPage({
                       <stop offset="100%" stopColor="#f59e0b" />
                     </linearGradient>
                   </defs>
-                  {/* Base heavy organic brush stroke */}
                   <path
                     d="M4 10 C35 4, 85 14, 140 7 C175 3, 200 9, 216 7"
                     stroke="url(#brushGradientHero)"
@@ -351,7 +604,6 @@ export default function LandingPage({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                  {/* Rough texture stroke to give authentic marker / brush feel */}
                   <path
                     d="M10 13 C55 8, 120 15, 195 9"
                     stroke="url(#brushGradientHero)"
@@ -359,7 +611,6 @@ export default function LandingPage({
                     strokeLinecap="round"
                     opacity="0.85"
                   />
-                  {/* Extra brush bristles accent */}
                   <path
                     d="M18 14 C70 12, 130 15, 170 11"
                     stroke="#fbbf24"
@@ -373,7 +624,7 @@ export default function LandingPage({
               {/* Secondary Callout: Bold Handwritten Link with Wavy Underline */}
               <button
                 type="button"
-                onClick={() => scrollToSection("about")}
+                onClick={() => scrollToSection("circuit-story")}
                 className="group flex items-center gap-2.5 text-xl sm:text-2xl font-bold font-handwriting text-zinc-300 hover:text-white transition-all duration-300 cursor-pointer py-1 hover:scale-105 active:scale-95"
               >
                 <span className="underline decoration-amber-500/60 group-hover:decoration-amber-400 decoration-[3px] decoration-wavy underline-offset-8 transition-colors duration-300">
@@ -383,7 +634,7 @@ export default function LandingPage({
               </button>
             </div>
 
-            {/* Hand-drawn style note with curved doodle arrow matching reference */}
+            {/* Hand-drawn style note with curved doodle arrow */}
             <div className="pt-2 flex items-center gap-3 text-lg sm:text-xl font-bold font-handwriting text-zinc-300/90 select-none group">
               <span>Works with ESP32, Arduino, sensors and more.</span>
               <svg
@@ -402,7 +653,7 @@ export default function LandingPage({
           </div>
         </div>
 
-        {/* Floating Bottom-Right Vision AI Note (No heavy border box) */}
+        {/* Floating Bottom-Right Vision AI Note */}
         <div className="absolute right-6 sm:right-10 lg:right-14 bottom-8 hidden md:flex items-center gap-2.5 text-xs font-mono text-zinc-300 select-none">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
           <span className="font-bold text-amber-400 uppercase tracking-wider text-[11px] drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]">
@@ -413,18 +664,29 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
-      <main className="flex-1 w-full px-6 sm:px-10 lg:px-14 py-8 sm:py-12 space-y-16 sm:space-y-24">
+      {/* ================= INTERACTIVE STORY CHAPTER: WATCH YOUR CIRCUIT BUILD ITSELF ================= */}
+      <section id="circuit-story" className="scroll-mt-20 w-full">
+        <InteractiveCircuitStory
+          isDark={isDark}
+          onLaunchStudio={onLaunchStudio}
+        />
+      </section>
 
-        {/* ================= SECTION 2: ABOUT BLINKY (RECONSTRUCTED EXACTLY FROM YOUR IMAGE LAYOUT!) ================= */}
-        <section id="about" className="scroll-mt-24 w-full">
+      {/* ================= FULL-WIDTH MAIN CONTAINER ================= */}
+      <main className="flex-1 w-full px-6 sm:px-10 lg:px-14 py-8 sm:py-16 space-y-20 sm:space-y-28">
+
+        {/* ================= SECTION 2: ABOUT BLINKY ("PHYSICAL CIRCUITS. AI BRAIN.") ================= */}
+        <section ref={aboutSectionRef} id="about" className="scroll-mt-24 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
-            {/* Left Massive Statement (Matching "THE HYPE STOPS HERE." layout in amber-red) */}
-            <div className="lg:col-span-5 select-none space-y-1 overflow-visible">
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] text-transparent bg-clip-text bg-gradient-to-b from-amber-400 via-orange-400 to-red-500 whitespace-nowrap">
-                PHYSICAL
-              </h2>
+            {/* Left Massive Statement - Reveal on Scroll */}
+            <div className="lg:col-span-5 select-none space-y-1 overflow-hidden">
+              <div ref={aboutWord1Ref}>
+                <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] text-transparent bg-clip-text bg-gradient-to-b from-amber-400 via-orange-400 to-red-500 whitespace-nowrap">
+                  PHYSICAL
+                </h2>
+              </div>
               <div
+                ref={aboutWord2Ref}
                 className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap ${
                   isDark ? "text-zinc-600/70" : "text-zinc-300"
                 }`}
@@ -432,6 +694,7 @@ export default function LandingPage({
                 CIRCUITS.
               </div>
               <div
+                ref={aboutWord3Ref}
                 className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter leading-[0.95] whitespace-nowrap ${
                   isDark ? "text-zinc-700/60" : "text-zinc-300/80"
                 }`}
@@ -440,8 +703,8 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Right Editorial Copy (Clean, focused, no clutter) */}
-            <div className="lg:col-span-7 space-y-5 pt-1">
+            {/* Right Editorial Copy */}
+            <div ref={aboutContentRef} className="lg:col-span-7 space-y-5 pt-1">
               <h3
                 className={`text-xl sm:text-2xl font-bold font-outfit leading-snug ${
                   isDark ? "text-white" : "text-zinc-950"
@@ -478,7 +741,7 @@ export default function LandingPage({
         </section>
 
         {/* ================= SECTION 3: HOW BLINKY WORKS (THE 4 PROGRESSIVE STEPS) ================= */}
-        <section id="how-it-works" className="scroll-mt-24 w-full space-y-8">
+        <section ref={howItWorksSectionRef} id="how-it-works" className="scroll-mt-24 w-full space-y-8">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
               ✦ Process Workflow
@@ -490,7 +753,7 @@ export default function LandingPage({
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* 01 Capture & Describe */}
-            <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
               <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-500 mb-3">01</div>
               <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Capture &amp; Describe</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -499,7 +762,7 @@ export default function LandingPage({
             </div>
 
             {/* 02 AI Understands */}
-            <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
               <div className="text-3xl sm:text-4xl font-black font-outfit text-orange-500 mb-3">02</div>
               <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">AI Understands</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -508,7 +771,7 @@ export default function LandingPage({
             </div>
 
             {/* 03 Circuit & Code Generation */}
-            <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
               <div className="text-3xl sm:text-4xl font-black font-outfit text-red-500 mb-3">03</div>
               <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Circuit &amp; Code</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -517,7 +780,7 @@ export default function LandingPage({
             </div>
 
             {/* 04 Flash & Execute */}
-            <div className={`p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
+            <div className={`workflow-card p-6 rounded-3xl border transition-all ${isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200 shadow-sm"}`}>
               <div className="text-3xl sm:text-4xl font-black font-outfit text-amber-400 mb-3">04</div>
               <h3 className="text-base sm:text-lg font-bold font-outfit mb-2 text-white">Flash &amp; Execute</h3>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
@@ -527,8 +790,11 @@ export default function LandingPage({
           </div>
         </section>
 
-        {/* ================= SECTION 5: UNBOXED, BOLD IMPACT CTA ================= */}
-        <section className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full">
+        {/* ================= SECTION 4: UNBOXED, BOLD IMPACT CTA ================= */}
+        <section
+          ref={bottomCtaRef}
+          className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full"
+        >
           <h2 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter text-white leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]">
             Ready to dig in?
           </h2>
@@ -598,7 +864,7 @@ export default function LandingPage({
             <button
               type="button"
               onClick={() => setShowNewProjectModal(false)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/[0.06]"
+              className="absolute top-5 right-5 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-white/[0.06] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -634,7 +900,7 @@ export default function LandingPage({
                   Featured Starters:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {circuitsList.map((c) => (
+                  {starterCircuits.map((c) => (
                     <button
                       key={c.id}
                       type="button"
@@ -642,7 +908,7 @@ export default function LandingPage({
                         handleLaunchProject(c.circuitKey);
                         setShowNewProjectModal(false);
                       }}
-                      className="text-xs px-3 py-1.5 rounded-xl bg-[#1a1420] border border-white/[0.08] hover:border-amber-500/40 text-zinc-300 hover:text-white transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-xl bg-[#1a1420] border border-white/[0.08] hover:border-amber-500/40 text-zinc-300 hover:text-white transition-colors cursor-pointer"
                     >
                       {c.title}
                     </button>
@@ -654,14 +920,14 @@ export default function LandingPage({
                 <button
                   type="button"
                   onClick={() => setShowNewProjectModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-lg hover:bg-white/[0.05]"
+                  className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-lg hover:bg-white/[0.05] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="group px-6 py-2.5 text-xs font-bold bg-[#131117] hover:bg-[#1a141e] border border-amber-500/35 hover:border-amber-500/70 text-white rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)] flex items-center gap-2.5 transition-all hover:scale-[1.02]"
+                  className="group px-6 py-2.5 text-xs font-bold bg-[#131117] hover:bg-[#1a141e] border border-amber-500/35 hover:border-amber-500/70 text-white rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.5)] hover:shadow-[0_0_18px_rgba(245,158,11,0.2)] flex items-center gap-2.5 transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <div className="w-4 h-4 rounded-md border border-amber-500/30 bg-amber-500/10 flex items-center justify-center text-amber-400">
                     <Sparkles className="w-2.5 h-2.5" />

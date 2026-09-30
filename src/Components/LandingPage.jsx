@@ -121,16 +121,6 @@ export default function LandingPage({
     }
   };
 
-  // Tech stack items
-  const techStack = [
-    { category: "Frontend", items: ["React Native", "Expo", "React", "SVG"] },
-    { category: "AI & Backend", items: ["Google Gemini Vision", "Python", "FastAPI"] },
-    { category: "Hardware", items: ["ESP32 DevKit V1", "Breadboard Sensors", "Arduino C++"] },
-    { category: "Execution", items: ["PySerial", "esptool WebSerial"] },
-    { category: "Voice Guidance", items: ["ElevenLabs Audio API"] },
-    { category: "Cloud & Telemetry", items: ["TigerData / PostgreSQL", "DigitalOcean"] },
-  ];
-
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${
@@ -181,13 +171,6 @@ export default function LandingPage({
               className="text-zinc-400 hover:text-amber-400 transition-colors"
             >
               Circuits
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection("tech-stack")}
-              className="text-zinc-400 hover:text-amber-400 transition-colors"
-            >
-              Tech Stack
             </button>
           </nav>
 
@@ -629,44 +612,7 @@ export default function LandingPage({
           </div>
         </section>
 
-        {/* ================= SECTION 6: TECH STACK (CLEAN CATEGORIZED PILLS, NO CLUTTER) ================= */}
-        <section id="tech-stack" className="scroll-mt-24 w-full space-y-8">
-          <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-amber-500 font-semibold block mb-1">
-              ✦ Engineering Stack
-            </span>
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black font-outfit tracking-tight">
-              Tech Stack
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {techStack.map((group, idx) => (
-              <div
-                key={idx}
-                className={`p-6 rounded-3xl border ${
-                  isDark ? "bg-[#0e0c10] border-white/[0.08]" : "bg-white border-zinc-200"
-                } space-y-3.5`}
-              >
-                <span className="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold block">
-                  {group.category}
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {group.items.map((item, itemIdx) => (
-                    <span
-                      key={itemIdx}
-                      className="px-3 py-1.5 rounded-xl border border-white/[0.08] bg-[#161219] text-xs font-mono text-zinc-200"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ================= SECTION 7: UNBOXED, BOLD IMPACT CTA ================= */}
+        {/* ================= SECTION 6: UNBOXED, BOLD IMPACT CTA ================= */}
         <section className="py-16 sm:py-24 text-center flex flex-col items-center justify-center space-y-6 select-none w-full">
           <h2 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-black font-outfit uppercase tracking-tighter text-white leading-none drop-shadow-[0_10px_35px_rgba(0,0,0,0.9)]">
             Ready to dig in?

@@ -402,17 +402,17 @@ export default function CircuitChatPage({
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-6 sm:py-12">
             
-            {/* Monumental Headline */}
+            {/* Monumental Headline (IoT Focused) */}
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight font-outfit leading-[1.08]">
-              <span className="text-white block">Tell Blinky.</span>
+              <span className="text-white block">Prompt Any IoT Project.</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-red-500 block mt-1">
-                It gets it done.
+                Simulate, Code & Flash.
               </span>
             </h1>
 
-            {/* Subhead narrative from screenshot */}
+            {/* Subhead narrative for IoT physical circuits */}
             <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl text-center mx-auto leading-relaxed mt-4 font-normal px-4">
-              Blinky sees what you see, understands what you ask, and takes care of the computer work.
+              Describe your sensors, displays, and microcontroller idea. Blinky designs the circuit schematic, generates Arduino/ESP32 firmware, and flashes your hardware.
             </p>
 
             {/* Glowing 3D Mascot in Center */}
@@ -449,7 +449,7 @@ export default function CircuitChatPage({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="What should Blinky do?"
+                  placeholder="Describe your IoT project (e.g. ESP32 Plant Monitor, Weather Station)..."
                   className="flex-1 bg-transparent border-none outline-none text-white text-xs sm:text-sm md:text-base placeholder-zinc-500 font-medium px-2"
                   disabled={isLoading}
                 />

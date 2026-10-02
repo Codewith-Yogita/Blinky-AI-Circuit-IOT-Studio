@@ -41,9 +41,7 @@ export default function LandingPage({
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("blinky-theme") || "dark";
   });
-  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [customPrompt, setCustomPrompt] = useState("");
 
   // Master container & element refs for GSAP ScrollTrigger
   const pageRef = useRef(null);
@@ -348,30 +346,6 @@ export default function LandingPage({
 
   const isDark = theme === "dark";
 
-  // Starter templates preserved for modal
-  const starterCircuits = [
-    {
-      id: "flagship",
-      circuitKey: "flagship",
-      title: "HC-SR04 Water Level",
-    },
-    {
-      id: "preset1",
-      circuitKey: "preset1",
-      title: "LED Blink Controller",
-    },
-    {
-      id: "oled_display",
-      circuitKey: "oled_display",
-      title: "SSD1306 0.96\" OLED",
-    },
-    {
-      id: "joystick",
-      circuitKey: "joystick",
-      title: "Dual-Axis Joystick",
-    },
-  ];
-
   const scrollToSection = (sectionId) => {
     setMobileMenuOpen(false);
     const element = document.getElementById(sectionId);
@@ -385,17 +359,6 @@ export default function LandingPage({
       onSelectPreset(presetKey);
     } else {
       onLaunchStudio();
-    }
-  };
-
-  const handleNewProjectSubmit = (e) => {
-    e?.preventDefault();
-    if (customPrompt.trim()) {
-      onGeneratePrompt(customPrompt.trim());
-      setShowNewProjectModal(false);
-    } else {
-      onLaunchStudio();
-      setShowNewProjectModal(false);
     }
   };
 
@@ -715,7 +678,7 @@ export default function LandingPage({
               {/* Primary Callout: Bold Hand-Drawn Brush Underline CTA */}
               <button
                 type="button"
-                onClick={() => setShowNewProjectModal(true)}
+                onClick={onLaunchStudio}
                 className="group relative inline-flex flex-col items-start cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               >
                 <div className="flex items-center gap-2.5 sm:gap-3.5 text-xl sm:text-3xl lg:text-4xl font-black font-outfit text-white group-hover:text-amber-200 transition-colors tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
@@ -1070,89 +1033,6 @@ export default function LandingPage({
           </a>
         </footer>
       </main>
-
-      {/* ================= MODAL: NEW PROJECT (RESPONSIVE TOUCH) ================= */}
-      {showNewProjectModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#100d13] border border-amber-500/40 rounded-2xl sm:rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => setShowNewProjectModal(false)}
-              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 rounded-xl hover:bg-white/[0.06] cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-2">
-              <Zap className="w-5 h-5 text-amber-500 fill-amber-500" />
-              <h3 className="text-lg sm:text-xl font-bold text-white font-outfit">
-                New IoT Circuit Project
-              </h3>
-            </div>
-            <p className="text-xs text-zinc-400 mb-4 sm:mb-5">
-              Describe what you want to build or pick a starter template.
-            </p>
-
-            <form onSubmit={handleNewProjectSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                  AI Prompt:
-                </label>
-                <textarea
-                  rows={3}
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="e.g. Ultrasonic distance sensor with buzzer alarm and red alert LED on ESP32..."
-                  className="w-full bg-[#18131c] border border-white/[0.1] rounded-xl sm:rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/60"
-                  autoFocus
-                />
-              </div>
-
-              {/* Quick Starters */}
-              <div>
-                <span className="text-[10px] sm:text-[11px] font-medium text-zinc-400 uppercase tracking-wider block mb-2">
-                  Featured Starters:
-                </span>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {starterCircuits.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        handleLaunchProject(c.circuitKey);
-                        setShowNewProjectModal(false);
-                      }}
-                      className="text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl bg-[#1a1420] border border-white/[0.08] hover:border-amber-500/40 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-                    >
-                      {c.title}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setShowNewProjectModal(false)}
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-medium text-zinc-400 hover:text-white rounded-xl hover:bg-white/[0.05] cursor-pointer text-center"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-white rounded-xl sm:rounded-2xl shadow-[0_4px_16px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{customPrompt.trim() ? "Generate Project" : "Open Studio"}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

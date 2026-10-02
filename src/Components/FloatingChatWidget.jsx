@@ -565,30 +565,12 @@ What would you like to build or wire today?`,
                 <X size={26} strokeWidth={2.8} />
               </div>
             ) : (
-              // When closed: EXACT match of user's image icon
-              <div className="w-full h-full flex items-center justify-center p-1 relative">
+              // When closed: 3D Blinky Mascot!
+              <div className="w-full h-full flex items-center justify-center p-1.5 relative">
                 <img
-                  src="/chatbot-avatar.png"
-                  alt="Blinky Chatbot Icon"
-                  className="w-full h-full object-contain pointer-events-none select-none"
-                  onError={(e) => {
-                    // Crisp SVG robot with speech bubble fallback if image not found
-                    e.target.style.display = "none";
-                    e.target.parentElement.innerHTML = `
-                      <svg viewBox="0 0 100 100" class="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-                        <!-- Top Antenna -->
-                        <line x1="50" y1="26" x2="50" y2="12" />
-                        <circle cx="50" cy="10" r="4" fill="currentColor" />
-                        <!-- Robot Head -->
-                        <rect x="25" y="26" width="50" height="50" rx="12" stroke-width="6" />
-                        <!-- Left & Right Ears -->
-                        <line x1="18" y1="36" x2="18" y2="66" stroke-width="5" />
-                        <line x1="82" y1="36" x2="82" y2="66" stroke-width="5" />
-                        <!-- Speech bubble with 3 dots inside -->
-                        <path d="M 40 45 C 34 45 34 60 42 63 L 40 68 L 47 64 C 62 66 66 52 58 46 C 53 43 45 44 40 45 Z" fill="currentColor" />
-                      </svg>
-                    `;
-                  }}
+                  src="/blinky-mascot.png"
+                  alt="Blinky Mascot"
+                  className="w-full h-full object-contain pointer-events-none select-none drop-shadow-sm transition-transform group-hover:scale-105"
                 />
               </div>
             )}

@@ -35,9 +35,9 @@ import { sendChatMessage } from "../services/chatAssistant";
 import { generateProject } from "../services/api";
 import { waterLevelAlarmCircuit, joystickLedCircuit, singleLedCircuit } from "../data/mockCircuits";
 import ComponentCameraScanner from "./ComponentCameraScanner";
-import CircuitDiagram from "./circuitDiagram";
-import CodePanel from "./CodePanel";
-import HardwarePanel from "./HardwarePanel";
+import CircuitSimulationCard from "./CircuitSimulationCard";
+import CodeGenerationCard from "./CodeGenerationCard";
+import CodeFlashingCard from "./CodeFlashingCard";
 
 const QUICK_STARTERS = [
   { label: "💡 Ultrasonic Distance Alarm", prompt: "Build an ESP32 HC-SR04 ultrasonic distance sensor with buzzer and alert LED" },
@@ -60,8 +60,12 @@ export default function CircuitChatPage({
   const [isLoading, setIsLoading] = useState(false);
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [scannedComponents, setScannedComponents] = useState([]);
-  const [activeProject, setActiveProject] = useState(parentProject || waterLevelAlarmCircuit);
-  const [workspaceTab, setWorkspaceTab] = useState("simulation"); // 'simulation' | 'code' | 'flash'
+  const [activeProject, setActiveProject] = useState(parentProject || null);
+  const [visibleComponents, setVisibleComponents] = useState({
+    circuit: false,
+    code: false,
+    flash: false,
+  });
   const [isListening, setIsListening] = useState(false);
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -152,6 +156,166 @@ export default function CircuitChatPage({
     };
 
     setMessages((prev) => [...prev, userMsg]);
+
+    const lower = textToSend.toLowerCase();
+
+    // Intent detection for component display
+    const wantsCircuit =
+      lower.includes("circuit") ||
+      lower.includes("schematic") ||
+      lower.includes("wire") ||
+      lower.includes("wiring") ||
+      lower.includes("diagram") ||
+      lower.includes("simulation") ||
+      lower.includes("wokwi");
+
+    const wantsCode =
+      lower.includes("code") ||
+      lower.includes("firmware") ||
+      lower.includes("sketch") ||
+      lower.includes("c++") ||
+      lower.includes("cpp") ||
+      lower.includes("arduino") ||
+      lower.includes(".ino");
+
+    const wantsFlash =
+      lower.includes("flash") ||
+      lower.includes("upload") ||
+      lower.includes("burn") ||
+      lower.includes("webserial") ||
+      lower.includes("serial monitor") ||
+      lower.includes("baud");
+
+    const wantsHideCircuit = lower.includes("hide circuit") || lower.includes("close circuit");
+    const wantsHideCode = lower.includes("hide code") || lower.includes("close code");
+    const wantsHideFlash = lower.includes("hide flash") || lower.includes("close flash") || lower.includes("close flasher");
+    const wantsShowAll = lower.includes("show all") || lower.includes("show everything");
+    const wantsHideAll = lower.includes("hide all") || lower.includes("close all");
+
+    // Fast conversational intercept for component toggling when a project is already active
+    const isShowOrHideCommand =
+      wantsHideCircuit ||
+      wantsHideCode ||
+      wantsHideFlash ||
+      wantsHideAll ||
+      wantsShowAll ||
+      ((wantsCircuit || wantsCode || wantsFlash) &&
+        (lower.startsWith("show") ||
+          lower.startsWith("view") ||
+          lower.startsWith("open") ||
+          lower.startsWith("give") ||
+          lower.startsWith("flash") ||
+          lower === "circuit" ||
+          lower === "code" ||
+          lower === "flash"));
+
+    if (activeProject && isShowOrHideCommand) {
+      if (wantsHideAll) {
+        setVisibleComponents({ circuit: false, code: false, flash: false });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: "bot",
+            text: "✅ Closed all hardware workspace components. Say **'Show circuit'**, **'Show code'**, or **'Flash it'** anytime to bring them back!",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        return;
+      }
+
+      if (wantsShowAll) {
+        setVisibleComponents({ circuit: true, code: true, flash: true });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: "bot",
+            text: "🚀 Showing all 3 components below:\n- ⚡ **Circuit Simulation & Wokwi Blueprint**\n- 💻 **Arduino C++ Firmware**\n- 🔥 **WebSerial Hardware Flasher**",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        return;
+      }
+
+      if (wantsHideCircuit) {
+        setVisibleComponents((prev) => ({ ...prev, circuit: false }));
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: "bot",
+            text: "👌 Closed the **Circuit Simulation** component.",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        return;
+      }
+
+      if (wantsHideCode) {
+        setVisibleComponents((prev) => ({ ...prev, code: false }));
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: "bot",
+            text: "👌 Closed the **Arduino Code** viewer component.",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        return;
+      }
+
+      if (wantsHideFlash) {
+        setVisibleComponents((prev) => ({ ...prev, flash: false }));
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: "bot",
+            text: "👌 Closed the **Hardware Flasher** component.",
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
+        return;
+      }
+
+      // Handle displaying individual components on demand
+      let replyParts = [];
+      if (wantsCircuit) {
+        setVisibleComponents((prev) => ({ ...prev, circuit: true }));
+        replyParts.push(
+          `⚡ **Circuit Simulation Component Opened!**\nI've rendered the interactive **Wokwi breadboard simulation and schematic** for **${
+            activeProject.circuit?.title || "your ESP32 circuit"
+          }** below.`
+        );
+      }
+      if (wantsCode) {
+        setVisibleComponents((prev) => ({ ...prev, code: true }));
+        replyParts.push(
+          `💻 **Arduino C++ Code Component Opened!**\nHere is the verified non-blocking firmware with pin definitions. You can copy the code or download the \`.ino\` sketch below.`
+        );
+      }
+      if (wantsFlash) {
+        setVisibleComponents((prev) => ({ ...prev, flash: true }));
+        replyParts.push(
+          `🔥 **Hardware Flasher Component Opened!**\nConnect your physical **ESP32 DevKit** via USB and click **Flash Firmware** below to upload over WebSerial.`
+        );
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: replyParts.join("\n\n"),
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+      return;
+    }
+
+    // Otherwise, perform AI circuit synthesis or answering
     setIsLoading(true);
 
     try {
@@ -162,6 +326,13 @@ export default function CircuitChatPage({
         if (onUpdateProject) {
           onUpdateProject(response.circuitProject);
         }
+
+        // Only show components if the user's query specifically asked for that component!
+        setVisibleComponents({
+          circuit: wantsCircuit,
+          code: wantsCode,
+          flash: wantsFlash,
+        });
       }
 
       const botMsg = {
@@ -201,6 +372,8 @@ export default function CircuitChatPage({
     setMessages([]);
     setInputValue("");
     setScannedComponents([]);
+    setActiveProject(null);
+    setVisibleComponents({ circuit: false, code: false, flash: false });
   };
 
   const handleApplyScannedHardware = ({ components }) => {
@@ -561,9 +734,58 @@ export default function CircuitChatPage({
                       {/* Message Content */}
                       {isUser ? <p>{msg.text}</p> : renderFormattedText(msg.text)}
 
+                      {/* Component Request Buttons on AI Messages */}
+                      {!isUser && (msg.circuitProject || activeProject) && (
+                        <div className="mt-4 pt-3.5 border-t border-white/[0.08] flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-mono text-zinc-400 mr-1 flex items-center gap-1">
+                            <Sparkles size={12} className="text-amber-400" />
+                            Show Component:
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSend("Show circuit simulation")}
+                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
+                              visibleComponents.circuit
+                                ? "bg-amber-500/25 border-amber-500 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                            }`}
+                          >
+                            <Play size={12} className={visibleComponents.circuit ? "fill-amber-400 text-amber-400" : "text-amber-400"} />
+                            <span>{visibleComponents.circuit ? "⚡ Circuit Active" : "⚡ Show Circuit"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSend("Show Arduino code")}
+                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
+                              visibleComponents.code
+                                ? "bg-cyan-500/25 border-cyan-500 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]"
+                                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                            }`}
+                          >
+                            <Code2 size={12} className="text-cyan-400" />
+                            <span>{visibleComponents.code ? "💻 Code Active" : "💻 Show Code"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSend("Flash to ESP32")}
+                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
+                              visibleComponents.flash
+                                ? "bg-orange-500/25 border-orange-500 text-orange-300 shadow-[0_0_12px_rgba(249,115,22,0.25)]"
+                                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                            }`}
+                          >
+                            <Zap size={12} className={visibleComponents.flash ? "fill-orange-400 text-orange-400" : "text-orange-400"} />
+                            <span>{visibleComponents.flash ? "🔥 Flasher Active" : "🔥 Flash ESP32"}</span>
+                          </button>
+                        </div>
+                      )}
+
                       {/* If Bot message has Suggested Next Steps pills */}
                       {!isUser && msg.suggestedNextSteps?.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap gap-2">
+                        <div className="mt-3 pt-2.5 border-t border-white/[0.04] flex flex-wrap gap-2">
                           {msg.suggestedNextSteps.map((step, idx) => (
                             <button
                               key={idx}
@@ -592,96 +814,40 @@ export default function CircuitChatPage({
               )}
             </div>
 
-            {/* ================= ALL-IN-ONE HARDWARE WORKSPACE (SIMULATION + CODE + FLASHING) ================= */}
-            {activeProject && (
-              <div className="mt-8 rounded-3xl bg-[#0d0a14]/95 border border-amber-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_35px_rgba(249,115,22,0.15)] overflow-hidden">
-                {/* Workspace Tabs Header */}
-                <div className="px-4 sm:px-6 py-3.5 border-b border-white/[0.08] bg-[#140f20]/90 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                    <h3 className="text-sm sm:text-base font-bold font-outfit text-white">
-                      IoT Hardware Workspace
-                    </h3>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400">
-                      {activeProject.circuit?.board?.model || "ESP32 DevKit V1"}
-                    </span>
-                  </div>
+            {/* ================= DEDICATED SEPARATE HARDWARE COMPONENTS ================= */}
+            {/* Only shown when user specifically asks the AI for circuit, code, or flash */}
 
-                  {/* 3 Core Interactive Tabs: Simulation, Code Generation, Code Flashing */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06]">
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceTab("simulation")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        workspaceTab === "simulation"
-                          ? "bg-amber-500 text-white shadow-md shadow-orange-500/30"
-                          : "text-zinc-400 hover:text-white"
-                      }`}
-                    >
-                      <Play size={13} fill={workspaceTab === "simulation" ? "currentColor" : "none"} />
-                      <span>Circuit Simulation</span>
-                    </button>
+            {/* 1. Dedicated Circuit Simulation Component */}
+            {visibleComponents.circuit && activeProject?.circuit && (
+              <CircuitSimulationCard
+                circuit={activeProject.circuit}
+                onClose={() => setVisibleComponents((prev) => ({ ...prev, circuit: false }))}
+                onOpenCode={() => setVisibleComponents((prev) => ({ ...prev, code: true }))}
+                onOpenFlash={() => setVisibleComponents((prev) => ({ ...prev, flash: true }))}
+              />
+            )}
 
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceTab("code")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        workspaceTab === "code"
-                          ? "bg-amber-500 text-white shadow-md shadow-orange-500/30"
-                          : "text-zinc-400 hover:text-white"
-                      }`}
-                    >
-                      <Code2 size={13} />
-                      <span>Code Generation</span>
-                    </button>
+            {/* 2. Dedicated Code Generation Component */}
+            {visibleComponents.code && activeProject?.code && (
+              <CodeGenerationCard
+                code={activeProject.code}
+                circuit={activeProject.circuit}
+                boardModel={activeProject.circuit?.board?.model || "ESP32 DevKit V1"}
+                onClose={() => setVisibleComponents((prev) => ({ ...prev, code: false }))}
+                onOpenCircuit={() => setVisibleComponents((prev) => ({ ...prev, circuit: true }))}
+                onOpenFlash={() => setVisibleComponents((prev) => ({ ...prev, flash: true }))}
+              />
+            )}
 
-                    <button
-                      type="button"
-                      onClick={() => setWorkspaceTab("flash")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        workspaceTab === "flash"
-                          ? "bg-amber-500 text-white shadow-md shadow-orange-500/30"
-                          : "text-zinc-400 hover:text-white"
-                      }`}
-                    >
-                      <Zap size={13} />
-                      <span>Code Flashing</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tab 1: Live Interactive Circuit Simulation */}
-                {workspaceTab === "simulation" && (
-                  <div className="p-4 sm:p-6 space-y-4">
-                    <div className="flex items-center justify-between text-xs text-zinc-400">
-                      <p>Interactive breadboard simulation rendered directly from synthesized netlist.</p>
-                      <span className="font-mono text-amber-400">Wokwi Engine Active</span>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/[0.08] overflow-hidden bg-black/50">
-                      <CircuitDiagram circuit={activeProject.circuit} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Tab 2: Synthesized Arduino C++ Code */}
-                {workspaceTab === "code" && (
-                  <div className="p-4 sm:p-6 space-y-4">
-                    <CodePanel
-                      code={activeProject.code}
-                      boardModel={activeProject.circuit?.board?.model || "ESP32 DevKit V1"}
-                      circuit={activeProject.circuit}
-                    />
-                  </div>
-                )}
-
-                {/* Tab 3: Serial Hardware Flashing UI */}
-                {workspaceTab === "flash" && (
-                  <div className="p-4 sm:p-6 space-y-4">
-                    <HardwarePanel code={activeProject.code} />
-                  </div>
-                )}
-              </div>
+            {/* 3. Dedicated Code Flashing Component */}
+            {visibleComponents.flash && activeProject?.code && (
+              <CodeFlashingCard
+                code={activeProject.code}
+                circuit={activeProject.circuit}
+                onClose={() => setVisibleComponents((prev) => ({ ...prev, flash: false }))}
+                onOpenCircuit={() => setVisibleComponents((prev) => ({ ...prev, circuit: true }))}
+                onOpenCode={() => setVisibleComponents((prev) => ({ ...prev, code: true }))}
+              />
             )}
 
             <div ref={messagesEndRef} />

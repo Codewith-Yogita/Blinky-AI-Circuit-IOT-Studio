@@ -86,10 +86,11 @@ graph TB
   - **Natural Language Text**: Type questions or component descriptions.
   - **Voice Speech Recognition (`OR LISTEN`)**: Speak your circuit requirements using browser-native Web Speech API.
   - **Camera Component Scanner**: Snap desk hardware components using your phone camera via Windows Phone Link or local LAN QR code.
-- **Unified Hardware Workspace**:
-  1. ⚡ **Circuit Simulation**: Live interactive Wokwi simulation canvas and schematic wiring diagram rendered directly in the conversation.
-  2. 💻 **Code Generation**: Production-ready, non-blocking Arduino C++ code with syntax highlighting, copy-to-clipboard, and `.ino` download.
-  3. 🔥 **WebSerial Flashing UI**: Direct browser-to-chip connection over USB serial, 1-click ESP32 flashing with progress animation, and real-time 115200 baud serial monitor.
+- **On-Demand Standalone Hardware Components**:
+  - Components are separate, modular cards that **only appear when requested by the user** (via conversational commands like *"Show circuit"*, *"Show code"*, *"Flash to ESP32"*, or message action pills):
+    1. ⚡ **`CircuitSimulationCard`**: Live interactive Wokwi simulation canvas and schematic wiring diagram rendered directly in the conversation.
+    2. 💻 **`CodeGenerationCard`**: Production-ready, non-blocking Arduino C++ code with syntax highlighting, copy-to-clipboard, and `.ino` download.
+    3. 🔥 **`CodeFlashingCard`**: Direct browser-to-chip connection over USB serial, 1-click ESP32 flashing with progress animation, and real-time 115200 baud serial monitor.
 
 ---
 
@@ -131,10 +132,13 @@ blinkyAntigravity/
 │   ├── Components/                  # Modular UI Components
 │   │   ├── nodes/                   # SVG Schematic Component Nodes (ESP32, LED, Resistor, Buzzer, Ultrasonic)
 │   │   ├── ui/                      # UI primitives
-│   │   ├── CircuitChatPage.jsx      # Page 2: All-in-One AI Circuit Chatbot & Workspace
-│   │   ├── circuitDiagram.jsx       # Tab 1: Wokwi Simulator & Blueprint Canvas
-│   │   ├── CodePanel.jsx            # Tab 2: Arduino C++ Firmware Viewer & Exporter
-│   │   ├── HardwarePanel.jsx        # Tab 3: ESP32 WebSerial Flasher & Serial Monitor
+│   │   ├── CircuitChatPage.jsx      # Page 2: AI Circuit Chatbot Studio
+│   │   ├── CircuitSimulationCard.jsx # On-Demand: Standalone Wokwi Simulation Card
+│   │   ├── CodeGenerationCard.jsx   # On-Demand: Standalone Arduino C++ Code Card
+│   │   ├── CodeFlashingCard.jsx     # On-Demand: Standalone WebSerial ESP32 Flasher Card
+│   │   ├── circuitDiagram.jsx       # Wokwi Simulator & Blueprint Canvas
+│   │   ├── CodePanel.jsx            # Arduino C++ Firmware Viewer & Exporter
+│   │   ├── HardwarePanel.jsx        # ESP32 WebSerial Flasher & Serial Monitor
 │   │   ├── ComponentCameraScanner.jsx # Phone Link / Camera Hardware Component Scanner
 │   │   ├── FloatingChatWidget.jsx   # Circular Floating Bot Side Button & Chat Drawer
 │   │   ├── InteractiveCircuitStory.jsx # GSAP Scroll-driven storytelling narrative

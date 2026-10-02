@@ -21,25 +21,38 @@ import {
   Play,
   Terminal,
   Zap,
+  Mic,
+  MicOff,
+  Flame,
+  Radio,
+  FileCode,
+  Download,
+  Copy,
+  Sliders,
+  Check,
 } from "lucide-react";
 import { sendChatMessage } from "../services/chatAssistant";
+import { generateProject } from "../services/api";
+import { waterLevelAlarmCircuit, joystickLedCircuit, singleLedCircuit } from "../data/mockCircuits";
 import ComponentCameraScanner from "./ComponentCameraScanner";
+import CircuitDiagram from "./circuitDiagram";
+import CodePanel from "./CodePanel";
+import HardwarePanel from "./HardwarePanel";
 
-const BASE_EXAMPLE_QUERIES = [
-  "Blink an LED on ESP32 GPIO2 every second",
-  "HC-SR04 ultrasonic distance alarm with buzzer & alert LED",
-  "Dual-axis analog joystick controlling two servo motors",
-  "How does an LDR voltage divider circuit work on ESP32?",
-  "Why do tactile buttons need a pull-up resistor or INPUT_PULLUP?",
-  "I2C SSD1306 OLED display pinouts and telemetry code",
+const QUICK_STARTERS = [
+  { label: "💡 Ultrasonic Distance Alarm", prompt: "Build an ESP32 HC-SR04 ultrasonic distance sensor with buzzer and alert LED" },
+  { label: "🔘 Push Button Debounce & LED", prompt: "ESP32 push button with internal pull-up and status indicator LED" },
+  { label: "🕹️ Dual-Axis Joystick Controller", prompt: "Dual-axis analog joystick controlling two servo motors with ESP32" },
+  { label: "🌡️ DHT11 Temp & Humidity Sensor", prompt: "DHT11 temperature and humidity sensor reading telemetry on ESP32" },
+  { label: "⚡ ESP32 GPIO Pinout & Safety", prompt: "Explain ESP32 pin capabilities, ADC1 vs ADC2, and safe pins for sensors" },
 ];
 
 export default function CircuitChatPage({
   initialQuery = "",
+  currentProject: parentProject,
   onBackToLanding,
-  onLaunchStudioWithProject,
-  onOpenStudio,
-  theme,
+  onUpdateProject,
+  theme = "dark",
   toggleTheme,
 }) {
   const [messages, setMessages] = useState([]);
@@ -47,26 +60,80 @@ export default function CircuitChatPage({
   const [isLoading, setIsLoading] = useState(false);
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [scannedComponents, setScannedComponents] = useState([]);
+  const [activeProject, setActiveProject] = useState(parentProject || waterLevelAlarmCircuit);
+  const [workspaceTab, setWorkspaceTab] = useState("simulation"); // 'simulation' | 'code' | 'flash'
+  const [isListening, setIsListening] = useState(false);
+  const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const inputRef = useRef(null);
+  const speechRecognitionRef = useRef(null);
   const hasAutoSentRef = useRef(false);
+
   const isDark = theme === "dark";
 
-  // Auto-scroll to bottom of chat
+  // Auto-scroll when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
-  // Handle auto-resizing textarea
-  const handleTextareaChange = (e) => {
-    setInputValue(e.target.value);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        180
-      )}px`;
+  // Handle incoming initialQuery
+  useEffect(() => {
+    if (initialQuery && initialQuery.trim() && !hasAutoSentRef.current) {
+      hasAutoSentRef.current = true;
+      handleSend(initialQuery.trim());
+    }
+  }, [initialQuery]);
+
+  // Sync active project if parent updates
+  useEffect(() => {
+    if (parentProject) {
+      setActiveProject(parentProject);
+    }
+  }, [parentProject]);
+
+  // Initialize SpeechRecognition if available
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInputValue((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        }
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+
+      speechRecognitionRef.current = recognition;
+    }
+  }, []);
+
+  const handleToggleVoice = () => {
+    if (!speechRecognitionRef.current) {
+      alert("Voice input is not supported in this browser. Please type your request or click an example!");
+      return;
+    }
+
+    if (isListening) {
+      speechRecognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        speechRecognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.warn("Speech recognition already running", e);
+      }
     }
   };
 
@@ -74,11 +141,7 @@ export default function CircuitChatPage({
     const textToSend = (customText || inputValue).trim();
     if (!textToSend || isLoading) return;
 
-    // Reset input
     setInputValue("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
 
     const userMsg = {
       id: Date.now(),
@@ -94,6 +157,13 @@ export default function CircuitChatPage({
     try {
       const response = await sendChatMessage(textToSend, messages, scannedComponents);
 
+      if (response.circuitProject) {
+        setActiveProject(response.circuitProject);
+        if (onUpdateProject) {
+          onUpdateProject(response.circuitProject);
+        }
+      }
+
       const botMsg = {
         id: Date.now() + 1,
         sender: "bot",
@@ -105,16 +175,16 @@ export default function CircuitChatPage({
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      console.error("Chat error:", err);
-      const errorMsg = {
-        id: Date.now() + 1,
-        sender: "bot",
-        text: "I encountered an error while synthesizing your circuit. Please verify the hardware description and try again.",
-        circuitProject: null,
-        suggestedNextSteps: [],
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      console.error("Chat message error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: `⚠️ **Error Processing Request**: Could not generate circuit. Please check your network connection and try again.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -136,35 +206,37 @@ export default function CircuitChatPage({
   const handleApplyScannedHardware = ({ components }) => {
     setScannedComponents(components);
     const names = components.map((c) => c.name).join(", ");
-    setInputValue(
-      `I scanned my components: ${names}. Build a complete circuit with simulation and step-by-step wiring instructions.`
-    );
+    handleSend(`Build an ESP32 circuit using scanned components: ${names}`);
   };
 
-  // Auto-send initial query if transferred from floating chat widget
-  useEffect(() => {
-    if (initialQuery && initialQuery.trim() && !hasAutoSentRef.current) {
-      hasAutoSentRef.current = true;
-      handleSend(initialQuery.trim());
-    }
-  }, [initialQuery]);
+  const handleRunDemo = () => {
+    handleSend("HC-SR04 ultrasonic distance alarm with buzzer & alert LED");
+  };
 
   // Helper to format bot markdown text cleanly
   const renderFormattedText = (rawText) => {
     const lines = rawText.split("\n");
+
     return (
-      <div className="space-y-3 leading-relaxed text-sm sm:text-base">
+      <div className="space-y-2 leading-relaxed">
         {lines.map((line, idx) => {
           if (line.startsWith("### ")) {
             return (
-              <h3 key={idx} className="text-base sm:text-lg font-bold text-amber-300 mt-2 mb-1">
+              <h3
+                key={idx}
+                className="text-base sm:text-lg font-bold font-outfit text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mt-2 mb-1 flex items-center gap-2"
+              >
+                <Sparkles size={16} className="text-amber-400 shrink-0" />
                 {line.replace("### ", "")}
               </h3>
             );
           }
           if (line.startsWith("#### ")) {
             return (
-              <h4 key={idx} className="text-sm sm:text-base font-semibold text-zinc-200 mt-2 mb-0.5">
+              <h4
+                key={idx}
+                className="text-xs sm:text-sm font-bold font-mono text-amber-300 uppercase tracking-wider mt-3 mb-1"
+              >
                 {line.replace("#### ", "")}
               </h4>
             );
@@ -229,14 +301,30 @@ export default function CircuitChatPage({
   };
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 ${
-        isDark ? "bg-[#080709] text-zinc-100" : "bg-[#fbf9f6] text-zinc-900"
-      } flex flex-col antialiased selection:bg-amber-500/30 selection:text-white w-full`}
-    >
-      {/* Background Ambient Glow */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-gradient-to-b from-amber-500/10 via-orange-600/5 to-transparent blur-3xl rounded-full" />
+    <div className="min-h-screen bg-[#040306] text-zinc-100 flex flex-col antialiased selection:bg-amber-500/30 selection:text-white w-full relative overflow-x-hidden">
+      {/* ================= RETRO DIGITAL DOT MATRIX BACKGROUND ================= */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)`,
+          backgroundSize: "28px 28px",
+        }}
+      />
+
+      {/* Scattered Ambient Pixel Stars (Matching Reference Screenshot) */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Subtle glowing star pixels */}
+        <span className="absolute top-[18%] left-[12%] w-1.5 h-1.5 rounded-full bg-cyan-400/60 shadow-[0_0_8px_cyan] animate-pulse" />
+        <span className="absolute top-[32%] left-[8%] w-1 h-1 rounded-full bg-purple-400/50 shadow-[0_0_6px_purple]" />
+        <span className="absolute top-[48%] left-[15%] w-1.5 h-1.5 rounded-full bg-amber-400/50 shadow-[0_0_6px_amber]" />
+        <span className="absolute top-[22%] right-[14%] w-1 h-1 rounded-full bg-emerald-400/60 shadow-[0_0_6px_emerald]" />
+        <span className="absolute top-[38%] right-[10%] w-1.5 h-1.5 rounded-full bg-pink-400/50 shadow-[0_0_8px_pink] animate-pulse" />
+        <span className="absolute top-[65%] right-[16%] w-1 h-1 rounded-full bg-orange-400/60 shadow-[0_0_6px_orange]" />
+        <span className="absolute top-[75%] left-[9%] w-1.5 h-1.5 rounded-full bg-teal-400/40 shadow-[0_0_6px_teal]" />
+        <span className="absolute top-[82%] right-[24%] w-1 h-1 rounded-full bg-yellow-400/50 shadow-[0_0_6px_yellow]" />
+
+        {/* Central Warm Ambient Aura Behind Mascot */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[450px] bg-gradient-to-tr from-amber-600/15 via-orange-600/10 to-red-600/5 blur-[120px] rounded-full pointer-events-none" />
       </div>
 
       {/* Camera Scanner Modal Component */}
@@ -246,499 +334,500 @@ export default function CircuitChatPage({
         onApplyToChat={handleApplyScannedHardware}
       />
 
-      {/* ================= HEADER BAR ================= */}
-      <header
-        className={`sticky top-0 z-40 w-full px-4 sm:px-8 py-3.5 border-b backdrop-blur-xl flex items-center justify-between transition-colors duration-300 ${
-          isDark
-            ? "bg-[#080709]/90 border-white/[0.08]"
-            : "bg-[#fbf9f6]/90 border-amber-900/10 shadow-sm"
-        }`}
-      >
-        {/* Left: Brand + Navigation to Landing */}
-        <div className="flex items-center gap-4 sm:gap-6">
-          <button
-            type="button"
-            onClick={onBackToLanding}
-            className="group flex items-center gap-2 text-xs sm:text-sm font-bold font-outfit text-zinc-300 hover:text-white transition-all duration-300 py-1 cursor-pointer hover:scale-105 active:scale-95"
-            title="Return to Landing Page"
-          >
-            <ArrowLeft
-              size={15}
-              className="text-amber-400 transition-transform duration-300 group-hover:-translate-x-1.5"
-            />
-            <span className="relative">
-              Dashboard
-              <span className="absolute -bottom-0.5 left-0 w-0 h-[2px] bg-gradient-to-r from-amber-400 to-orange-500 group-hover:w-full transition-all duration-300 rounded-full" />
-            </span>
-          </button>
-
-          <div
-            className={`flex items-center gap-2.5 cursor-pointer group transition-all duration-300 hover:scale-105 active:scale-95 ${
-              isDark
-                ? "py-0.5"
-                : "bg-[#0d0a14] px-2.5 py-1 rounded-xl shadow-sm border border-amber-500/20"
-            }`}
-            onClick={onBackToLanding}
-          >
-            <img
-              src="/blinky-logo-text.png"
-              alt="Blinky Logo"
-              className="h-6 sm:h-7.5 w-auto object-contain drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]"
-            />
-            <span className="text-[10px] font-bold font-mono tracking-wider uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30">
-              AI Chat
-            </span>
-          </div>
+      {/* ================= TOP NAVIGATION HEADER (MATCHING SCREENSHOT) ================= */}
+      <header className="sticky top-0 z-40 w-full px-5 sm:px-10 py-3.5 border-b border-white/[0.06] bg-[#040306]/85 backdrop-blur-2xl flex items-center justify-between transition-colors">
+        {/* Left: Brand Logo Text */}
+        <div
+          className="flex items-center cursor-pointer group transition-transform hover:scale-105 active:scale-95"
+          onClick={onBackToLanding}
+        >
+          <img
+            src="/blinky-logo-text.png"
+            alt="Blinky Logo"
+            className="h-7 sm:h-8 w-auto object-contain drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]"
+          />
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Direct Camera Button in Header */}
+        {/* Center: Nav links from reference image (Demo, Quick Actions, Features) */}
+        <nav className="hidden md:flex items-center gap-8 text-xs font-medium tracking-wide">
           <button
             type="button"
-            onClick={() => setShowCameraScanner(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold font-outfit transition-all cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.2)] hover:scale-105 active:scale-95"
-            title="Scan physical components via Phone Link or Webcam"
+            onClick={handleRunDemo}
+            className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1 flex items-center gap-1.5"
           >
-            <Camera size={14} className="text-amber-400" />
-            <span className="hidden sm:inline">Scan Hardware</span>
+            <Play size={13} className="text-amber-400" />
+            <span>Demo</span>
           </button>
 
-          {messages.length > 0 && (
-            <button
-              type="button"
-              onClick={handleNewChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-medium transition-all cursor-pointer"
-              title="Start a new chat session"
-            >
-              <RefreshCw size={13} className="text-amber-400" />
-              <span className="hidden sm:inline">New Chat</span>
-            </button>
-          )}
-
-          {/* Jump to Studio */}
           <button
             type="button"
-            onClick={onOpenStudio}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-zinc-200 hover:text-white text-xs font-bold font-outfit transition-all cursor-pointer hover:scale-105 active:scale-95"
-            title="Open Circuit Studio Workspace"
+            onClick={() => setShowQuickActionsModal(true)}
+            className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1 flex items-center gap-1.5"
           >
-            <CircuitBoard size={14} className="text-amber-400" />
-            <span>Circuit Studio</span>
+            <Zap size={13} className="text-orange-400" />
+            <span>Quick Actions</span>
           </button>
 
-          {/* Theme Toggle */}
           <button
             type="button"
-            onClick={toggleTheme}
-            className="p-1.5 text-zinc-400 hover:text-amber-400 hover:scale-110 active:scale-90 transition-all cursor-pointer"
-            title={isDark ? "Switch to Day Mode" : "Switch to Night Mode"}
+            onClick={() => {
+              if (messages.length === 0) {
+                handleSend("Show me all Blinky capabilities: simulation, code generation, and ESP32 flashing");
+              }
+            }}
+            className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1"
           >
-            {isDark ? (
-              <Sun className="w-4 h-4 text-amber-400 hover:rotate-90 transition-transform duration-500" />
-            ) : (
-              <Moon className="w-4 h-4 text-amber-600 hover:-rotate-45 transition-transform duration-500" />
-            )}
+            Features
+          </button>
+        </nav>
+
+        {/* Right: Dashboard / Download Capsule Button (Matching Reference Image) */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBackToLanding}
+            className="group flex items-center gap-2 px-4 sm:px-5 py-2 rounded-full bg-white hover:bg-zinc-100 text-black font-bold text-xs sm:text-sm font-outfit shadow-lg shadow-white/10 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Return to Landing Page Dashboard"
+          >
+            <span>Dashboard</span>
+            <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </header>
 
-      {/* ================= MAIN CONTENT ================= */}
-      <main className="flex-1 flex flex-col justify-between w-full max-w-4xl mx-auto px-4 sm:px-6 relative z-10 py-6 sm:py-8">
+      {/* ================= MAIN CONTENT AREA ================= */}
+      <main className="flex-1 flex flex-col justify-between w-full max-w-5xl mx-auto px-4 sm:px-6 relative z-10 py-6 sm:py-10">
         
-        {/* VIEW 1: EMPTY / INITIAL STATE (MATCHING USER SCREENSHOT) */}
+        {/* ================= VIEW 1: HERO VIEW (EXACT MATCH OF UPLOADED SCREENSHOT) ================= */}
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-10">
-            {/* Title & Subtitle */}
-            <div className="max-w-2xl mx-auto mb-8 sm:mb-10 space-y-3">
-              <h1 className="text-3xl sm:text-5xl font-black tracking-tight font-outfit text-white drop-shadow-md">
-                Investigate Your Circuit
-              </h1>
-              <p className="text-xs sm:text-sm md:text-base text-zinc-400 max-w-xl mx-auto leading-relaxed">
-                Scan your physical components or describe your desired circuit. We calculate pinouts,
-                verify electrical safety, synthesize live schematics, and flash production Arduino C++ to your ESP32.
-              </p>
+          <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-6 sm:py-12">
+            
+            {/* Monumental Headline */}
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight font-outfit leading-[1.08]">
+              <span className="text-white block">Tell Blinky.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-red-500 block mt-1">
+                It gets it done.
+              </span>
+            </h1>
+
+            {/* Subhead narrative from screenshot */}
+            <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl text-center mx-auto leading-relaxed mt-4 font-normal px-4">
+              Blinky sees what you see, understands what you ask, and takes care of the computer work.
+            </p>
+
+            {/* Glowing 3D Mascot in Center */}
+            <div className="relative my-8 sm:my-11 flex items-center justify-center">
+              {/* Backglow Aura */}
+              <div className="absolute w-44 h-44 sm:w-56 sm:h-56 rounded-full bg-gradient-to-tr from-amber-500/35 via-orange-600/25 to-red-500/15 blur-3xl pointer-events-none" />
+              <img
+                src="/blinky-mascot.png"
+                alt="Blinky Mascot"
+                className="relative w-28 h-28 sm:w-36 sm:h-36 object-contain drop-shadow-[0_15px_35px_rgba(249,115,22,0.45)] hover:scale-110 hover:-rotate-3 transition-transform duration-300 cursor-pointer select-none"
+                onClick={() => inputRef.current?.focus()}
+                title="Blinky AI Mascot"
+              />
             </div>
 
-            {/* Central Chatbox Container (Matching user reference layout) */}
-            <div className="w-full max-w-2xl mx-auto">
-              <div className="relative rounded-2xl sm:rounded-3xl bg-[#13111a]/95 border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.06)] focus-within:border-amber-500/50 focus-within:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.18)] transition-all p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
+            {/* Wide Input Capsule (Matching Reference Screenshot) */}
+            <div className="w-full max-w-2xl mx-auto mt-2">
+              <div className="relative rounded-full bg-[#121118]/90 border border-zinc-800/80 hover:border-zinc-700 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
                 
-                {/* Active Scanned Hardware Pill Tray */}
-                {scannedComponents.length > 0 && (
-                  <div className="flex items-center justify-between px-3 py-1.5 mb-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
-                    <div className="flex items-center gap-2 overflow-x-auto py-0.5">
-                      <span className="font-mono font-bold flex items-center gap-1 shrink-0 text-emerald-400">
-                        <Camera size={13} />
-                        Scanned Hardware ({scannedComponents.length}):
-                      </span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {scannedComponents.map((c, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 rounded-md bg-black/40 text-[11px] font-mono border border-amber-500/20 text-zinc-200"
-                          >
-                            {c.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setScannedComponents([])}
-                      className="text-zinc-400 hover:text-white text-[11px] underline ml-2 shrink-0 cursor-pointer"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
+                {/* Camera Scan Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowCameraScanner(true)}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 transition-all flex items-center justify-center shrink-0 cursor-pointer hover:scale-105 active:scale-95 border border-white/[0.05]"
+                  title="Scan hardware components with Phone Link or Webcam"
+                >
+                  <Camera size={17} />
+                </button>
 
-                {/* Textarea */}
-                <textarea
-                  ref={textareaRef}
+                {/* Input Text Box */}
+                <input
+                  ref={inputRef}
+                  type="text"
                   value={inputValue}
-                  onChange={handleTextareaChange}
+                  onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={
-                    scannedComponents.length > 0
-                      ? "Tell me what circuit to build with your scanned components..."
-                      : "Describe an IoT project, or click 'Scan Camera' to auto-detect hardware..."
-                  }
-                  className="w-full bg-transparent border-none outline-none text-zinc-100 placeholder-zinc-500 text-sm sm:text-base resize-none font-medium leading-relaxed"
-                  rows={2}
+                  placeholder="What should Blinky do?"
+                  className="flex-1 bg-transparent border-none outline-none text-white text-xs sm:text-sm md:text-base placeholder-zinc-500 font-medium px-2"
                   disabled={isLoading}
                 />
 
-                {/* Bottom Bar inside Chatbox */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] mt-2 gap-2">
-                  <div className="flex items-center gap-2.5">
-                    {/* Side AI Icon matching Image 2 */}
-                    <div
-                      className="relative shrink-0 group cursor-pointer"
-                      onClick={() => textareaRef.current?.focus()}
-                      title="Blinky AI Copilot"
-                    >
-                      <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-orange-500 to-red-500 shadow-[0_0_12px_rgba(249,115,22,0.4)] group-hover:scale-110 transition-transform">
-                        <div className="w-full h-full rounded-full bg-[#120d1c] flex items-center justify-center p-0.5">
-                          <img
-                            src="/blinky-mascot.png"
-                            alt="Blinky Mascot"
-                            className="w-full h-full object-contain pointer-events-none select-none drop-shadow-sm"
-                          />
-                        </div>
-                      </div>
-                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#120d1c] animate-pulse" />
-                    </div>
+                {/* Microphone / "OR LISTEN" Button */}
+                <button
+                  type="button"
+                  onClick={handleToggleVoice}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all shrink-0 cursor-pointer ${
+                    isListening
+                      ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 border-white/[0.08]"
+                  }`}
+                  title="Voice command (Speech Recognition)"
+                >
+                  <Mic size={13} className={isListening ? "text-red-400" : "text-zinc-400"} />
+                  <span className="hidden sm:inline">OR LISTEN</span>
+                </button>
 
-                    {/* Camera Scanner Trigger */}
-                    <button
-                      type="button"
-                      onClick={() => setShowCameraScanner(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.15)] hover:scale-105 active:scale-95 shrink-0"
-                      title="Scan components with webcam or phone link"
-                    >
-                      <Camera size={14} className="text-amber-400" />
-                      <span>Scan Camera</span>
-                    </button>
-
-                    <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-400 select-none">
-                      <Sparkles size={13} className="text-amber-400 shrink-0" />
-                      <span>Press Enter to synthesize</span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSend()}
-                    disabled={!inputValue.trim() || isLoading}
-                    className="group relative flex items-center gap-2 px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 text-white font-bold text-xs sm:text-sm font-outfit shadow-[0_4px_16px_rgba(245,158,11,0.3)] hover:shadow-[0_4px_22px_rgba(245,158,11,0.5)] transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin text-amber-200" />
-                        <span>Synthesizing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Investigate &amp; Build</span>
-                        <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Submit / Send Button */}
+                <button
+                  type="button"
+                  onClick={() => handleSend()}
+                  disabled={!inputValue.trim() || isLoading}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/25 transition-transform hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Send message"
+                >
+                  {isLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <ArrowRight size={17} />
+                  )}
+                </button>
               </div>
 
-              {/* Example Demo Queries Section (Matching user reference layout) */}
-              <div className="mt-8 text-left">
-                <div className="text-[11px] font-mono font-bold tracking-widest text-zinc-500 uppercase mb-3 px-1">
-                  Or Try An Example Demo Query:
-                </div>
-                <div className="flex flex-wrap gap-2.5">
+              {/* Quick Query Starters Pills */}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+                {QUICK_STARTERS.map((starter, i) => (
                   <button
+                    key={i}
                     type="button"
-                    onClick={() => setShowCameraScanner(true)}
-                    className="px-3.5 py-2 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all shadow-[0_2px_8px_rgba(0,0,0,0.4)] hover:shadow-[0_0_16px_rgba(245,158,11,0.25)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex items-center gap-1.5"
+                    onClick={() => handleSend(starter.prompt)}
+                    className="px-3 py-1.5 rounded-full bg-white/[0.03] hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-500/30 text-[11px] sm:text-xs text-zinc-400 hover:text-amber-300 font-medium transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
                   >
-                    <Camera size={13} className="text-amber-400" />
-                    <span>Scan physical components with camera</span>
+                    {starter.label}
                   </button>
-
-                  {BASE_EXAMPLE_QUERIES.map((query, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSend(query)}
-                      className="px-3.5 py-2 rounded-full bg-[#16121f]/90 hover:bg-[#201830] border border-zinc-800 hover:border-amber-500/40 text-zinc-300 hover:text-white text-xs font-medium transition-all shadow-[0_2px_8px_rgba(0,0,0,0.4)] hover:shadow-[0_0_16px_rgba(245,158,11,0.18)] hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-left"
-                    >
-                      &ldquo;{query}&rdquo;
-                    </button>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
           </div>
         ) : (
-          /* VIEW 2: ACTIVE CONVERSATION STREAM (CHATGPT STYLE) */
-          <div className="flex-1 flex flex-col justify-between w-full">
-            <div className="space-y-6 pb-32">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex items-start gap-3 sm:gap-4 ${
-                    msg.sender === "user" ? "flex-row-reverse" : "flex-row"
-                  }`}
-                >
-                  {/* Avatar */}
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                      msg.sender === "user"
-                        ? "bg-zinc-800 text-zinc-300 border border-zinc-700"
-                        : "bg-gradient-to-tr from-amber-500 to-red-600 text-white shadow-[0_0_12px_rgba(245,158,11,0.4)]"
-                    }`}
-                  >
-                    {msg.sender === "user" ? <User size={16} /> : <Bot size={16} />}
-                  </div>
+          /* ================= VIEW 2: ACTIVE CONVERSATION & ALL-IN-ONE HARDWARE WORKSPACE ================= */
+          <div className="flex-1 flex flex-col space-y-8 pb-32">
+            
+            {/* Header Actions for Conversation View */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center gap-3">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-xs sm:text-sm font-bold font-outfit text-zinc-300">
+                  Active Circuit Synthesis
+                </span>
+                {activeProject?.circuit?.title && (
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                    {activeProject.circuit.title}
+                  </span>
+                )}
+              </div>
 
-                  {/* Message Bubble */}
+              <button
+                type="button"
+                onClick={handleNewChat}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-medium text-zinc-300 hover:text-white transition-all cursor-pointer"
+              >
+                <RefreshCw size={12} className="text-amber-400" />
+                <span>New Project</span>
+              </button>
+            </div>
+
+            {/* Chat Messages Stream */}
+            <div className="space-y-6">
+              {messages.map((msg) => {
+                const isUser = msg.sender === "user";
+
+                return (
                   <div
-                    className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-4 sm:p-5 shadow-lg ${
-                      msg.sender === "user"
-                        ? "bg-[#1f192b] text-zinc-100 border border-amber-500/20"
-                        : "bg-[#13111a]/95 text-zinc-200 border border-zinc-800/90"
-                    }`}
+                    key={msg.id}
+                    className={`flex flex-col ${isUser ? "items-end" : "items-start"} space-y-2`}
                   >
                     {/* Timestamp & Sender */}
-                    <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 mb-2">
-                      <span className="font-bold text-amber-400/90">
-                        {msg.sender === "user" ? "You" : "Blinky AI Architect"}
-                      </span>
-                      <span>{msg.timestamp}</span>
-                    </div>
-
-                    {/* Scanned Badge on User Bubble */}
-                    {msg.scannedParts?.length > 0 && (
-                      <div className="mb-2 text-[11px] font-mono text-amber-300 bg-black/30 px-2 py-1 rounded-md border border-amber-500/20">
-                        📷 Attached Scanned Components: {msg.scannedParts.map((p) => p.name).join(", ")}
-                      </div>
-                    )}
-
-                    {/* Formatted Content */}
-                    <div className="text-zinc-200">
-                      {msg.sender === "user" ? (
-                        <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
-                          {msg.text}
-                        </p>
+                    <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500 px-1">
+                      {isUser ? (
+                        <span>You • {msg.timestamp}</span>
                       ) : (
-                        renderFormattedText(msg.text)
+                        <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+                          <Bot size={13} />
+                          <span>Blinky AI • {msg.timestamp}</span>
+                        </div>
                       )}
                     </div>
 
-                    {/* Integrated Synthesized Circuit & Flash Action Card */}
-                    {msg.circuitProject && (
-                      <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-[#1a1224] to-[#100b17] border border-amber-500/30 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                            <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                              Simulation &amp; Firmware Ready
-                            </span>
-                          </div>
-                          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300">
-                            {msg.circuitProject.circuit?.board?.model || "ESP32 DevKit V1"}
-                          </span>
+                    {/* Bubble */}
+                    <div
+                      className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-[95%] sm:max-w-[85%] text-xs sm:text-sm shadow-xl ${
+                        isUser
+                          ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-br-xs shadow-orange-500/20"
+                          : "bg-[#110e19]/95 border border-white/[0.08] text-zinc-200 rounded-bl-xs shadow-black/80"
+                      }`}
+                    >
+                      {/* Message Content */}
+                      {isUser ? <p>{msg.text}</p> : renderFormattedText(msg.text)}
+
+                      {/* If Bot message has Suggested Next Steps pills */}
+                      {!isUser && msg.suggestedNextSteps?.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap gap-2">
+                          {msg.suggestedNextSteps.map((step, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleSend(step)}
+                              className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30 text-zinc-300 hover:text-white transition-all cursor-pointer"
+                            >
+                              {step}
+                            </button>
+                          ))}
                         </div>
-
-                        <p className="text-xs text-zinc-300 mb-4 leading-relaxed">
-                          The interactive Wokwi simulation schematic and production Arduino C++ firmware have been verified.
-                        </p>
-
-                        {/* Dual Action Buttons: Interactive Simulation OR Direct Flash */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => onLaunchStudioWithProject(msg.circuitProject, "circuit")}
-                            className="group flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 text-white font-bold text-xs sm:text-sm font-outfit shadow-[0_4px_16px_rgba(245,158,11,0.35)] hover:shadow-[0_4px_24px_rgba(245,158,11,0.5)] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                          >
-                            <Play size={15} className="fill-white" />
-                            <span>Run Live Simulation</span>
-                            <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onLaunchStudioWithProject(msg.circuitProject, "flash")}
-                            className="group flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#231735] hover:bg-[#2c1d42] border border-amber-500/40 text-amber-300 hover:text-white font-bold text-xs sm:text-sm font-outfit shadow-md transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
-                          >
-                            <Terminal size={15} />
-                            <span>Flash to Physical ESP32</span>
-                            <Zap size={13} className="text-amber-400" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Suggested Next Steps Chips */}
-                    {msg.suggestedNextSteps?.length > 0 && (
-                      <div className="mt-3.5 pt-3 border-t border-white/[0.06] flex flex-wrap gap-1.5">
-                        {msg.suggestedNextSteps.map((step, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              if (step.includes("Open in Circuit Studio") && msg.circuitProject) {
-                                onLaunchStudioWithProject(msg.circuitProject, "circuit");
-                              } else {
-                                handleSend(step);
-                              }
-                            }}
-                            className="text-[11px] px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-amber-500/10 hover:border-amber-500/30 border border-white/[0.06] text-zinc-300 hover:text-amber-300 transition-colors cursor-pointer"
-                          >
-                            ↳ {step}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
-              {/* Bot Loading Indicator */}
+              {/* Loading Indicator */}
               {isLoading && (
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-red-600 text-white flex items-center justify-center shadow-[0_0_12px_rgba(245,158,11,0.4)]">
-                    <Bot size={16} />
-                  </div>
-                  <div className="rounded-2xl p-4 bg-[#13111a]/95 border border-zinc-800/90 text-zinc-300 flex items-center gap-3">
-                    <Loader2 size={16} className="animate-spin text-amber-400" />
-                    <span className="text-xs sm:text-sm font-medium">
-                      Consulting hardware rules, synthesizing pinouts &amp; verifying schematic...
-                    </span>
-                  </div>
+                <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#110e19]/95 border border-amber-500/25 w-fit shadow-lg">
+                  <Loader2 size={18} className="animate-spin text-amber-400" />
+                  <span className="text-xs sm:text-sm font-medium text-zinc-300">
+                    Blinky is synthesizing circuit, generating firmware, and preparing simulation...
+                  </span>
                 </div>
               )}
-
-              <div ref={messagesEndRef} />
             </div>
 
-            {/* Pinned Bottom Chatbar (ChatGPT Style) */}
-            <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-[#080709] via-[#080709]/95 to-transparent pt-6 pb-4 px-4 z-30">
-              <div className="max-w-4xl mx-auto space-y-2">
-                
-                {/* Active Scanned Hardware Pill Tray on bottom chatbar */}
-                {scannedComponents.length > 0 && (
-                  <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#13111a]/95 border border-amber-500/30 text-amber-300 text-xs shadow-lg">
-                    <div className="flex items-center gap-2 overflow-x-auto py-0.5">
-                      <span className="font-mono font-bold flex items-center gap-1 shrink-0 text-emerald-400">
-                        <Camera size={13} />
-                        Scanned Hardware ({scannedComponents.length}):
-                      </span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {scannedComponents.map((c, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 rounded-md bg-black/40 text-[11px] font-mono border border-amber-500/20 text-zinc-200"
-                          >
-                            {c.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+            {/* ================= ALL-IN-ONE HARDWARE WORKSPACE (SIMULATION + CODE + FLASHING) ================= */}
+            {activeProject && (
+              <div className="mt-8 rounded-3xl bg-[#0d0a14]/95 border border-amber-500/30 shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_35px_rgba(249,115,22,0.15)] overflow-hidden">
+                {/* Workspace Tabs Header */}
+                <div className="px-4 sm:px-6 py-3.5 border-b border-white/[0.08] bg-[#140f20]/90 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                    <h3 className="text-sm sm:text-base font-bold font-outfit text-white">
+                      IoT Hardware Workspace
+                    </h3>
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400">
+                      {activeProject.circuit?.board?.model || "ESP32 DevKit V1"}
+                    </span>
+                  </div>
+
+                  {/* 3 Core Interactive Tabs: Simulation, Code Generation, Code Flashing */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.06]">
                     <button
                       type="button"
-                      onClick={() => setScannedComponents([])}
-                      className="text-zinc-400 hover:text-white text-[11px] underline ml-2 shrink-0 cursor-pointer"
+                      onClick={() => setWorkspaceTab("simulation")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        workspaceTab === "simulation"
+                          ? "bg-amber-500 text-white shadow-md shadow-orange-500/30"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
                     >
-                      Clear
+                      <Play size={13} fill={workspaceTab === "simulation" ? "currentColor" : "none"} />
+                      <span>Circuit Simulation</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setWorkspaceTab("code")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        workspaceTab === "code"
+                          ? "bg-amber-500 text-white shadow-md shadow-orange-500/30"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      <Code2 size={13} />
+                      <span>Code Generation</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setWorkspaceTab("flash")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        workspaceTab === "flash"
+                          ? "bg-amber-500 text-white shadow-md shadow-orange-500/30"
+                          : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      <Zap size={13} />
+                      <span>Code Flashing</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tab 1: Live Interactive Circuit Simulation */}
+                {workspaceTab === "simulation" && (
+                  <div className="p-4 sm:p-6 space-y-4">
+                    <div className="flex items-center justify-between text-xs text-zinc-400">
+                      <p>Interactive breadboard simulation rendered directly from synthesized netlist.</p>
+                      <span className="font-mono text-amber-400">Wokwi Engine Active</span>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/[0.08] overflow-hidden bg-black/50">
+                      <CircuitDiagram circuit={activeProject.circuit} />
+                    </div>
                   </div>
                 )}
 
-                <div className="relative rounded-2xl bg-[#13111a]/95 border border-zinc-800 focus-within:border-amber-500/40 p-2.5 sm:p-3 shadow-2xl flex items-center gap-2.5">
-                  {/* Side AI Icon on Bottom Chatbar matching Image 2 */}
-                  <div
-                    className="relative shrink-0 group cursor-pointer"
-                    onClick={() => textareaRef.current?.focus()}
-                    title="Blinky AI Copilot"
-                  >
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-orange-500 to-red-500 shadow-[0_0_12px_rgba(249,115,22,0.4)] group-hover:scale-110 transition-transform">
-                      <div className="w-full h-full rounded-full bg-[#120d1c] flex items-center justify-center p-0.5">
-                        <img
-                          src="/blinky-mascot.png"
-                          alt="Blinky Mascot"
-                          className="w-full h-full object-contain pointer-events-none select-none drop-shadow-sm"
-                        />
-                      </div>
-                    </div>
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-[#120d1c] animate-pulse" />
+                {/* Tab 2: Synthesized Arduino C++ Code */}
+                {workspaceTab === "code" && (
+                  <div className="p-4 sm:p-6 space-y-4">
+                    <CodePanel
+                      code={activeProject.code}
+                      boardModel={activeProject.circuit?.board?.model || "ESP32 DevKit V1"}
+                      circuit={activeProject.circuit}
+                    />
                   </div>
+                )}
 
-                  {/* Camera Scanner Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => setShowCameraScanner(true)}
-                    className="p-2 sm:px-3 sm:py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 font-bold text-xs"
-                    title="Scan components with camera (Phone Link / Webcam)"
-                  >
-                    <Camera size={16} />
-                    <span className="hidden sm:inline">Scan</span>
-                  </button>
-
-                  <textarea
-                    ref={textareaRef}
-                    value={inputValue}
-                    onChange={handleTextareaChange}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask a follow-up or request modifications (e.g. 'Can we add a push button?')..."
-                    className="flex-1 bg-transparent border-none outline-none text-zinc-100 placeholder-zinc-500 text-xs sm:text-sm resize-none font-medium max-h-[120px]"
-                    rows={1}
-                    disabled={isLoading}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => handleSend()}
-                    disabled={!inputValue.trim() || isLoading}
-                    className="p-2 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 text-white font-bold text-xs font-outfit shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95 cursor-pointer shrink-0"
-                    title="Send message"
-                  >
-                    {isLoading ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <span className="hidden sm:inline">Send</span>
-                        <Send size={14} />
-                      </div>
-                    )}
-                  </button>
-                </div>
-                <p className="text-center text-[10px] text-zinc-400 font-mono">
-                  Blinky AI verifies electronic design constraints, generates Wokwi simulations, and writes Arduino C++.
-                </p>
+                {/* Tab 3: Serial Hardware Flashing UI */}
+                {workspaceTab === "flash" && (
+                  <div className="p-4 sm:p-6 space-y-4">
+                    <HardwarePanel code={activeProject.code} />
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
         )}
       </main>
+
+      {/* ================= STICKY BOTTOM INPUT CAPSULE (WHEN CHATTING) ================= */}
+      {messages.length > 0 && (
+        <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-[#040306] via-[#040306]/95 to-transparent pt-6 pb-4 px-4 z-30">
+          <div className="max-w-3xl mx-auto space-y-2">
+            
+            {/* Scanned components notification */}
+            {scannedComponents.length > 0 && (
+              <div className="flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs">
+                <span className="font-mono font-bold flex items-center gap-1.5">
+                  <Camera size={13} />
+                  Scanned: {scannedComponents.map((c) => c.name).join(", ")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setScannedComponents([])}
+                  className="text-zinc-400 hover:text-white underline text-[11px]"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            {/* Bottom Capsule Input Bar */}
+            <div className="relative rounded-full bg-[#121118]/95 border border-zinc-800/80 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
+              
+              {/* Camera Scanner Trigger */}
+              <button
+                type="button"
+                onClick={() => setShowCameraScanner(true)}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 transition-all flex items-center justify-center shrink-0 cursor-pointer border border-white/[0.05]"
+                title="Scan hardware components with camera"
+              >
+                <Camera size={17} />
+              </button>
+
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask Blinky to modify circuit, add sensors, or change code..."
+                className="flex-1 bg-transparent border-none outline-none text-white text-xs sm:text-sm placeholder-zinc-500 font-medium px-2"
+                disabled={isLoading}
+              />
+
+              {/* Microphone / "OR LISTEN" */}
+              <button
+                type="button"
+                onClick={handleToggleVoice}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all shrink-0 cursor-pointer ${
+                  isListening
+                    ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse"
+                    : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 border-white/[0.08]"
+                }`}
+                title="Voice input"
+              >
+                <Mic size={13} className={isListening ? "text-red-400" : "text-zinc-400"} />
+                <span className="hidden sm:inline">OR LISTEN</span>
+              </button>
+
+              {/* Submit Button */}
+              <button
+                type="button"
+                onClick={() => handleSend()}
+                disabled={!inputValue.trim() || isLoading}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/25 transition-transform hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                title="Send message"
+              >
+                {isLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <ArrowRight size={17} />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= QUICK ACTIONS MODAL ================= */}
+      {showQuickActionsModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-3xl bg-[#120e1c] border border-amber-500/30 p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="text-base font-bold font-outfit text-white flex items-center gap-2">
+                <Zap size={16} className="text-amber-400" />
+                Quick Actions
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowQuickActionsModal(false)}
+                className="text-zinc-400 hover:text-white p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQuickActionsModal(false);
+                  setShowCameraScanner(true);
+                }}
+                className="w-full p-3 rounded-2xl bg-white/[0.04] hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30 text-left text-xs sm:text-sm font-medium transition-all flex items-center gap-3 cursor-pointer text-zinc-200 hover:text-white"
+              >
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+                  <Camera size={16} />
+                </div>
+                <div>
+                  <div className="font-bold">Scan Physical Hardware</div>
+                  <div className="text-[11px] text-zinc-400">Identify components via Phone Link or camera</div>
+                </div>
+              </button>
+
+              {QUICK_STARTERS.map((s, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setShowQuickActionsModal(false);
+                    handleSend(s.prompt);
+                  }}
+                  className="w-full p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-left text-xs sm:text-sm font-medium transition-all flex items-center gap-3 cursor-pointer text-zinc-200 hover:text-white"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400">
+                    <Cpu size={16} />
+                  </div>
+                  <div>
+                    <div className="font-bold">{s.label}</div>
+                    <div className="text-[11px] text-zinc-400">{s.prompt.slice(0, 48)}...</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

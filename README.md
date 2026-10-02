@@ -30,11 +30,14 @@ Blinky is an end-to-end AI electronics assistant designed for hardware builders,
   - Synthesizes circuits on the fly and provides instant action cards: **"⚡ Open in Studio Simulator"** and **"🔥 Flash Directly to ESP32"**.
   - Integrated camera shortcut button and one-click expand to full-page chat.
 
-### 3. 💬 Dedicated Full-Page Circuit AI Chat (`CircuitChatPage`)
-- **ChatGPT-Style Circuit Studio**: Clean, distraction-free environment centered around an *"Investigate Your Circuit"* hero and multiline prompt bar.
-- **Electronic Design Intelligence**: Built-in knowledge base verifying safe pin allocations (ADC1 vs ADC2 with Wi-Fi, strapping pins, capacitive touch, I2C/SPI buses).
-- **Embedded Simulation Cards**: Generates complete Arduino C++ firmware and netlists, ready to simulate in Wokwi or flash to physical hardware.
-- **Seamless State Hand-off**: Queries started in the floating side widget can be expanded directly into the full-page chat.
+### 3. 💬 All-in-One Circuit Chatbot Page (`CircuitChatPage`)
+- **"Tell Blinky. It gets it done." Aesthetic**: Styled with a retro digital dot matrix grid, colorful neon pixel stars, and a centered 3D Blinky mascot with a warm ambient aura.
+- **Multimodal Prompt Capsule**: Wide capsule input bar with natural language typing, camera hardware scanner trigger, and voice speech recognition (**"OR LISTEN"**).
+- **All-in-One Hardware Workspace**:
+  1. **⚡ Circuit Simulation**: Interactive Wokwi breadboard simulation canvas and SVG schematic blueprints directly inside the conversation.
+  2. **💻 Code Generation**: Arduino C++ firmware viewer with syntax highlighting, one-click copy, and `.ino` download.
+  3. **🔥 Code Flashing**: WebSerial ESP32 hardware flasher with real-time compilation/flashing progress bar and integrated 115200 baud serial monitor.
+- **2-Page Architecture**: The application is strictly composed of two pages: the **Landing Page** and the **All-in-One Circuit Chatbot Page**. Clicking *"Start New Project"*, any preset, or studio triggers navigates seamlessly to the Chatbot Page.
 
 ### 4. 📷 Phone Camera Hardware Scanner (`ComponentCameraScanner`)
 - **No External Mobile Apps Needed**: Discards third-party mobile apps in favor of native browser standards, local Wi-Fi LAN access (`host: true`), and Windows Phone Link.

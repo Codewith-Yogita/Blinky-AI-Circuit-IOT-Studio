@@ -33,6 +33,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function LandingPage({
   onLaunchStudio,
+  onOpenChat,
   onSelectPreset,
   onGeneratePrompt,
   isLoading = false,
@@ -447,6 +448,14 @@ export default function LandingPage({
             </button>
             <button
               type="button"
+              onClick={onOpenChat}
+              className="text-zinc-400 hover:text-amber-400 transition-colors flex items-center gap-1.5 cursor-pointer py-1 font-semibold"
+            >
+              <Bot className="w-3.5 h-3.5 text-amber-500" />
+              <span>Circuit AI Chat</span>
+            </button>
+            <button
+              type="button"
               onClick={() => scrollToSection("how-it-works")}
               className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1"
             >
@@ -554,6 +563,20 @@ export default function LandingPage({
                   <Cpu size={14} />
                 </div>
                 <span>About Blinky (Physical Circuits • AI Brain)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenChat?.();
+                }}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.05] text-left text-sm font-outfit font-bold text-zinc-200 hover:text-amber-400 transition-colors cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Bot size={14} />
+                </div>
+                <span>Circuit AI Chat</span>
               </button>
 
               <button

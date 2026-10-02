@@ -15,9 +15,13 @@ import {
   Sun,
   Moon,
   Star,
+  Info,
+  AlertCircle,
 } from "lucide-react";
 
 import LandingPage from "./Components/LandingPage";
+import CircuitChatPage from "./Components/CircuitChatPage";
+import FloatingChatWidget from "./Components/FloatingChatWidget";
 import {
   waterLevelAlarmCircuit,
   singleLedCircuit,
@@ -28,7 +32,6 @@ import {
 import { generateProject } from "./services/api";
 import CircuitDiagram from "./Components/circuitDiagram";
 import CodePanel from "./Components/CodePanel";
-import PromptBar from "./Components/PromptBar";
 import InstructionPanel from "./Components/InstructionPanel";
 import HardwarePanel from "./Components/HardwarePanel";
 import TelemetryPanel from "./Components/TelemetryPanel";
@@ -52,6 +55,7 @@ function App() {
   });
 
   const [viewMode, setViewMode] = useState("landing");
+  const [chatInitialQuery, setChatInitialQuery] = useState("");
   const [activeStage, setActiveStage] = useState(STAGES.CIRCUIT);
   const [activePreset, setActivePreset] = useState("flagship");
   const [isLoading, setIsLoading] = useState(false);
@@ -171,21 +175,56 @@ function App() {
 
   if (viewMode === "landing") {
     return (
-      <LandingPage
-        onLaunchStudio={() => setViewMode("studio")}
-        onSelectPreset={(presetKey) => {
-          handleSelectPreset(presetKey);
+      <>
+        <LandingPage
+          onLaunchStudio={() => setViewMode("studio")}
+          onOpenChat={() => {
+            setChatInitialQuery("");
+            setViewMode("chat");
+          }}
+          onSelectPreset={(presetKey) => {
+            handleSelectPreset(presetKey);
+            setViewMode("studio");
+          }}
+          onGeneratePrompt={(promptText) => {
+            setViewMode("studio");
+            handleGenerate(promptText);
+          }}
+          onOpenStage={(stageKey) => {
+            setActiveStage(stageKey);
+            setViewMode("studio");
+          }}
+          isLoading={isLoading}
+        />
+        <FloatingChatWidget
+          onOpenFullChat={(initialPrompt) => {
+            setChatInitialQuery(initialPrompt || "");
+            setViewMode("chat");
+          }}
+          onLaunchStudioWithProject={(project, targetStage = STAGES.CIRCUIT) => {
+            setCurrentProject(project);
+            setActiveStage(targetStage === "flash" ? STAGES.FLASH : STAGES.CIRCUIT);
+            setViewMode("studio");
+          }}
+          theme={theme}
+        />
+      </>
+    );
+  }
+
+  if (viewMode === "chat") {
+    return (
+      <CircuitChatPage
+        initialQuery={chatInitialQuery}
+        onBackToLanding={() => setViewMode("landing")}
+        onOpenStudio={() => setViewMode("studio")}
+        onLaunchStudioWithProject={(project, targetStage = STAGES.CIRCUIT) => {
+          setCurrentProject(project);
+          setActiveStage(targetStage === "flash" ? STAGES.FLASH : STAGES.CIRCUIT);
           setViewMode("studio");
         }}
-        onGeneratePrompt={(promptText) => {
-          setViewMode("studio");
-          handleGenerate(promptText);
-        }}
-        onOpenStage={(stageKey) => {
-          setActiveStage(stageKey);
-          setViewMode("studio");
-        }}
-        isLoading={isLoading}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
     );
   }
@@ -284,6 +323,18 @@ function App() {
             ))}
           </div>
 
+          {/* AI Circuit Chat Link */}
+          <button
+            type="button"
+            onClick={() => setViewMode("chat")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold font-outfit transition-all cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.15)] hover:shadow-[0_0_18px_rgba(245,158,11,0.3)] hover:scale-105 active:scale-95"
+            title="Open AI Circuit Chat"
+          >
+            <Bot size={14} className="text-amber-400" />
+            <span className="hidden sm:inline">AI Circuit Chat</span>
+            <span className="sm:hidden">Chat</span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             type="button"
@@ -365,13 +416,23 @@ function App() {
               </div>
             </div>
 
-            {/* Prompt & AI Generation Bar */}
-            <PromptBar
-              onGenerate={handleGenerate}
-              isLoading={isLoading}
-              error={apiError}
-              networkWarning={networkWarning}
-            />
+            {/* Network Warning Banner if Backend is offline */}
+            {networkWarning && (
+              <div className="network-warning-banner mb-4">
+                <Info size={16} className="text-amber-400 shrink-0" />
+                <span>
+                  <strong>Demo Resilience Mode:</strong> {networkWarning}
+                </span>
+              </div>
+            )}
+
+            {/* Error Banner */}
+            {apiError && (
+              <div className="prompt-error-banner mb-4">
+                <AlertCircle size={16} className="text-red-400 shrink-0" />
+                <span>{apiError}</span>
+              </div>
+            )}
 
             {/* Circuit Diagram Component */}
             <div className="circuit-container">
@@ -677,6 +738,19 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Floating Chatbot Side Button Widget */}
+      <FloatingChatWidget
+        onOpenFullChat={(initialPrompt) => {
+          setChatInitialQuery(initialPrompt || "");
+          setViewMode("chat");
+        }}
+        onLaunchStudioWithProject={(project, targetStage = STAGES.CIRCUIT) => {
+          setCurrentProject(project);
+          setActiveStage(targetStage === "flash" ? STAGES.FLASH : STAGES.CIRCUIT);
+        }}
+        theme={theme}
+      />
     </div>
   );
 }

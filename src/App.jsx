@@ -274,14 +274,20 @@ function App() {
           </button>
 
           <div
-            className="flex items-center gap-2 cursor-pointer group"
+            className={`flex items-center gap-2 cursor-pointer group transition-all duration-300 hover:scale-105 active:scale-95 ${
+              isDark
+                ? "py-0.5"
+                : "bg-[#0d0a14] px-2.5 py-1 rounded-xl shadow-sm border border-amber-500/20"
+            }`}
             onClick={() => setViewMode("landing")}
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 flex items-center justify-center shadow-[0_0_12px_rgba(245,158,11,0.5)]">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="text-base font-bold tracking-tight font-outfit text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500">
-              Blinky Studio
+            <img
+              src="/blinky-logo-text.png"
+              alt="Blinky Logo"
+              className="h-6 sm:h-7.5 w-auto object-contain drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]"
+            />
+            <span className="text-[10px] font-bold font-mono tracking-wider uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+              Studio
             </span>
           </div>
         </div>

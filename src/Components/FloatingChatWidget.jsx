@@ -179,14 +179,9 @@ What would you like to build or wire today?`,
                 <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-orange-500 to-red-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]">
                   <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
                     <img
-                      src="/chatbot-avatar.png"
+                      src="/blinky-mascot.png"
                       alt="Blinky Bot"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Fallback in case image is missing
-                        e.target.style.display = "none";
-                        e.target.parentElement.innerHTML = `<span style="color:#f97316;font-weight:bold;font-size:18px;">🤖</span>`;
-                      }}
+                      className="w-full h-full object-contain p-0.5"
                     />
                   </div>
                 </div>
@@ -434,6 +429,19 @@ What would you like to build or wire today?`,
               isDark ? "bg-[#14101d] border-white/[0.08]" : "bg-white border-amber-900/10"
             }`}
           >
+            {/* Mascot on Chatbar */}
+            <div
+              className="shrink-0 cursor-pointer group"
+              onClick={() => inputRef.current?.focus()}
+              title="Blinky AI Mascot"
+            >
+              <img
+                src="/blinky-mascot.png"
+                alt="Blinky Mascot"
+                className="w-7 h-7 object-contain drop-shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-transform select-none"
+              />
+            </div>
+
             {/* Camera Scanner Trigger */}
             <button
               type="button"

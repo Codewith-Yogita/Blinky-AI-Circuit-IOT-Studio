@@ -418,15 +418,18 @@ export default function LandingPage({
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-3 sm:py-4 flex items-center justify-between">
           {/* Brand Logo */}
           <div
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group"
+            className={`flex items-center cursor-pointer group transition-all duration-300 hover:scale-105 active:scale-95 ${
+              isDark
+                ? "py-0.5"
+                : "bg-[#0d0a14] px-3 py-1.5 rounded-2xl shadow-md border border-amber-500/20"
+            }`}
             onClick={() => scrollToSection("hero")}
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 flex items-center justify-center shadow-[0_0_16px_rgba(245,158,11,0.5)] group-hover:scale-105 transition-transform">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-            </div>
-            <span className="text-lg sm:text-xl font-bold tracking-tight font-outfit text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500">
-              Blinky
-            </span>
+            <img
+              src="/blinky-logo-text.png"
+              alt="Blinky"
+              className="h-7 sm:h-8.5 w-auto object-contain drop-shadow-[0_0_14px_rgba(245,158,11,0.4)]"
+            />
           </div>
 
           {/* Desktop Narrative Links (Hidden on Mobile) */}

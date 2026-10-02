@@ -273,14 +273,20 @@ export default function CircuitChatPage({
           </button>
 
           <div
-            className="flex items-center gap-2 cursor-pointer group"
+            className={`flex items-center gap-2.5 cursor-pointer group transition-all duration-300 hover:scale-105 active:scale-95 ${
+              isDark
+                ? "py-0.5"
+                : "bg-[#0d0a14] px-2.5 py-1 rounded-xl shadow-sm border border-amber-500/20"
+            }`}
             onClick={onBackToLanding}
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 flex items-center justify-center shadow-[0_0_12px_rgba(245,158,11,0.5)]">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="text-base font-bold tracking-tight font-outfit text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500">
-              Blinky AI Chat
+            <img
+              src="/blinky-logo-text.png"
+              alt="Blinky Logo"
+              className="h-6 sm:h-7.5 w-auto object-contain drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]"
+            />
+            <span className="text-[10px] font-bold font-mono tracking-wider uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border border-amber-500/30">
+              AI Chat
             </span>
           </div>
         </div>
@@ -354,6 +360,22 @@ export default function CircuitChatPage({
               </p>
             </div>
 
+            {/* Mascot Perched on Top of Chatbar */}
+            <div className="flex justify-center -mb-5 z-20">
+              <div
+                className="relative group cursor-pointer transition-transform duration-300 hover:scale-110"
+                onClick={() => textareaRef.current?.focus()}
+                title="Blinky AI Mascot"
+              >
+                <div className="absolute -inset-1 rounded-3xl bg-gradient-to-tr from-amber-500 via-orange-500 to-red-600 blur-md opacity-70 group-hover:opacity-100 transition-opacity" />
+                <img
+                  src="/blinky-mascot.png"
+                  alt="Blinky Mascot"
+                  className="relative w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-2xl hover:-rotate-3 transition-transform"
+                />
+              </div>
+            </div>
+
             {/* Central Chatbox Container (Matching user reference layout) */}
             <div className="w-full max-w-2xl mx-auto">
               <div className="relative rounded-2xl sm:rounded-3xl bg-[#13111a]/95 border border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.06)] focus-within:border-amber-500/50 focus-within:shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(245,158,11,0.18)] transition-all p-4 sm:p-5 flex flex-col justify-between min-h-[140px] sm:min-h-[160px]">
@@ -405,7 +427,16 @@ export default function CircuitChatPage({
 
                 {/* Bottom Bar inside Chatbox */}
                 <div className="flex items-center justify-between pt-3 border-t border-white/[0.04] mt-2 gap-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
+                    {/* Mascot on Chatbar */}
+                    <img
+                      src="/blinky-mascot.png"
+                      alt="Blinky Mascot"
+                      className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-md select-none hover:rotate-12 transition-transform cursor-pointer"
+                      title="Blinky Mascot"
+                      onClick={() => textareaRef.current?.focus()}
+                    />
+
                     {/* Camera Scanner Trigger */}
                     <button
                       type="button"
@@ -650,6 +681,18 @@ export default function CircuitChatPage({
                 )}
 
                 <div className="relative rounded-2xl bg-[#13111a]/95 border border-zinc-800 focus-within:border-amber-500/40 p-2.5 sm:p-3 shadow-2xl flex items-center gap-2.5">
+                  {/* Mascot on Bottom Chatbar */}
+                  <div className="relative shrink-0 group">
+                    <img
+                      src="/blinky-mascot.png"
+                      alt="Blinky Mascot"
+                      className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-md select-none group-hover:scale-110 group-hover:-rotate-6 transition-transform cursor-pointer"
+                      title="Blinky AI Mascot"
+                      onClick={() => textareaRef.current?.focus()}
+                    />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border border-black animate-pulse" />
+                  </div>
+
                   {/* Camera Scanner Trigger */}
                   <button
                     type="button"

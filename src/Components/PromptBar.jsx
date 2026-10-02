@@ -90,9 +90,13 @@ function PromptBar({ onGenerate, isLoading, error, networkWarning }) {
       <form onSubmit={handleSubmit} className="clay-search-pill-container relative w-full">
         <div className="clay-search-pill flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-full bg-[#110b17] border border-amber-500/30 shadow-[inset_0_3px_8px_rgba(0,0,0,0.85),0_8px_24px_rgba(0,0,0,0.5),0_0_20px_rgba(245,158,11,0.08)] focus-within:border-amber-400 focus-within:shadow-[inset_0_3px_8px_rgba(0,0,0,0.85),0_0_25px_rgba(245,158,11,0.25)] transition-all">
           
-          {/* Left Circular Embossed Badge */}
-          <div className="clay-pill-icon-badge w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-red-600 flex items-center justify-center text-black font-bold shadow-[0_4px_12px_rgba(245,158,11,0.45),inset_0_1px_2px_rgba(255,255,255,0.4)] shrink-0 select-none">
-            <Sparkles className="w-5 h-5 text-black drop-shadow-sm" />
+          {/* Left Circular Embossed Mascot Badge */}
+          <div className="clay-pill-icon-badge w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-amber-400 via-amber-500 to-red-600 flex items-center justify-center p-1 text-black font-bold shadow-[0_4px_12px_rgba(245,158,11,0.45),inset_0_1px_2px_rgba(255,255,255,0.4)] shrink-0 select-none">
+            <img
+              src="/blinky-mascot.png"
+              alt="Blinky Mascot"
+              className="w-full h-full object-contain drop-shadow-md hover:scale-110 transition-transform"
+            />
           </div>
 
           {/* Input with pre-existing placeholder */}

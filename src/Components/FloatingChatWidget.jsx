@@ -177,11 +177,11 @@ What would you like to build or wire today?`,
               {/* Bot Icon */}
               <div className="relative">
                 <div className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-amber-500 via-orange-500 to-red-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]">
-                  <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
+                  <div className="w-full h-full bg-[#130f1c] rounded-full flex items-center justify-center overflow-hidden">
                     <img
                       src="/blinky-mascot.png"
                       alt="Blinky Bot"
-                      className="w-full h-full object-contain p-0.5"
+                      className="w-full h-full object-contain p-1"
                     />
                   </div>
                 </div>
@@ -551,26 +551,26 @@ What would you like to build or wire today?`,
           type="button"
           aria-label={isOpen ? "Close Blinky AI Chatbot" : "Open Blinky AI Chatbot"}
           onClick={() => setIsOpen(!isOpen)}
-          className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full cursor-pointer transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center p-[3.5px] ${
+          className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full cursor-pointer transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center ${
             isOpen
-              ? "bg-gradient-to-tr from-amber-600 via-orange-600 to-red-600 shadow-[0_8px_30px_rgba(249,115,22,0.6)] rotate-90"
-              : "bg-gradient-to-tr from-amber-500 via-orange-500 to-red-500 shadow-[0_8px_30px_rgba(249,115,22,0.45)] hover:shadow-[0_12px_45px_rgba(249,115,22,0.7)]"
+              ? "p-[3px] bg-gradient-to-tr from-amber-600 via-orange-600 to-red-600 shadow-[0_8px_30px_rgba(249,115,22,0.6)] rotate-90"
+              : "p-[2.5px] bg-gradient-to-tr from-amber-500 via-orange-500 to-red-500 shadow-[0_10px_35px_rgba(0,0,0,0.6),0_0_25px_rgba(249,115,22,0.45)] hover:shadow-[0_12px_45px_rgba(0,0,0,0.8),0_0_35px_rgba(249,115,22,0.7)]"
           }`}
         >
-          {/* Inner white circle like user image */}
-          <div className="w-full h-full rounded-full bg-white flex items-center justify-center relative overflow-hidden shadow-inner">
+          {/* Inner dark container - No white background */}
+          <div className="w-full h-full rounded-full bg-[#120d1c] flex items-center justify-center relative overflow-hidden shadow-inner">
             {isOpen ? (
               // When open, display crisp close X inside
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-500 to-amber-600 text-white -rotate-90 transition-transform">
                 <X size={26} strokeWidth={2.8} />
               </div>
             ) : (
-              // When closed: 3D Blinky Mascot!
-              <div className="w-full h-full flex items-center justify-center p-1.5 relative">
+              // When closed: 3D Blinky Mascot on dark obsidian background
+              <div className="w-full h-full flex items-center justify-center p-1.5 relative bg-[#120d1c] hover:bg-[#1a1426] transition-colors">
                 <img
                   src="/blinky-mascot.png"
                   alt="Blinky Mascot"
-                  className="w-full h-full object-contain pointer-events-none select-none drop-shadow-sm transition-transform group-hover:scale-105"
+                  className="w-full h-full object-contain pointer-events-none select-none drop-shadow-[0_4px_12px_rgba(249,115,22,0.35)] transition-transform group-hover:scale-110"
                 />
               </div>
             )}
@@ -578,7 +578,7 @@ What would you like to build or wire today?`,
 
           {/* Pulse notification badge */}
           {!isOpen && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-[#080709] animate-pulse shadow-md" />
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#120d1c] animate-pulse shadow-md" />
           )}
         </button>
       </div>

@@ -573,38 +573,6 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
           />
         </div>
 
-        {/* Center: Nav links from reference image (Demo, Quick Actions, Features) */}
-        <nav className="hidden md:flex items-center gap-8 text-xs font-medium tracking-wide">
-          <button
-            type="button"
-            onClick={handleRunDemo}
-            className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1 flex items-center gap-1.5"
-          >
-            <Play size={13} className="text-amber-400" />
-            <span>Demo</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowQuickActionsModal(true)}
-            className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1 flex items-center gap-1.5"
-          >
-            <Zap size={13} className="text-orange-400" />
-            <span>Quick Actions</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (messages.length === 0) {
-                handleSend("Show me all Blinky capabilities: simulation, code generation, and ESP32 flashing");
-              }
-            }}
-            className="text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer py-1"
-          >
-            Features
-          </button>
-        </nav>
 
         {/* Right: Dashboard / Download Capsule Button (Matching Reference Image) */}
         <div className="flex items-center gap-3">

@@ -30,11 +30,12 @@ import {
   Copy,
   Sliders,
   Check,
+  Paperclip,
+  X,
 } from "lucide-react";
 import { sendChatMessage } from "../services/chatAssistant";
 import { generateProject } from "../services/api";
 import { waterLevelAlarmCircuit, joystickLedCircuit, singleLedCircuit } from "../data/mockCircuits";
-import ComponentCameraScanner from "./ComponentCameraScanner";
 import CircuitSimulationCard from "./CircuitSimulationCard";
 import CodeGenerationCard from "./CodeGenerationCard";
 import CodeFlashingCard from "./CodeFlashingCard";
@@ -58,7 +59,10 @@ export default function CircuitChatPage({
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showCameraScanner, setShowCameraScanner] = useState(false);
+  const [cameraDevices, setCameraDevices] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState("");
+  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
   const [scannedComponents, setScannedComponents] = useState([]);
   const [activeProject, setActiveProject] = useState(parentProject || null);
   const [visibleComponents, setVisibleComponents] = useState({
@@ -72,6 +76,10 @@ export default function CircuitChatPage({
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const liveVideoRef = useRef(null);
+  const mediaStreamRef = useRef(null);
   const speechRecognitionRef = useRef(null);
   const hasAutoSentRef = useRef(false);
 
@@ -141,7 +149,201 @@ export default function CircuitChatPage({
     }
   };
 
-  const handleSend = async (customText = null) => {
+  const sendImageImmediately = (file, imageDataUrl, source) => {
+    handleSend(
+      `I attached a ${source} photo of my hardware. Identify the visible components and help me build the circuit.`,
+      { name: file.name || `${source}-photo.jpg`, dataUrl: imageDataUrl }
+    );
+  };
+
+  const handleImageFile = (event, source) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => sendImageImmediately(file, reader.result, source);
+    reader.readAsDataURL(file);
+  };
+
+  // Live camera stream management
+  useEffect(() => {
+    let active = true;
+
+    if (!isLiveCameraOpen) {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      }
+      return;
+    }
+
+    const initCamera = async () => {
+      try {
+        setCameraError("");
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+          mediaStreamRef.current = null;
+        }
+
+        const constraints = selectedCameraId
+          ? { video: { deviceId: { exact: selectedCameraId } }, audio: false }
+          : { video: { facingMode: "environment" }, audio: false };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (!active) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+
+        mediaStreamRef.current = stream;
+        if (liveVideoRef.current) {
+          liveVideoRef.current.srcObject = stream;
+          try {
+            await liveVideoRef.current.play();
+          } catch (e) {
+            console.warn("Camera video play handled:", e);
+          }
+        }
+
+        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(
+          (d) => d.kind === "videoinput"
+        );
+
+        if (active) {
+          setCameraDevices(devices);
+          const activeTrack = stream.getVideoTracks()[0];
+          const actualDeviceId = activeTrack?.getSettings?.()?.deviceId;
+          if (actualDeviceId && !selectedCameraId) {
+            setSelectedCameraId(actualDeviceId);
+          }
+        }
+      } catch (err) {
+        console.error("Camera access error:", err);
+        if (active) {
+          setCameraError("Camera access failed. Check browser permissions and camera availability.");
+        }
+      }
+    };
+
+    initCamera();
+
+    return () => {
+      active = false;
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+      }
+    };
+  }, [isLiveCameraOpen, selectedCameraId]);
+
+  const handleCameraButton = () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      cameraInputRef.current?.click();
+      return;
+    }
+    setIsLiveCameraOpen((prev) => !prev);
+  };
+
+  const handleCapturePhoto = () => {
+    const video = liveVideoRef.current;
+    if (!video) return;
+
+    try {
+      const width = video.videoWidth || 1280;
+      const height = video.videoHeight || 720;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        const currentDev = cameraDevices.find((d) => d.deviceId === selectedCameraId);
+        const name = currentDev?.label ? `${currentDev.label}.jpg` : "camera-capture.jpg";
+        setIsLiveCameraOpen(false);
+        sendImageImmediately({ name }, dataUrl, "camera");
+      }
+    } catch (err) {
+      console.error("Failed to capture photo frame:", err);
+      setCameraError("Failed to capture image frame.");
+    }
+  };
+
+  const renderLiveCameraOverlay = () => {
+    if (!isLiveCameraOpen) return null;
+
+    return (
+      <div className="mb-3 w-full bg-[#16141f]/95 border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-[0_15px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+            <span className="text-xs font-semibold text-zinc-200 tracking-wide uppercase shrink-0">
+              Live Camera Feed
+            </span>
+
+            {cameraDevices.length > 0 && (
+              <div className="relative flex-1 max-w-[220px]">
+                <select
+                  value={selectedCameraId}
+                  onChange={(e) => setSelectedCameraId(e.target.value)}
+                  className="w-full h-7 sm:h-8 rounded-lg bg-[#242031] border border-amber-500/30 px-2.5 text-xs text-amber-300 outline-none cursor-pointer hover:border-amber-500/60 focus:border-amber-500 transition-colors truncate"
+                  title="Switch camera device"
+                >
+                  {cameraDevices.map((device, idx) => (
+                    <option key={device.deviceId || idx} value={device.deviceId}>
+                      {device.label || `Camera ${idx + 1}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsLiveCameraOpen(false)}
+            className="w-7 h-7 rounded-full bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-all cursor-pointer shrink-0"
+            title="Close camera preview"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        <div className="relative w-full aspect-video sm:max-h-72 bg-black rounded-xl overflow-hidden border border-white/10 flex items-center justify-center">
+          <video
+            ref={liveVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-contain bg-black"
+          />
+          {cameraError && (
+            <div className="absolute inset-0 bg-black/85 flex items-center justify-center p-4 text-center text-xs text-red-400">
+              {cameraError}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <p className="text-[11px] text-zinc-400 hidden sm:block">
+            Preview live hardware footage and click capture to send to Blinky AI.
+          </p>
+          <button
+            type="button"
+            onClick={handleCapturePhoto}
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+          >
+            <Camera size={15} />
+            <span>Capture & Send Photo</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const handleSend = async (customText = null, attachment = null) => {
     const textToSend = (customText || inputValue).trim();
     if (!textToSend || isLoading) return;
 
@@ -151,6 +353,7 @@ export default function CircuitChatPage({
       id: Date.now(),
       sender: "user",
       text: textToSend,
+      attachment,
       scannedParts: [...scannedComponents],
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
@@ -337,8 +540,7 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
       if (wantsCircuit) {
         setVisibleComponents((prev) => ({ ...prev, circuit: true }));
         replyParts.push(
-          `⚡ **Circuit Simulation Component Opened!**\nI've rendered the interactive **Wokwi breadboard simulation and schematic** for **${
-            activeProject.circuit?.title || "your ESP32 circuit"
+          `⚡ **Circuit Simulation Component Opened!**\nI've rendered the interactive **Wokwi breadboard simulation and schematic** for **${activeProject.circuit?.title || "your ESP32 circuit"
           }** below.`
         );
       }
@@ -426,12 +628,6 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
     setScannedComponents([]);
     setActiveProject(null);
     setVisibleComponents({ circuit: false, code: false, flash: false });
-  };
-
-  const handleApplyScannedHardware = ({ components }) => {
-    setScannedComponents(components);
-    const names = components.map((c) => c.name).join(", ");
-    handleSend(`Build an ESP32 circuit using scanned components: ${names}`);
   };
 
   const handleRunDemo = () => {
@@ -552,13 +748,6 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[450px] bg-gradient-to-tr from-amber-600/15 via-orange-600/10 to-red-600/5 blur-[120px] rounded-full pointer-events-none" />
       </div>
 
-      {/* Camera Scanner Modal Component */}
-      <ComponentCameraScanner
-        isOpen={showCameraScanner}
-        onClose={() => setShowCameraScanner(false)}
-        onApplyToChat={handleApplyScannedHardware}
-      />
-
       {/* ================= TOP NAVIGATION HEADER (MATCHING SCREENSHOT) ================= */}
       <header className="sticky top-0 z-40 w-full px-5 sm:px-10 py-3.5 border-b border-white/[0.06] bg-[#040306]/85 backdrop-blur-2xl flex items-center justify-between transition-colors">
         {/* Left: Brand Logo Text */}
@@ -590,11 +779,11 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
 
       {/* ================= MAIN CONTENT AREA ================= */}
       <main className="flex-1 flex flex-col justify-between w-full max-w-5xl mx-auto px-4 sm:px-6 relative z-10 pt-2 sm:pt-4 pb-8">
-        
+
         {/* ================= VIEW 1: HERO VIEW (EXACT MATCH OF UPLOADED SCREENSHOT) ================= */}
         {messages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-start text-center pt-3 sm:pt-6 pb-6">
-            
+
             {/* Monumental Headline */}
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight font-outfit leading-[1.08] mt-1 sm:mt-2">
               <span className="text-white block">Turn ideas into</span>
@@ -623,16 +812,49 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
 
             {/* Wide Input Capsule (Matching Reference Screenshot) */}
             <div className="w-full max-w-2xl mx-auto mt-2">
+              {renderLiveCameraOverlay()}
               <div className="relative rounded-full bg-[#121118]/90 border border-zinc-800/80 hover:border-zinc-700 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
-                
-                {/* Camera Scan Button */}
+
+                {/* Hidden native file pickers */}
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(event) => handleImageFile(event, "camera")}
+                  className="hidden"
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleImageFile(event, "file")}
+                  className="hidden"
+                />
+
+                {/* Live Camera Trigger */}
                 <button
                   type="button"
-                  onClick={() => setShowCameraScanner(true)}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 transition-all flex items-center justify-center shrink-0 cursor-pointer hover:scale-105 active:scale-95 border border-white/[0.05]"
-                  title="Scan hardware components with Phone Link or Webcam"
+                  onClick={handleCameraButton}
+                  disabled={isLoading}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer hover:scale-105 active:scale-95 border ${isLiveCameraOpen
+                    ? "bg-amber-500 text-black border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                    : "bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 border-white/[0.05]"
+                    } disabled:opacity-40`}
+                  title={isLiveCameraOpen ? "Close live camera feed" : "Open live camera preview"}
                 >
                   <Camera size={17} />
+                </button>
+
+                {/* Existing image file picker */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 transition-all flex items-center justify-center shrink-0 cursor-pointer hover:scale-105 active:scale-95 border border-white/[0.05] disabled:opacity-40"
+                  title="Attach an existing image"
+                >
+                  <Paperclip size={16} />
                 </button>
 
                 {/* Input Text Box */}
@@ -642,7 +864,7 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Describe the circuit you want to build (e.g. Ultrasonic sensor with buzzer on ESP32)..."
+                  placeholder="Describe the circuit you want to build"
                   className="flex-1 bg-transparent border-none outline-none text-white text-xs sm:text-sm md:text-base placeholder-zinc-500 font-medium px-2"
                   disabled={isLoading}
                 />
@@ -651,15 +873,14 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                 <button
                   type="button"
                   onClick={handleToggleVoice}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all shrink-0 cursor-pointer ${
-                    isListening
-                      ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse"
-                      : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 border-white/[0.08]"
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all shrink-0 cursor-pointer ${isListening
+                    ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse"
+                    : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 border-white/[0.08]"
+                    }`}
                   title="Voice command (Speech Recognition)"
                 >
                   <Mic size={13} className={isListening ? "text-red-400" : "text-zinc-400"} />
-                  <span className="hidden sm:inline">OR LISTEN</span>
+                  <span className="hidden sm:inline">Speak</span>
                 </button>
 
                 {/* Submit / Send Button */}
@@ -677,6 +898,12 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                   )}
                 </button>
               </div>
+
+              {cameraError && (
+                <p className="mt-2 text-center text-xs text-amber-300" role="status">
+                  {cameraError}
+                </p>
+              )}
 
               {/* Quick Query Starters Pills */}
               <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
@@ -696,7 +923,7 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
         ) : (
           /* ================= VIEW 2: ACTIVE CONVERSATION & ALL-IN-ONE HARDWARE WORKSPACE ================= */
           <div className="flex-1 flex flex-col space-y-8 pb-32">
-            
+
             {/* Header Actions for Conversation View */}
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-3">
@@ -745,14 +972,24 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
 
                     {/* Bubble */}
                     <div
-                      className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-[95%] sm:max-w-[85%] text-xs sm:text-sm shadow-xl ${
-                        isUser
-                          ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-br-xs shadow-orange-500/20"
-                          : "bg-[#110e19]/95 border border-white/[0.08] text-zinc-200 rounded-bl-xs shadow-black/80"
-                      }`}
+                      className={`rounded-2xl sm:rounded-3xl p-4 sm:p-6 max-w-[95%] sm:max-w-[85%] text-xs sm:text-sm shadow-xl ${isUser
+                        ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-br-xs shadow-orange-500/20"
+                        : "bg-[#110e19]/95 border border-white/[0.08] text-zinc-200 rounded-bl-xs shadow-black/80"
+                        }`}
                     >
                       {/* Message Content */}
-                      {isUser ? <p>{msg.text}</p> : renderFormattedText(msg.text)}
+                      {isUser ? (
+                        <>
+                          {msg.attachment && (
+                            <img
+                              src={msg.attachment.dataUrl}
+                              alt={msg.attachment.name}
+                              className="mb-3 max-h-64 max-w-full rounded-xl border border-white/25 object-contain"
+                            />
+                          )}
+                          <p>{msg.text}</p>
+                        </>
+                      ) : renderFormattedText(msg.text)}
 
                       {/* Component Request Buttons on AI Messages */}
                       {!isUser && (msg.circuitProject || activeProject) && (
@@ -765,11 +1002,10 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                           <button
                             type="button"
                             onClick={() => handleSend("Show circuit simulation")}
-                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
-                              visibleComponents.circuit
-                                ? "bg-amber-500/25 border-amber-500 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
-                                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
-                            }`}
+                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${visibleComponents.circuit
+                              ? "bg-amber-500/25 border-amber-500 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]"
+                              : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                              }`}
                           >
                             <Play size={12} className={visibleComponents.circuit ? "fill-amber-400 text-amber-400" : "text-amber-400"} />
                             <span>{visibleComponents.circuit ? "⚡ Circuit Active" : "⚡ Show Circuit"}</span>
@@ -778,11 +1014,10 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                           <button
                             type="button"
                             onClick={() => handleSend("Show Arduino code")}
-                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
-                              visibleComponents.code
-                                ? "bg-cyan-500/25 border-cyan-500 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]"
-                                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
-                            }`}
+                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${visibleComponents.code
+                              ? "bg-cyan-500/25 border-cyan-500 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]"
+                              : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                              }`}
                           >
                             <Code2 size={12} className="text-cyan-400" />
                             <span>{visibleComponents.code ? "💻 Code Active" : "💻 Show Code"}</span>
@@ -791,11 +1026,10 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                           <button
                             type="button"
                             onClick={() => handleSend("Flash to ESP32")}
-                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${
-                              visibleComponents.flash
-                                ? "bg-orange-500/25 border-orange-500 text-orange-300 shadow-[0_0_12px_rgba(249,115,22,0.25)]"
-                                : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
-                            }`}
+                            className={`text-xs px-3 py-1.5 rounded-xl border flex items-center gap-1.5 transition-all cursor-pointer font-medium ${visibleComponents.flash
+                              ? "bg-orange-500/25 border-orange-500 text-orange-300 shadow-[0_0_12px_rgba(249,115,22,0.25)]"
+                              : "bg-white/[0.04] hover:bg-white/[0.08] border-white/10 text-zinc-300 hover:text-white"
+                              }`}
                           >
                             <Zap size={12} className={visibleComponents.flash ? "fill-orange-400 text-orange-400" : "text-orange-400"} />
                             <span>{visibleComponents.flash ? "🔥 Flasher Active" : "🔥 Flash ESP32"}</span>
@@ -879,7 +1113,7 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
       {messages.length > 0 && (
         <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-[#040306] via-[#040306]/95 to-transparent pt-6 pb-4 px-4 z-30">
           <div className="max-w-3xl mx-auto space-y-2">
-            
+
             {/* Scanned components notification */}
             {scannedComponents.length > 0 && (
               <div className="flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs">
@@ -898,58 +1132,91 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
             )}
 
             {/* Bottom Capsule Input Bar */}
-            <div className="relative rounded-full bg-[#121118]/95 border border-zinc-800/80 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
-              
-              {/* Camera Scanner Trigger */}
-              <button
-                type="button"
-                onClick={() => setShowCameraScanner(true)}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 transition-all flex items-center justify-center shrink-0 cursor-pointer border border-white/[0.05]"
-                title="Scan hardware components with camera"
-              >
-                <Camera size={17} />
-              </button>
+            <div className="w-full">
+              {renderLiveCameraOverlay()}
+              <div className="relative rounded-full bg-[#121118]/95 border border-zinc-800/80 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
 
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask Blinky to modify circuit, add sensors, or change code..."
-                className="flex-1 bg-transparent border-none outline-none text-white text-xs sm:text-sm placeholder-zinc-500 font-medium px-2"
-                disabled={isLoading}
-              />
+                {/* Hidden native file pickers */}
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(event) => handleImageFile(event, "camera")}
+                  className="hidden"
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleImageFile(event, "file")}
+                  className="hidden"
+                />
 
-              {/* Microphone / "OR LISTEN" */}
-              <button
-                type="button"
-                onClick={handleToggleVoice}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all shrink-0 cursor-pointer ${
-                  isListening
+                {/* Live Camera Trigger */}
+                <button
+                  type="button"
+                  onClick={handleCameraButton}
+                  disabled={isLoading}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all flex items-center justify-center shrink-0 cursor-pointer border ${isLiveCameraOpen
+                    ? "bg-amber-500 text-black border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+                    : "bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 border-white/[0.05]"
+                    } disabled:opacity-40`}
+                  title={isLiveCameraOpen ? "Close live camera feed" : "Open live camera preview"}
+                >
+                  <Camera size={17} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/[0.05] hover:bg-amber-500/20 text-zinc-400 hover:text-amber-400 transition-all flex items-center justify-center shrink-0 cursor-pointer border border-white/[0.05] disabled:opacity-40"
+                  title="Attach an existing image"
+                >
+                  <Paperclip size={16} />
+                </button>
+
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask Blinky to modify circuit, add sensors, or change code..."
+                  className="flex-1 bg-transparent border-none outline-none text-white text-xs sm:text-sm placeholder-zinc-500 font-medium px-2"
+                  disabled={isLoading}
+                />
+
+                {/* Microphone / "OR LISTEN" */}
+                <button
+                  type="button"
+                  onClick={handleToggleVoice}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-mono tracking-wider uppercase transition-all shrink-0 cursor-pointer ${isListening
                     ? "bg-red-500/20 border-red-500 text-red-400 animate-pulse"
                     : "bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-zinc-200 border-white/[0.08]"
-                }`}
-                title="Voice input"
-              >
-                <Mic size={13} className={isListening ? "text-red-400" : "text-zinc-400"} />
-                <span className="hidden sm:inline">OR LISTEN</span>
-              </button>
+                    }`}
+                  title="Voice input"
+                >
+                  <Mic size={13} className={isListening ? "text-red-400" : "text-zinc-400"} />
+                  <span className="hidden sm:inline">Speak</span>
+                </button>
 
-              {/* Submit Button */}
-              <button
-                type="button"
-                onClick={() => handleSend()}
-                disabled={!inputValue.trim() || isLoading}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/25 transition-transform hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                title="Send message"
-              >
-                {isLoading ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <ArrowRight size={17} />
-                )}
-              </button>
+                {/* Submit Button */}
+                <button
+                  type="button"
+                  onClick={() => handleSend()}
+                  disabled={!inputValue.trim() || isLoading}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/25 transition-transform hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Send message"
+                >
+                  {isLoading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <ArrowRight size={17} />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -978,7 +1245,7 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                 type="button"
                 onClick={() => {
                   setShowQuickActionsModal(false);
-                  setShowCameraScanner(true);
+                  handleCameraButton();
                 }}
                 className="w-full p-3 rounded-2xl bg-white/[0.04] hover:bg-amber-500/20 border border-white/10 hover:border-amber-500/30 text-left text-xs sm:text-sm font-medium transition-all flex items-center gap-3 cursor-pointer text-zinc-200 hover:text-white"
               >

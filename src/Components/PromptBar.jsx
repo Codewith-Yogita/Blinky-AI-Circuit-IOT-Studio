@@ -1,14 +1,49 @@
-import { useState } from "react";
-import { Sparkles, X, Loader2, ArrowRight, AlertCircle, Info, Menu } from "lucide-react";
+import { useState, useRef } from "react";
+import { Sparkles, X, Loader2, ArrowRight, AlertCircle, Info, Menu, Camera, Paperclip } from "lucide-react";
 
 function PromptBar({ onGenerate, isLoading, error, networkWarning }) {
   const [prompt, setPrompt] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const cameraInputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!prompt.trim() || isLoading) return;
     onGenerate(prompt.trim());
+  };
+
+  const handleCameraCapture = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Convert to base64 for instant processing
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageData = event.target.result;
+      // Send image instantly to generation function
+      onGenerate({ type: 'camera', image: imageData, file });
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageData = event.target.result;
+      // Send image instantly
+      onGenerate({ type: 'file', image: imageData, file });
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input
+    e.target.value = '';
   };
 
   return (
@@ -108,6 +143,45 @@ function PromptBar({ onGenerate, isLoading, error, networkWarning }) {
             onChange={(e) => setPrompt(e.target.value)}
             disabled={isLoading}
           />
+
+          {/* Hidden file inputs */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleCameraCapture}
+            className="hidden"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {/* Camera button */}
+          <button
+            type="button"
+            className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer shrink-0"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={isLoading}
+            title="Capture from camera"
+          >
+            <Camera size={16} />
+          </button>
+
+          {/* File attachment button */}
+          <button
+            type="button"
+            className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="Select image file"
+          >
+            <Paperclip size={16} />
+          </button>
 
           {/* Clear button if prompt is entered */}
           {prompt && !isLoading && (

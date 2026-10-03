@@ -589,14 +589,14 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
       </header>
 
       {/* ================= MAIN CONTENT AREA ================= */}
-      <main className="flex-1 flex flex-col justify-between w-full max-w-5xl mx-auto px-4 sm:px-6 relative z-10 py-6 sm:py-10">
+      <main className="flex-1 flex flex-col justify-between w-full max-w-5xl mx-auto px-4 sm:px-6 relative z-10 pt-2 sm:pt-4 pb-8">
         
         {/* ================= VIEW 1: HERO VIEW (EXACT MATCH OF UPLOADED SCREENSHOT) ================= */}
         {messages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-6 sm:py-12">
+          <div className="flex-1 flex flex-col items-center justify-start text-center pt-3 sm:pt-6 pb-6">
             
             {/* Monumental Headline */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight font-outfit leading-[1.08]">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight font-outfit leading-[1.08] mt-1 sm:mt-2">
               <span className="text-white block">Turn ideas into</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-red-500 block mt-1">
                 working circuits.
@@ -604,12 +604,12 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
             </h1>
 
             {/* Subhead narrative */}
-            <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl text-center mx-auto leading-relaxed mt-4 font-normal px-4">
+            <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl text-center mx-auto leading-relaxed mt-3.5 font-normal px-4">
               Tell Blinky what you want to connect. Get instant schematics, interactive simulations, and ready-to-flash firmware.
             </p>
 
             {/* Glowing 3D Mascot in Center */}
-            <div className="relative my-8 sm:my-11 flex items-center justify-center">
+            <div className="relative my-6 sm:my-8 flex items-center justify-center">
               {/* Backglow Aura */}
               <div className="absolute w-44 h-44 sm:w-56 sm:h-56 rounded-full bg-gradient-to-tr from-amber-500/35 via-orange-600/25 to-red-500/15 blur-3xl pointer-events-none" />
               <img

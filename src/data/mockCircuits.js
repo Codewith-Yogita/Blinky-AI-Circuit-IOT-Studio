@@ -127,6 +127,8 @@ void loop() {
 };
 
 export const singleLedCircuit = {
+  id: "single_led_blink",
+  title: "ESP32 Hardware Circuit Diagram",
   board: {
     id: "esp32",
     type: "ESP32",
@@ -157,6 +159,15 @@ export const singleLedCircuit = {
       from: { component: "led_1", pin: "cathode" },
       to: { component: "esp32", pin: "GND" },
     },
+  ],
+  instructions: [
+    "1. Place the ESP32 DevKit V1 onto the center of your breadboard.",
+    "2. Place the 220Ω current-limiting resistor into the breadboard.",
+    "3. Route a jumper wire from ESP32 pin GPIO2 to Pin 1 of the 220Ω resistor.",
+    "4. Insert the Red LED (longer lead is Anode +, shorter lead is Cathode -).",
+    "5. Route a jumper wire from Pin 2 of the resistor to the LED Anode (+).",
+    "6. Route a jumper wire from the LED Cathode (-) to the ESP32 GND pin to complete the circuit.",
+    "7. Power on the ESP32 and run the live hardware simulation!",
   ],
   code: `// Blinky generated Arduino C++ sketch for ESP32
 // Target Board: ESP32 DevKit V1

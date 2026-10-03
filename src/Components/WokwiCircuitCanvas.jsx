@@ -10,6 +10,15 @@ import {
   Volume2,
   Gamepad2,
   Sparkles,
+  Play,
+  Pause,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  ArrowRight,
+  Layers,
+  X,
+  Info,
 } from "lucide-react";
 
 /**
@@ -277,10 +286,16 @@ function computeWokwiWirePath(p1, p2, idx) {
  * Clean Wokwi Circuit Diagram Canvas (True Wokwi Style + Fully Functional Interactive Simulation)
  * Buttons click, Joysticks deflect, Sensors trigger, and LEDs dynamically illuminate in real time.
  */
-export default function WokwiCircuitCanvas({ circuit }) {
+export default function WokwiCircuitCanvas({ circuit, initialMode = "step" }) {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [hoveredWireId, setHoveredWireId] = useState(null);
   const canvasRef = useRef(null);
+
+  // Step-by-Step Simulation Mode State
+  const [isStepMode, setIsStepMode] = useState(initialMode === "step");
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [autoPlaySpeed] = useState(2500);
 
   // Live Interactive State
   const [buttonPressed, setButtonPressed] = useState(false);
@@ -337,38 +352,11 @@ export default function WokwiCircuitCanvas({ circuit }) {
     }
   }, [isButtonCircuit, isJoystickCircuit, isUltrasonicCircuit]);
 
-  // Dynamic LED State resolved in real-time from active inputs
-  const isLedOn = useMemo(() => {
-    if (isButtonCircuit) {
-      return buttonPressed || buttonToggled;
-    }
-    if (isJoystickCircuit) {
-      const isDeflected =
-        Math.abs(joystickState.x) > 0.25 || Math.abs(joystickState.y) > 0.25;
-      return isDeflected || joystickState.pressed;
-    }
-    if (isUltrasonicCircuit) {
-      return ultrasonicDistance > 0 && ultrasonicDistance < 15;
-    }
-    return blinkTick;
-  }, [
-    isButtonCircuit,
-    buttonPressed,
-    buttonToggled,
-    isJoystickCircuit,
-    joystickState,
-    isUltrasonicCircuit,
-    ultrasonicDistance,
-    blinkTick,
-  ]);
-
-  // Dynamic Piezo Buzzer Soundwaves
-  const isBuzzerOn = useMemo(() => {
-    if (isUltrasonicCircuit) {
-      return ultrasonicDistance > 0 && ultrasonicDistance < 15;
-    }
-    return false;
-  }, [isUltrasonicCircuit, ultrasonicDistance]);
+  // Reset steps when circuit changes
+  useEffect(() => {
+    setCurrentStepIndex(0);
+    setIsAutoPlaying(false);
+  }, [circuit?.id, circuit?.title]);
 
   // Distinct, collision-free layout for each circuit type
   const layout = useMemo(() => {
@@ -630,11 +618,8 @@ export default function WokwiCircuitCanvas({ circuit }) {
       if (foundKey) pinMeta = registry[foundKey];
     }
 
-    if (!pinMeta) {
-      pinMeta = { x: compPos.width / 2, y: compPos.height / 2, dir: [0, 1] };
-    }
-
     return {
+      compId: compKey,
       x: compPos.x + pinMeta.x,
       y: compPos.y + pinMeta.y,
       dir: pinMeta.dir || [0, 1],
@@ -644,7 +629,7 @@ export default function WokwiCircuitCanvas({ circuit }) {
   };
 
   // Generate verified wires with natural curves
-  const wires = useMemo(() => {
+  const rawWires = useMemo(() => {
     if (!circuit?.connections) return [];
 
     return circuit.connections
@@ -664,20 +649,11 @@ export default function WokwiCircuitCanvas({ circuit }) {
         const pathData = computeWokwiWirePath(p1, p2, idx);
         const fullLabel = `${p1.compName} [${p1.pinName}] ➔ ${p2.compName} [${p2.pinName}]`;
 
-        // Check if wire carries active signal current
-        const isCurrentActive =
-          (isLedOn &&
-            (toKey === "led_1" ||
-              fromKey === "led_1" ||
-              toKey === "resistor_1" ||
-              fromKey === "resistor_1")) ||
-          ((buttonPressed || buttonToggled) &&
-            (toKey === "button_1" || fromKey === "button_1")) ||
-          (isBuzzerOn && (toKey === "buzzer_1" || fromKey === "buzzer_1"));
-
         return {
           id: `wire-${idx}`,
           num: idx + 1,
+          fromKey,
+          toKey,
           p1,
           p2,
           pathData,
@@ -687,11 +663,296 @@ export default function WokwiCircuitCanvas({ circuit }) {
           fromPin: p1.pinName,
           toComp: p2.compName,
           toPin: p2.pinName,
-          isCurrentActive,
         };
       })
       .filter(Boolean);
-  }, [circuit, layout, isLedOn, buttonPressed, buttonToggled, isBuzzerOn]);
+  }, [circuit, layout]);
+
+  // Step-by-Step Assembly Steps Sequence
+  const steps = useMemo(() => {
+    if (!circuit) return [];
+
+    const generatedSteps = [];
+    const introducedComponents = new Set(["esp32", "esp"]);
+    const introducedWires = new Set();
+
+    const boardModel = circuit?.board?.model || "ESP32 DevKit V1";
+
+    // Step 1: ESP32 Microcontroller
+    generatedSteps.push({
+      stepNumber: 1,
+      type: "board",
+      title: `1. Mount ${boardModel}`,
+      shortTitle: "1. ESP32",
+      subtitle: `Place the ${boardModel} onto the breadboard workspace`,
+      description: `The ${boardModel} serves as the central IoT controller, supplying 3.3V digital GPIO logic outputs, ADC analog inputs, and system ground (GND) return paths.`,
+      visibleCompIds: new Set(["esp32", "esp"]),
+      visibleWireIds: new Set(),
+      focusedCompId: "esp32",
+      focusedWireId: null,
+      pinCallouts: [],
+      isLiveSimulation: false,
+    });
+
+    const getCompTitle = (comp) => {
+      if (!comp) return "Component";
+      return comp.name || comp.type || "Component";
+    };
+
+    const getCompTip = (comp) => {
+      const cat = getCompCategory(comp?.type);
+      if (cat === "resistor") {
+        return `A ${comp.value || "220"}Ω current-limiting resistor is placed in series with the LED to restrict excess current from 3.3V GPIO to a safe ~15mA, preventing LED burnout.`;
+      }
+      if (cat === "led") {
+        return `The Red LED is a directional semiconductor diode. Current must enter the longer lead (Anode +) and exit through the shorter lead (Cathode -).`;
+      }
+      if (cat === "pushbutton") {
+        return `The tactile pushbutton acts as a momentary digital switch to pull GPIO input LOW when clicked.`;
+      }
+      if (cat === "ultrasonic") {
+        return `The HC-SR04 sonar sensor measures distance by emitting 40kHz ultrasonic sound pulses and measuring echo return timing.`;
+      }
+      if (cat === "buzzer") {
+        return `The piezo buzzer vibrates rapidly when electrical current passes through its crystal element, generating acoustic alarms.`;
+      }
+      if (cat === "joystick") {
+        return `The analog joystick provides dual potentiometers for 2D coordinate deflection and an integrated pushbutton.`;
+      }
+      return `Mount the ${getCompTitle(comp)} onto the breadboard.`;
+    };
+
+    const getWireTip = (wire) => {
+      const f = String(wire.fromPin || "").toUpperCase();
+      const t = String(wire.toPin || "").toUpperCase();
+
+      if (f.includes("GND") || t.includes("GND") || f === "C" || t === "C" || f === "K" || t === "K") {
+        return `Route a jumper wire from ${wire.fromComp} pin [${wire.fromPin}] to ${wire.toComp} pin [${wire.toPin}]. This completes the closed electrical ground loop (0.0V reference).`;
+      }
+      if (f.includes("GPIO") || t.includes("GPIO") || f === "2" || t === "2") {
+        return `Connect signal jumper wire from ${wire.fromComp} pin [${wire.fromPin}] to ${wire.toComp} pin [${wire.toPin}]. When firmware sets this pin HIGH (3.3V), power is delivered.`;
+      }
+      if (f.includes("5V") || t.includes("5V") || f.includes("VCC") || t.includes("VCC")) {
+        return `Connect the 5V DC power wire from ${wire.fromComp} pin [${wire.fromPin}] to ${wire.toComp} pin [${wire.toPin}] to energize the component.`;
+      }
+      return `Connect jumper wire from ${wire.fromComp} pin [${wire.fromPin}] ➔ ${wire.toComp} pin [${wire.toPin}].`;
+    };
+
+    rawWires.forEach((wire) => {
+      const fromKey = wire.fromKey;
+      const toKey = wire.toKey;
+
+      const fromComp = activeComponents.find((c) => c.id === fromKey || c.name === wire.fromComp);
+      const toComp = activeComponents.find((c) => c.id === toKey || c.name === wire.toComp);
+
+      if (fromComp && !introducedComponents.has(fromComp.id)) {
+        introducedComponents.add(fromComp.id);
+        const stepNum = generatedSteps.length + 1;
+        generatedSteps.push({
+          stepNumber: stepNum,
+          type: "component",
+          title: `${stepNum}. Place ${getCompTitle(fromComp)}`,
+          shortTitle: `${stepNum}. ${getCompTitle(fromComp).replace(/DevKit.*|Sensor.*|Module.*/, "")}`,
+          subtitle: `Position the ${getCompTitle(fromComp)} on the breadboard`,
+          description: getCompTip(fromComp),
+          visibleCompIds: new Set(introducedComponents),
+          visibleWireIds: new Set(introducedWires),
+          focusedCompId: fromComp.id,
+          focusedWireId: null,
+          pinCallouts: [],
+          isLiveSimulation: false,
+        });
+      }
+
+      if (toComp && !introducedComponents.has(toComp.id)) {
+        introducedComponents.add(toComp.id);
+        const stepNum = generatedSteps.length + 1;
+        generatedSteps.push({
+          stepNumber: stepNum,
+          type: "component",
+          title: `${stepNum}. Place ${getCompTitle(toComp)}`,
+          shortTitle: `${stepNum}. ${getCompTitle(toComp).replace(/DevKit.*|Sensor.*|Module.*/, "")}`,
+          subtitle: `Position the ${getCompTitle(toComp)} on the breadboard`,
+          description: getCompTip(toComp),
+          visibleCompIds: new Set(introducedComponents),
+          visibleWireIds: new Set(introducedWires),
+          focusedCompId: toComp.id,
+          focusedWireId: null,
+          pinCallouts: [],
+          isLiveSimulation: false,
+        });
+      }
+
+      // Add wire step
+      introducedWires.add(wire.id);
+      const stepNum = generatedSteps.length + 1;
+      generatedSteps.push({
+        stepNumber: stepNum,
+        type: "wire",
+        title: `${stepNum}. Wire ${wire.fromComp} [${wire.fromPin}] ➔ ${wire.toComp} [${wire.toPin}]`,
+        shortTitle: `${stepNum}. Wire ${wire.fromPin} ➔ ${wire.toPin}`,
+        subtitle: `Route jumper wire specifying ${wire.fromComp} pin ${wire.fromPin}`,
+        description: getWireTip(wire),
+        visibleCompIds: new Set(introducedComponents),
+        visibleWireIds: new Set(introducedWires),
+        focusedCompId: null,
+        focusedWireId: wire.id,
+        pinCallouts: [
+          {
+            compId: fromKey,
+            compName: wire.fromComp,
+            pin: wire.fromPin,
+            x: wire.p1.x,
+            y: wire.p1.y,
+            dir: wire.p1.dir,
+          },
+          {
+            compId: toKey,
+            compName: wire.toComp,
+            pin: wire.toPin,
+            x: wire.p2.x,
+            y: wire.p2.y,
+            dir: wire.p2.dir,
+          },
+        ],
+        wire,
+        isLiveSimulation: false,
+      });
+    });
+
+    // Final live simulation step
+    const finalStepNum = generatedSteps.length + 1;
+    generatedSteps.push({
+      stepNumber: finalStepNum,
+      type: "completed",
+      title: `${finalStepNum}. ⚡ Circuit Complete — Live Hardware Simulation`,
+      shortTitle: `${finalStepNum}. Live Power ⚡`,
+      subtitle: "All connections closed & verified. Firmware runtime operational!",
+      description:
+        "Circuit fully assembled and energized! Firmware on the ESP32 is actively driving signals: GPIO2 toggles HIGH (3.3V) and LOW (0V), blinking the LED in real-time. You can toggle switches and inspect runtime response!",
+      visibleCompIds: new Set([...activeComponents.map((c) => c.id), "esp32", "esp"]),
+      visibleWireIds: new Set(rawWires.map((w) => w.id)),
+      focusedCompId: null,
+      focusedWireId: null,
+      pinCallouts: [],
+      isLiveSimulation: true,
+    });
+
+    return generatedSteps;
+  }, [circuit, activeComponents, rawWires]);
+
+  // Current Active Step Object
+  const currentStep = useMemo(() => {
+    if (!isStepMode || steps.length === 0) return null;
+    return steps[Math.min(currentStepIndex, Math.max(0, steps.length - 1))] || steps[0];
+  }, [isStepMode, steps, currentStepIndex]);
+
+  // Is the circuit completely assembled and energized (final live simulation step reached)
+  const isCircuitCompleted = useMemo(() => {
+    if (!currentStep) return false;
+    return Boolean(
+      currentStep.isLiveSimulation ||
+        currentStep.type === "completed" ||
+        currentStepIndex === steps.length - 1
+    );
+  }, [currentStep, currentStepIndex, steps.length]);
+
+  // Dynamic LED State resolved in real-time from active inputs
+  const isLedOn = useMemo(() => {
+    if (isStepMode && currentStep && !currentStep.isLiveSimulation) {
+      return false;
+    }
+    if (isButtonCircuit) {
+      return buttonPressed || buttonToggled;
+    }
+    if (isJoystickCircuit) {
+      const isDeflected =
+        Math.abs(joystickState.x) > 0.25 || Math.abs(joystickState.y) > 0.25;
+      return isDeflected || joystickState.pressed;
+    }
+    if (isUltrasonicCircuit) {
+      return ultrasonicDistance > 0 && ultrasonicDistance < 15;
+    }
+    return blinkTick;
+  }, [
+    isStepMode,
+    currentStep,
+    isButtonCircuit,
+    buttonPressed,
+    buttonToggled,
+    isJoystickCircuit,
+    joystickState,
+    isUltrasonicCircuit,
+    ultrasonicDistance,
+    blinkTick,
+  ]);
+
+  // Dynamic Piezo Buzzer Soundwaves
+  const isBuzzerOn = useMemo(() => {
+    if (isStepMode && currentStep && !currentStep.isLiveSimulation) {
+      return false;
+    }
+    if (isUltrasonicCircuit) {
+      return ultrasonicDistance > 0 && ultrasonicDistance < 15;
+    }
+    return false;
+  }, [isStepMode, currentStep, isUltrasonicCircuit, ultrasonicDistance]);
+
+  // Generate verified wires with live current status
+  const wires = useMemo(() => {
+    return rawWires.map((wire) => {
+      const isCurrentActive =
+        (isLedOn &&
+          (wire.toKey === "led_1" ||
+            wire.fromKey === "led_1" ||
+            wire.toKey === "resistor_1" ||
+            wire.fromKey === "resistor_1")) ||
+        ((buttonPressed || buttonToggled) &&
+          (wire.toKey === "button_1" || wire.fromKey === "button_1")) ||
+        (isBuzzerOn && (wire.toKey === "buzzer_1" || wire.fromKey === "buzzer_1"));
+
+      return {
+        ...wire,
+        isCurrentActive,
+      };
+    });
+  }, [rawWires, isLedOn, buttonPressed, buttonToggled, isBuzzerOn]);
+
+  // Auto-play timer
+  useEffect(() => {
+    if (!isAutoPlaying || !isStepMode || steps.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrentStepIndex((prev) => {
+        if (prev < steps.length - 1) {
+          return prev + 1;
+        } else {
+          setIsAutoPlaying(false);
+          return prev;
+        }
+      });
+    }, autoPlaySpeed);
+    return () => clearInterval(timer);
+  }, [isAutoPlaying, isStepMode, autoPlaySpeed, steps.length]);
+
+  // Keyboard navigation for step simulation
+  useEffect(() => {
+    if (!isStepMode) return;
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.key === "ArrowRight") {
+        setIsAutoPlaying(false);
+        setCurrentStepIndex((prev) => Math.min(steps.length - 1, prev + 1));
+      } else if (e.key === "ArrowLeft") {
+        setIsAutoPlaying(false);
+        setCurrentStepIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === " " && !e.target.closest("button")) {
+        e.preventDefault();
+        setIsAutoPlaying((p) => !p);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isStepMode, steps.length]);
 
   const canvasWidth = 920;
   const canvasHeight = 460;
@@ -710,56 +971,191 @@ export default function WokwiCircuitCanvas({ circuit }) {
           <h2 className="text-sm font-bold text-amber-200/95 tracking-wide truncate max-w-sm drop-shadow-[0_1px_8px_rgba(245,158,11,0.2)]">
             {circuit?.title || "ESP32 Hardware Circuit Diagram"}
           </h2>
-          <span className="text-[11px] text-amber-500/80 font-mono font-semibold hidden sm:inline">
+          <span className="text-[11px] text-amber-500/80 font-mono font-semibold hidden md:inline">
             • {activeComponents.length} Components • {wires.length} Connections
           </span>
         </div>
 
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            className="canvas-zoom-btn"
-            onClick={() => setZoomLevel((z) => Math.max(0.7, Number((z - 0.15).toFixed(2))))}
-            title="Zoom Out"
-          >
-            <ZoomOut size={13} />
-          </button>
-          <span className="canvas-zoom-val">{Math.round(zoomLevel * 100)}%</span>
-          <button
-            type="button"
-            className="canvas-zoom-btn"
-            onClick={() => setZoomLevel((z) => Math.min(2.0, Number((z + 0.15).toFixed(2))))}
-            title="Zoom In"
-          >
-            <ZoomIn size={13} />
-          </button>
-          {zoomLevel !== 1 && (
+        {/* Mode Switcher: Step-by-Step vs Full Circuit */}
+        <div className="flex items-center gap-2">
+          <div className="circuit-mode-switcher">
             <button
               type="button"
-              className="canvas-reset-btn"
-              onClick={() => setZoomLevel(1)}
-              title="Reset Zoom to 100%"
+              className={`circuit-mode-btn ${isStepMode ? "active" : ""}`}
+              onClick={() => setIsStepMode(true)}
+              title="Interactive step-by-step assembly walkthrough"
             >
-              <RotateCcw size={12} />
-              <span>Reset</span>
+              <Sparkles size={11} />
+              <span>Step-by-Step Assembly</span>
             </button>
-          )}
+            <button
+              type="button"
+              className={`circuit-mode-btn ${!isStepMode ? "active" : ""}`}
+              onClick={() => {
+                setIsStepMode(false);
+                setIsAutoPlaying(false);
+              }}
+              title="View complete interactive circuit directly"
+            >
+              <Zap size={11} />
+              <span>Full Circuit</span>
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1.5 ml-1">
+            <button
+              type="button"
+              className="canvas-zoom-btn"
+              onClick={() => setZoomLevel((z) => Math.max(0.7, Number((z - 0.15).toFixed(2))))}
+              title="Zoom Out"
+            >
+              <ZoomOut size={13} />
+            </button>
+            <span className="canvas-zoom-val">{Math.round(zoomLevel * 100)}%</span>
+            <button
+              type="button"
+              className="canvas-zoom-btn"
+              onClick={() => setZoomLevel((z) => Math.min(2.0, Number((z + 0.15).toFixed(2))))}
+              title="Zoom In"
+            >
+              <ZoomIn size={13} />
+            </button>
+            {zoomLevel !== 1 && (
+              <button
+                type="button"
+                className="canvas-reset-btn"
+                onClick={() => setZoomLevel(1)}
+                title="Reset Zoom to 100%"
+              >
+                <RotateCcw size={12} />
+                <span>Reset</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Clean, Simple Step-by-Step Navigation Bar (No bulky explanation box or pills) */}
+      {isStepMode && currentStep && (
+        <div className="wokwi-simple-stepper">
+          {/* Subtle Step Progress Line */}
+          <div className="simple-stepper-progress">
+            <div
+              className="simple-stepper-progress-fill"
+              style={{
+                width: `${((currentStepIndex + 1) / steps.length) * 100}%`,
+              }}
+            />
+          </div>
+
+          <div className="simple-stepper-inner">
+            {/* Primary Prev & Next Controls */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="simple-step-btn prev"
+                disabled={currentStepIndex === 0}
+                onClick={() => {
+                  setIsAutoPlaying(false);
+                  setCurrentStepIndex((prev) => Math.max(0, prev - 1));
+                }}
+                title="Previous Step (Left Arrow)"
+              >
+                <ChevronLeft size={16} />
+                <span>Prev</span>
+              </button>
+
+              <div className="simple-step-info">
+                <span className="simple-step-pill">
+                  Step {currentStepIndex + 1} of {steps.length}
+                </span>
+                <span className="simple-step-title">
+                  {currentStep.shortTitle || currentStep.title}
+                </span>
+                {isCircuitCompleted && (
+                  <span className="simple-complete-chip">
+                    <Check size={11} /> Complete ⚡
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="simple-step-btn next"
+                disabled={currentStepIndex === steps.length - 1}
+                onClick={() => {
+                  setIsAutoPlaying(false);
+                  setCurrentStepIndex((prev) => Math.min(steps.length - 1, prev + 1));
+                }}
+                title="Next Step (Right Arrow)"
+              >
+                <span>Next</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            {/* Quick Actions (Restart & Auto-Play) */}
+            <div className="simple-stepper-actions">
+              <button
+                type="button"
+                className="simple-action-btn"
+                onClick={() => {
+                  setIsAutoPlaying(false);
+                  setCurrentStepIndex(0);
+                }}
+                title="Restart assembly from Step 1"
+              >
+                <RotateCcw size={13} />
+                <span className="hidden sm:inline">Restart</span>
+              </button>
+
+              <button
+                type="button"
+                className={`simple-action-btn ${isAutoPlaying ? "active" : ""}`}
+                onClick={() => setIsAutoPlaying((p) => !p)}
+                title={isAutoPlaying ? "Pause (Spacebar)" : "Auto Play (Spacebar)"}
+              >
+                {isAutoPlaying ? <Pause size={13} /> : <Play size={13} className="fill-amber-400" />}
+                <span className="hidden sm:inline">{isAutoPlaying ? "Pause" : "Auto Play"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live Interactive Hardware Runtime Toolbar */}
       <div className="wokwi-live-toolbar">
         <div className="flex items-center gap-2.5">
           <div className="live-status-pill">
-            <span className={`live-pulse-dot ${isLedOn ? "active" : ""}`} />
-            <span className="text-xs font-bold text-amber-300">LIVE HARDWARE RUNTIME:</span>
+            <span
+              className={`live-pulse-dot ${
+                isStepMode && currentStep && !currentStep.isLiveSimulation
+                  ? ""
+                  : isLedOn
+                  ? "active"
+                  : ""
+              }`}
+            />
+            <span className="text-xs font-bold text-amber-300">
+              {isStepMode && currentStep && !currentStep.isLiveSimulation
+                ? `ASSEMBLY STEP ${currentStepIndex + 1}/${steps.length}:`
+                : "LIVE HARDWARE RUNTIME:"}
+            </span>
             <span
               className={`text-xs font-bold font-mono ${
-                isLedOn ? "text-emerald-400" : "text-amber-500/70"
+                isStepMode && currentStep && !currentStep.isLiveSimulation
+                  ? "text-amber-400/80"
+                  : isLedOn
+                  ? "text-emerald-400"
+                  : "text-amber-500/70"
               }`}
             >
-              {isLedOn ? "LED [ON 🟢]" : "LED [OFF ⚫]"}
+              {isStepMode && currentStep && !currentStep.isLiveSimulation
+                ? "POWER STANDBY"
+                : isLedOn
+                ? "LED [ON 🟢]"
+                : "LED [OFF ⚫]"}
             </span>
           </div>
 
@@ -886,13 +1282,17 @@ export default function WokwiCircuitCanvas({ circuit }) {
 
             {/* Wire traces */}
             {wires.map((wire) => {
+              const isWireVisible = !isStepMode || currentStep?.visibleWireIds?.has(wire.id);
+              if (!isWireVisible) return null;
+
               const isHovered = hoveredWireId === wire.id;
               const isDimmed = hoveredWireId && !isHovered;
+              const isFocusedWire = isStepMode && currentStep?.focusedWireId === wire.id;
 
               return (
                 <g
                   key={wire.id}
-                  className="wokwi-wire-group"
+                  className={`wokwi-wire-group ${isFocusedWire ? "wire-focus-active" : ""}`}
                   onMouseEnter={() => setHoveredWireId(wire.id)}
                   onMouseLeave={() => setHoveredWireId(null)}
                   style={{ opacity: isDimmed ? 0.25 : 1, transition: "opacity 0.2s" }}
@@ -902,7 +1302,7 @@ export default function WokwiCircuitCanvas({ circuit }) {
                     d={wire.pathData}
                     fill="none"
                     stroke="#0a0a0f"
-                    strokeWidth={isHovered ? 7.5 : wire.isCurrentActive ? 6 : 5}
+                    strokeWidth={isHovered ? 7.5 : wire.isCurrentActive || isFocusedWire ? 6 : 5}
                     strokeLinecap="round"
                     strokeOpacity="0.88"
                   />
@@ -912,8 +1312,9 @@ export default function WokwiCircuitCanvas({ circuit }) {
                     d={wire.pathData}
                     fill="none"
                     stroke={wire.color}
-                    strokeWidth={isHovered ? 4.5 : wire.isCurrentActive ? 3.6 : 2.8}
+                    strokeWidth={isHovered ? 4.5 : wire.isCurrentActive ? 3.6 : isFocusedWire ? 3.8 : 2.8}
                     strokeLinecap="round"
+                    className={isFocusedWire ? "wire-drawing-anim" : ""}
                     filter={wire.isCurrentActive ? "url(#current-pulse-glow)" : "url(#wire-glow-subtle)"}
                   />
 
@@ -921,46 +1322,71 @@ export default function WokwiCircuitCanvas({ circuit }) {
                   <circle
                     cx={wire.p1.x}
                     cy={wire.p1.y}
-                    r={isHovered ? 5.5 : 4}
+                    r={isHovered || isFocusedWire ? 5.5 : 4}
                     fill="#18181b"
                     stroke={wire.color}
-                    strokeWidth={isHovered ? 2.5 : 1.8}
+                    strokeWidth={isHovered || isFocusedWire ? 2.5 : 1.8}
                   />
                   <circle
                     cx={wire.p1.x}
                     cy={wire.p1.y}
-                    r={isHovered ? 2.2 : 1.4}
-                    fill={isHovered ? "#fbbf24" : "#09090b"}
+                    r={isHovered || isFocusedWire ? 2.2 : 1.4}
+                    fill={isHovered || isFocusedWire ? "#fbbf24" : "#09090b"}
                   />
 
                   {/* End Pin - Authentic through-hole solder eyelet */}
                   <circle
                     cx={wire.p2.x}
                     cy={wire.p2.y}
-                    r={isHovered ? 5.5 : 4}
+                    r={isHovered || isFocusedWire ? 5.5 : 4}
                     fill="#18181b"
                     stroke={wire.color}
-                    strokeWidth={isHovered ? 2.5 : 1.8}
+                    strokeWidth={isHovered || isFocusedWire ? 2.5 : 1.8}
                   />
                   <circle
                     cx={wire.p2.x}
                     cy={wire.p2.y}
-                    r={isHovered ? 2.2 : 1.4}
-                    fill={isHovered ? "#fbbf24" : "#09090b"}
+                    r={isHovered || isFocusedWire ? 2.2 : 1.4}
+                    fill={isHovered || isFocusedWire ? "#fbbf24" : "#09090b"}
                   />
 
                   <title>{wire.fullLabel}</title>
                 </g>
               );
             })}
+
+            {/* Glowing ripple pulse on active pins for the current wiring step */}
+            {isStepMode && currentStep?.pinCallouts?.map((callout, cIdx) => (
+              <g key={`pin-solder-glow-${cIdx}`}>
+                <circle
+                  cx={callout.x}
+                  cy={callout.y}
+                  r="7"
+                  fill="none"
+                  stroke="#fbbf24"
+                  strokeWidth="2.5"
+                  className="solder-pin-pulse"
+                />
+                <circle
+                  cx={callout.x}
+                  cy={callout.y}
+                  r="3.5"
+                  fill="#f59e0b"
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                />
+              </g>
+            ))}
           </svg>
 
           {/* Hardware Elements Layer (Authentic Silkscreen + Interactive Click Handlers) */}
           <div className="wokwi-components-layer">
             {/* 1. ESP32 DevKit Board */}
-            {layout["esp32"] && (
+            {(!isStepMode || currentStep?.visibleCompIds?.has("esp32")) && layout["esp32"] && (
               <div
-                className="part-container esp32-container"
+                className={`part-container esp32-container ${
+                  isStepMode && currentStep?.focusedCompId === "esp32" ? "part-newly-placed" : ""
+                }`}
                 style={{
                   left: `${layout["esp32"].x}px`,
                   top: `${layout["esp32"].y}px`,
@@ -968,6 +1394,9 @@ export default function WokwiCircuitCanvas({ circuit }) {
                   height: `${layout["esp32"].height}px`,
                 }}
               >
+                {isStepMode && currentStep?.focusedCompId === "esp32" && (
+                  <div className="component-spotlight-box" />
+                )}
                 <wokwi-esp32-devkit-v1 ledPower="" />
                 <span className="component-silkscreen-label placement-bottom">
                   ESP32 DevKit V1
@@ -977,6 +1406,10 @@ export default function WokwiCircuitCanvas({ circuit }) {
 
             {/* 2. Connected Hardware Components with Real-time Interactive Logic */}
             {activeComponents.map((comp) => {
+              const isCompVisible = !isStepMode || currentStep?.visibleCompIds?.has(comp.id);
+              if (!isCompVisible) return null;
+
+              const isFocused = isStepMode && currentStep?.focusedCompId === comp.id;
               const pos = layout[comp.id];
               if (!pos) return null;
               const cat = getCompCategory(comp.type);
@@ -986,7 +1419,7 @@ export default function WokwiCircuitCanvas({ circuit }) {
                   key={comp.id}
                   className={`part-container ${
                     cat === "led" && isLedOn ? "led-glowing-active" : ""
-                  }`}
+                  } ${isFocused ? "part-newly-placed" : ""}`}
                   style={{
                     left: `${pos.x}px`,
                     top: `${pos.y}px`,
@@ -994,6 +1427,7 @@ export default function WokwiCircuitCanvas({ circuit }) {
                     height: `${pos.height}px`,
                   }}
                 >
+                  {isFocused && <div className="component-spotlight-box" />}
                   {/* Pushbutton: Interactive Click/Hold */}
                   {cat === "pushbutton" && (
                     <div
@@ -1123,6 +1557,53 @@ export default function WokwiCircuitCanvas({ circuit }) {
             })}
           </div>
 
+          {/* Active Pin Callout Badges Hovering Directly Over Physical Pins */}
+          {isStepMode &&
+            currentStep?.pinCallouts?.map((callout, cIdx) => {
+              let badgeStyle = {
+                left: `${callout.x}px`,
+                top: `${callout.y - 14}px`,
+              };
+              let arrowClass = "arrow-down";
+
+              if (callout.dir && callout.dir[1] > 0) {
+                badgeStyle = {
+                  left: `${callout.x}px`,
+                  top: `${callout.y + 14}px`,
+                  transform: "translate(-50%, 0)",
+                };
+                arrowClass = "arrow-up";
+              } else if (callout.dir && callout.dir[0] > 0) {
+                badgeStyle = {
+                  left: `${callout.x + 8}px`,
+                  top: `${callout.y - 12}px`,
+                  transform: "translate(0, -50%)",
+                };
+                arrowClass = "arrow-left";
+              } else if (callout.dir && callout.dir[0] < 0) {
+                badgeStyle = {
+                  left: `${callout.x - 8}px`,
+                  top: `${callout.y - 12}px`,
+                  transform: "translate(-100%, -50%)",
+                };
+                arrowClass = "arrow-right";
+              }
+
+              return (
+                <div
+                  key={`pin-callout-badge-${cIdx}`}
+                  className={`canvas-pin-callout-badge ${arrowClass}`}
+                  style={badgeStyle}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping inline-block" />
+                  <span>
+                    {callout.compName}:{" "}
+                    <strong className="text-white font-mono">{callout.pin}</strong>
+                  </span>
+                </div>
+              );
+            })}
+
           {/* Interactive Floating Wire Inspection HUD */}
           {activeWireObj && (
             <div className="wire-hud-banner">
@@ -1149,7 +1630,9 @@ export default function WokwiCircuitCanvas({ circuit }) {
             </span>
           </div>
           <span className="text-[11px] text-amber-500/80 font-mono font-medium">
-            Hover any row to highlight the wire on the diagram
+            {isStepMode
+              ? "Click any net to jump directly to that wiring step"
+              : "Hover any row to highlight the wire on the diagram"}
           </span>
         </div>
 
@@ -1167,15 +1650,32 @@ export default function WokwiCircuitCanvas({ circuit }) {
             </thead>
             <tbody>
               {wires.map((wire) => {
-                const isActive = hoveredWireId === wire.id;
+                const isHovered = hoveredWireId === wire.id;
+                const isWireInStep = !isStepMode || currentStep?.visibleWireIds?.has(wire.id);
+                const isCurrentStepWire = isStepMode && currentStep?.focusedWireId === wire.id;
+                const stepTargetIndex = steps.findIndex((s) => s.focusedWireId === wire.id);
+
                 return (
                   <tr
                     key={wire.id}
-                    className={`netlist-row ${isActive ? "row-highlight" : ""} ${
-                      wire.isCurrentActive ? "bg-amber-500/10" : ""
+                    className={`netlist-row ${
+                      isHovered || isCurrentStepWire ? "row-highlight" : ""
+                    } ${isCurrentStepWire ? "bg-amber-500/20 border-l-4 border-amber-400 font-bold" : ""} ${
+                      !isWireInStep ? "opacity-35" : ""
                     }`}
                     onMouseEnter={() => setHoveredWireId(wire.id)}
                     onMouseLeave={() => setHoveredWireId(null)}
+                    onClick={() => {
+                      if (isStepMode && stepTargetIndex !== -1) {
+                        setCurrentStepIndex(stepTargetIndex);
+                        setIsAutoPlaying(false);
+                      }
+                    }}
+                    title={
+                      isStepMode && stepTargetIndex !== -1
+                        ? `Click to jump to Step ${stepTargetIndex + 1} (${wire.fromComp} ➔ ${wire.toComp})`
+                        : undefined
+                    }
                   >
                     <td className="font-mono text-amber-500 font-bold">#{wire.num}</td>
                     <td>
@@ -1196,39 +1696,61 @@ export default function WokwiCircuitCanvas({ circuit }) {
                       <span className="pin-highlight-chip">{wire.toPin}</span>
                     </td>
                     <td className="text-amber-200/85 text-xs font-medium">
-                      {wire.fromPin.includes("GND") || wire.toPin.includes("GND")
-                        ? "Common Ground Return (0.0V GND)"
-                        : wire.fromPin.includes("5V") ||
-                          wire.toPin.includes("5V") ||
-                          wire.fromPin.includes("VCC") ||
-                          wire.toPin.includes("VCC")
-                        ? "5V DC Power Rail"
-                        : wire.fromPin.includes("VERT") ||
-                          wire.toPin.includes("VERT") ||
-                          wire.fromPin.includes("34") ||
-                          wire.toPin.includes("34")
-                        ? "Analog ADC Y-Axis Deflection (0–4095, 12-Bit ADC1)"
-                        : wire.fromPin.includes("HORZ") ||
-                          wire.toPin.includes("HORZ") ||
-                          wire.fromPin.includes("35") ||
-                          wire.toPin.includes("35")
-                        ? "Analog ADC X-Axis Deflection (0–4095, 12-Bit ADC1)"
-                        : wire.fromPin.includes("SEL") ||
-                          wire.toPin.includes("SEL")
-                        ? "Joystick Integrated Select Button (Active LOW)"
-                        : wire.fromPin.includes("TRIG") || wire.toPin.includes("TRIG")
-                        ? "10µs Ultrasonic Sonar Trigger Pulse"
-                        : wire.fromPin.includes("ECHO") || wire.toPin.includes("ECHO")
-                        ? "Ultrasonic Sonar Pulse-Width Echo Input"
-                        : wire.fromPin.includes("BUZZER") ||
-                          wire.toPin.includes("+") ||
-                          wire.fromPin.includes("16")
-                        ? "Piezo Acoustic Warning Output"
-                        : wire.fromPin.includes("4") || wire.toPin.includes("1")
-                        ? "Tactile Input Interrupt (Active LOW)"
-                        : `Current-Limited GPIO Output ${
-                            wire.isCurrentActive ? "⚡ (ACTIVE HIGH: 3.3V)" : "⚫ (STANDBY: 0.0V)"
-                          }`}
+                      <div className="flex items-center justify-between gap-3">
+                        <span>
+                          {wire.fromPin.includes("GND") || wire.toPin.includes("GND")
+                            ? "Common Ground Return (0.0V GND)"
+                            : wire.fromPin.includes("5V") ||
+                              wire.toPin.includes("5V") ||
+                              wire.fromPin.includes("VCC") ||
+                              wire.toPin.includes("VCC")
+                            ? "5V DC Power Rail"
+                            : wire.fromPin.includes("VERT") ||
+                              wire.toPin.includes("VERT") ||
+                              wire.fromPin.includes("34") ||
+                              wire.toPin.includes("34")
+                            ? "Analog ADC Y-Axis Deflection (0–4095, 12-Bit ADC1)"
+                            : wire.fromPin.includes("HORZ") ||
+                              wire.toPin.includes("HORZ") ||
+                              wire.fromPin.includes("35") ||
+                              wire.toPin.includes("35")
+                            ? "Analog ADC X-Axis Deflection (0–4095, 12-Bit ADC1)"
+                            : wire.fromPin.includes("SEL") ||
+                              wire.toPin.includes("SEL")
+                            ? "Joystick Integrated Select Button (Active LOW)"
+                            : wire.fromPin.includes("TRIG") || wire.toPin.includes("TRIG")
+                            ? "10µs Ultrasonic Sonar Trigger Pulse"
+                            : wire.fromPin.includes("ECHO") || wire.toPin.includes("ECHO")
+                            ? "Ultrasonic Sonar Pulse-Width Echo Input"
+                            : wire.fromPin.includes("BUZZER") ||
+                              wire.toPin.includes("+") ||
+                              wire.fromPin.includes("16")
+                            ? "Piezo Acoustic Warning Output"
+                            : wire.fromPin.includes("4") || wire.toPin.includes("1")
+                            ? "Tactile Input Interrupt (Active LOW)"
+                            : `Current-Limited GPIO Output ${
+                                wire.isCurrentActive ? "⚡ (ACTIVE HIGH: 3.3V)" : "⚫ (STANDBY: 0.0V)"
+                              }`}
+                        </span>
+
+                        {isStepMode && (
+                          <span className="shrink-0">
+                            {isCurrentStepWire ? (
+                              <span className="px-2 py-0.5 rounded text-[9.5px] font-mono font-extrabold bg-amber-400 text-black shadow-sm flex items-center gap-1 animate-pulse">
+                                ● CURRENT STEP
+                              </span>
+                            ) : isWireInStep ? (
+                              <span className="px-2 py-0.5 rounded text-[9.5px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                ✓ CONNECTED
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[9.5px] font-mono font-medium bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+                                ⏳ PENDING
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

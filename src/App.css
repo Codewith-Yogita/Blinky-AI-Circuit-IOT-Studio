@@ -3943,3 +3943,538 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #94a3b8;
 }
+
+/* ==========================================================================
+   WOKWI STEP-BY-STEP ASSEMBLY SIMULATION STYLING
+   ========================================================================== */
+
+/* Mode Switcher Buttons */
+.circuit-mode-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(10, 12, 18, 0.8);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 9999px;
+  padding: 2.5px;
+  gap: 2px;
+}
+
+.circuit-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #a1a1aa;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.circuit-mode-btn:hover {
+  color: #fef08a;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.circuit-mode-btn.active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.95));
+  color: #000000;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+  font-weight: 800;
+}
+
+/* Stepper Controller Bar */
+.wokwi-stepper-bar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #131722;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.stepper-progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.stepper-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #10b981);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stepper-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stepper-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepper-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.25));
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  transition: all 0.15s ease;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
+.stepper-play-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.4));
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.3);
+}
+
+.stepper-play-btn.playing {
+  background: #f59e0b;
+  color: #000000;
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+  animation: pulsePlay 1.5s infinite;
+}
+
+@keyframes pulsePlay {
+  0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 24px rgba(245, 158, 11, 0.8); }
+  100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+}
+
+.stepper-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #d4d4d8;
+  transition: all 0.15s ease;
+}
+
+.stepper-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.stepper-nav-btn.active {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #fbbf24;
+}
+
+.stepper-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Step Pills Scroll Track */
+.wokwi-step-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
+}
+
+.wokwi-step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #71717a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wokwi-step-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #d4d4d8;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.wokwi-step-pill.completed {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+.wokwi-step-pill.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+  font-weight: 800;
+}
+
+/* Clean Simple Step Navigation Bar */
+.wokwi-simple-stepper {
+  background: #0f121d;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  position: relative;
+}
+
+.simple-stepper-progress {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.simple-stepper-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+.simple-stepper-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.simple-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.simple-step-btn.prev {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e4e4e7;
+}
+
+.simple-step-btn.prev:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #ffffff;
+}
+
+.simple-step-btn.next {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.98));
+  border: 1px solid #f59e0b;
+  color: #09090b;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+}
+
+.simple-step-btn.next:hover:not(:disabled) {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.simple-step-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.simple-step-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.simple-step-pill {
+  padding: 3.5px 9px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.simple-step-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f4f4f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 380px;
+}
+
+.simple-complete-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  animation: pulse 2s infinite;
+}
+
+.simple-stepper-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simple-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.simple-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.simple-action-btn.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+}
+
+/* In-Canvas Floating Step HUD Card (Legacy fallback) */
+.wokwi-step-hud {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  max-width: 320px;
+  background: rgba(17, 21, 32, 0.94);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(245, 158, 11, 0.45);
+  border-radius: 12px;
+  padding: 12px 14px;
+  z-index: 45;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.15);
+  animation: hudAppear 0.25s ease-out;
+  pointer-events: auto;
+}
+
+@keyframes hudAppear {
+  0% { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.step-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  margin-bottom: 6px;
+}
+
+.step-hud-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  font-family: var(--font-outfit, sans-serif);
+}
+
+.step-hud-desc {
+  font-size: 11px;
+  color: #a1a1aa;
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+
+.step-pins-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 10.5px;
+  font-family: var(--font-mono, monospace);
+}
+
+.step-pin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+/* Solder Pad Pin Callout Badges (Hovering directly over physical pins) */
+.canvas-pin-callout-badge {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(14, 18, 28, 0.96);
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.8), 0 0 14px rgba(245, 158, 11, 0.5);
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  color: #fbbf24;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 40;
+  animation: calloutBounce 0.4s ease-out;
+}
+
+.canvas-pin-callout-badge.arrow-down::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #f59e0b;
+}
+
+.canvas-pin-callout-badge.arrow-up::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid #f59e0b;
+}
+
+@keyframes calloutBounce {
+  0% { opacity: 0; transform: translate(-50%, -70%) scale(0.85); }
+  60% { transform: translate(-50%, -108%) scale(1.05); }
+  100% { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
+
+/* SVG Pulse Rings for Active Solder Eyelets */
+.solder-pin-pulse {
+  animation: pinPulseRing 1.4s ease-out infinite;
+  transform-origin: center;
+}
+
+@keyframes pinPulseRing {
+  0% { r: 4px; opacity: 1; stroke-width: 2.5px; }
+  70% { r: 12px; opacity: 0.6; stroke-width: 1.5px; }
+  100% { r: 16px; opacity: 0; stroke-width: 0.5px; }
+}
+
+/* Component Newly Arrived Bounce */
+.part-newly-placed {
+  animation: partDropBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes partDropBounce {
+  0% { opacity: 0; transform: translateY(-18px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Component Spotlight Halo */
+.component-spotlight-box {
+  position: absolute;
+  inset: -6px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(245, 158, 11, 0.8);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4), inset 0 0 12px rgba(245, 158, 11, 0.2);
+  pointer-events: none;
+  animation: haloPulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes haloPulse {
+  0% { opacity: 0.6; transform: scale(0.99); }
+  100% { opacity: 1; transform: scale(1.01); }
+}
+
+/* Wire Drawing Entrance */
+.wire-drawing-anim {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: drawWirePath 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes drawWirePath {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

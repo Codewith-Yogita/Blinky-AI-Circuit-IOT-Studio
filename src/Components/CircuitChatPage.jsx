@@ -192,6 +192,58 @@ export default function CircuitChatPage({
     const wantsShowAll = lower.includes("show all") || lower.includes("show everything");
     const wantsHideAll = lower.includes("hide all") || lower.includes("close all");
 
+    const wantsStepSimulation =
+      lower.includes("step by step") ||
+      lower.includes("step-by-step") ||
+      lower.includes("step simulation") ||
+      lower.includes("first esp32") ||
+      lower.includes("assembly simulation") ||
+      (lower.includes("step") && lower.includes("simulation"));
+
+    if (wantsStepSimulation) {
+      if (
+        lower.includes("resistor") &&
+        lower.includes("led") &&
+        !lower.includes("sonar") &&
+        !lower.includes("ultrasonic")
+      ) {
+        setActiveProject({
+          circuit: singleLedCircuit,
+          code: singleLedCircuit.code,
+          instructions: singleLedCircuit.instructions,
+        });
+      }
+      setVisibleComponents((prev) => ({ ...prev, circuit: true }));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: `🚀 **Step-by-Step Circuit Assembly Simulation is Live!**
+
+I have loaded the interactive simulation canvas in **Step-by-Step Assembly Mode** with all 7 guided stages:
+
+1. **Mount ESP32 Microcontroller**: Places the ESP32 DevKit V1 board onto the workspace.
+2. **Place 220Ω Resistor**: Positions the current-limiting resistor to protect the LED.
+3. **Wire ESP32 [GPIO2] ➔ 220Ω Resistor [Pin 1]**: Jumper wire connected with highlighted pinout pads on **GPIO2** and **Pin 1**.
+4. **Place Red LED**: Places the directional LED diode (longer leg is Anode +, shorter is Cathode -).
+5. **Wire 220Ω Resistor [Pin 2] ➔ Red LED [Anode]**: Delivers safe ~15mA current from the resistor into the LED anode.
+6. **Wire Red LED [Cathode] ➔ ESP32 [GND]**: Completes the closed electrical return path back to system ground.
+7. **⚡ Circuit Complete & Live Power**: Power turns ON, firmware runs, and the LED blinks in real-time!
+
+You can click **Play Simulation (▶)** on the canvas to watch it build automatically, or use **Next (➔)** / **Prev (⬅)** or keyboard arrows to step through each connection!`,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          suggestedNextSteps: [
+            "Show Arduino code",
+            "Flash to ESP32",
+            "Explain resistor calculation",
+            "Show full circuit diagram",
+          ],
+        },
+      ]);
+      return;
+    }
+
     // Fast conversational intercept for component toggling when a project is already active
     const isShowOrHideCommand =
       wantsHideCircuit ||

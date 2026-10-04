@@ -1,0 +1,9 @@
+fastapi>=0.142.2
+uvicorn>=0.54.0
+python-dotenv>=1.2.4
+httpx>=0.28.1
+opencv-python>=5.0.0.93
+ultralytics>=8.4.172
+torch>=2.0.0
+torchvision
+numpy>=2.0.0

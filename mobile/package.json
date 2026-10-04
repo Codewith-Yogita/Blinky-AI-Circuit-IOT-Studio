@@ -5,6 +5,7 @@
   "dependencies": {
     "expo": "~57.0.26",
     "expo-camera": "~57.0.6",
+    "expo-sensors": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "lucide-react-native": "^1.51.0",
     "react": "19.2.3",

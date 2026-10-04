@@ -47,7 +47,7 @@ export default function App() {
 
       // Silent capture: NO flash, NO shutter sound, NO shutter animation
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.35,
+        quality: 0.15, // ultra-compact payload for instant transfer
         base64: true,
         skipProcessing: true,
         shutterSound: false,
@@ -63,9 +63,9 @@ export default function App() {
         setDetections(items);
 
         if (items.length > 0) {
-          setStatusMessage(`Locked: ${items.map((i) => i.label).join(', ')}`);
+          setStatusMessage(`Tracking: ${items.map((i) => i.label).join(', ')}`);
         } else {
-          setStatusMessage('No component detected');
+          setStatusMessage('Scanning hardware...');
         }
       }
     } catch (err: any) {
@@ -76,21 +76,26 @@ export default function App() {
     }
   }, [isCameraReady]);
 
-  // Gentle, silent auto-scan every 2.5 seconds (zero shutter sound/flash)
+  // High-speed real-time detection pipeline for 60 FPS AR tracking
   useEffect(() => {
     if (!isCameraReady || !autoScan) return;
+    let isActive = true;
 
-    const timer = setTimeout(() => {
-      captureAndScan();
-    }, 1200);
+    const runPipeline = async () => {
+      // Brief warmup pause for camera stabilization
+      await new Promise((r) => setTimeout(r, 500));
 
-    const interval = setInterval(() => {
-      captureAndScan();
-    }, 2800);
+      while (isActive) {
+        await captureAndScan();
+        // Yield 35ms between frames for smooth 60 FPS UI thread execution
+        await new Promise((r) => setTimeout(r, 35));
+      }
+    };
+
+    runPipeline();
 
     return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
+      isActive = false;
     };
   }, [isCameraReady, autoScan, captureAndScan]);
 

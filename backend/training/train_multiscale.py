@@ -8,7 +8,7 @@ from ultralytics import YOLO
 def train_multiscale_esp32():
     print("[Trainer] Starting Multi-Scale ESP32 & IoT YOLO Model Training...")
     
-    base_dir = Path("backend/esp32_data_v2").resolve()
+    base_dir = Path("training_artifacts/esp32_data_v2").resolve()
     if base_dir.exists():
         shutil.rmtree(base_dir)
         
@@ -123,8 +123,8 @@ names:
   1: LED
 """)
 
-    print("[Trainer] Starting YOLOv8 transfer learning (15 epochs)...")
-    model = YOLO("yolov8n.pt")
+    print("[Trainer] Starting Ultralytics YOLO26 transfer learning (15 epochs)...")
+    model = YOLO("yolo26n.pt")
     model.train(
         data=str(yaml_path),
         epochs=15,

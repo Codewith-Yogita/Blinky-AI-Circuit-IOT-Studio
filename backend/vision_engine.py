@@ -50,8 +50,8 @@ class OpenSourceVisionEngine:
         # PRIMARY DETECTOR: Custom Trained Multiscale YOLO Model
         if self.model is not None:
             try:
-                # High-speed native letterboxed inference at 416px (17ms latency)
-                results = self.model(img, imgsz=416, conf=0.35, iou=0.45, verbose=False)
+                # High-speed native letterboxed inference at 640px with high sensitivity for LEDs
+                results = self.model(img, imgsz=640, conf=0.25, iou=0.45, verbose=False)
                 for r in results:
                     for i, box in enumerate(r.boxes):
                         x1, y1, x2, y2 = box.xyxyn[0].tolist()

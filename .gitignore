@@ -25,3 +25,26 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python & ML Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+runs/
+*.pt
+!backend/esp32_yolo.pt
+backend/*.jpg
+backend/*.jpeg
+backend/*.png
+backend/esp32_data*/
+
+# Training & Generated Artifacts
+training_artifacts/*
+!training_artifacts/.gitkeep
+esp32_data*/
+
+# Mobile & Expo
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/

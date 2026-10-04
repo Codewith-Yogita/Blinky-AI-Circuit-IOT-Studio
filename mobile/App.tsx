@@ -101,8 +101,8 @@ export default function App() {
 
       while (isActive) {
         await captureAndScan();
-        // Yield 80ms between background captures to keep camera preview running at native 60 FPS
-        await new Promise((r) => setTimeout(r, 80));
+        // Zero-delay loop for instantaneous frame capture and streaming
+        await new Promise((r) => setTimeout(r, 0));
       }
     };
 

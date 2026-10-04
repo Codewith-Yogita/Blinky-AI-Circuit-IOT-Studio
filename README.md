@@ -104,18 +104,41 @@ Blinky lets you scan physical components sitting on your desk without requiring 
 
 ---
 
+## 📱 Mobile AR Circuit Scanner (`mobile/`)
+
+Blinky includes a dedicated high-performance companion mobile app built with **React Native & Expo Prebuild**:
+- **60 FPS Hardware Gyroscope Tracking**: Projects physical device rotations onto the AR screen on the native GPU UI thread with zero damping lag (`BoundingBoxOverlay.tsx`).
+- **High-Clarity 1080p Camera Feed**: Captures full-resolution 1080p frames at 0.85 JPEG quality for fine circuit trace and component detection without compression artifacts.
+- **Smart Dual-Networking**: Automatically routes requests through zero-latency USB port forwarding (`localhost:8000`) and seamlessly falls back to local Wi-Fi (`192.168.1.x:8000`).
+- **Live Hands-Free Scanning**: Runs continuous automatic detection without requiring manual shutter buttons.
+
+---
+
+## 🧠 AI & Vision Pipeline
+
+Blinky utilizes a two-tier artificial intelligence stack:
+1. **Sub-50ms Edge Detection (YOLO)**: Custom-trained neural model identifying microcontrollers (ESP32), discrete components (LEDs, resistors), and sensors directly in live camera feeds.
+2. **Generative Circuit Synthesis (Gemini 2.5 Flash)**: Deep multimodal analysis of identified hardware, electrical safety validation, Wokwi `diagram.json` generation, and non-blocking Arduino C++ code compilation.
+
+> Detailed AI guides are available in the [`docs/`](docs/) directory:
+> - 📘 [**AI & Vision Architecture Guide**](docs/ai_architecture.md): Deep-dive into latency, gyroscope coordinate math, and dual-perception pipeline.
+> - 📗 [**Model Training & Dataset Pipeline**](docs/model_training.md): Annotation standards, augmentation pipeline, and training workflows.
+
+---
+
 ## 🛠️ Technology Stack
 
 | Domain | Technologies |
 | :--- | :--- |
-| **Architecture** | 2-Page Architecture (Landing Page + All-in-One Hardware Chatbot) |
-| **Frontend Framework** | React 19, Vite, Tailwind CSS v4, Vanilla CSS Design System |
-| **Diagramming & Design** | Mermaid.js, GSAP 3 (ScrollTrigger), Lucide React, Google Fonts (*Outfit 400-900*, *Inter*, *JetBrains Mono*) |
+| **Web Client** | React 19, Vite, Tailwind CSS v4, Vanilla CSS Design System |
+| **Mobile AR App** | React Native, Expo (SDK 57 Native Prebuild), `react-native-vision-camera`, `expo-sensors` |
+| **Vision & Edge AI** | Ultralytics YOLO (Nano/Small), ONNX Runtime, `react-native-fast-tflite` |
+| **AI Synthesis** | Google Gemini 2.5 Flash & Vision AI, Electronics Rules Engine |
+| **Backend & Collector** | Python 3.10+, FastAPI, Uvicorn, OpenCV, PyTorch |
 | **Circuit Simulation** | Wokwi Simulation Engine, SVG Vector Schematics, Netlist Layout Engine |
-| **AI & Vision Synthesizer** | Google Gemini 2.5 Flash & Vision AI, Electronics Safety & Pinout Rules Engine |
-| **Hardware & Flashing** | ESP32 DevKit V1, WebSerial API, `esptool.py`, PySerial (115200 Baud) |
-| **Multimodal Capture** | Web Speech API, HTML5 Media Capture, Windows Phone Link, Wi-Fi LAN Hotspot |
-| **Telemetry & Storage** | PostgreSQL, TigerData Real-time Stream |
+| **Hardware & Flashing** | ESP32 DevKit V1, WebSerial API, `esptool.py` (115200 Baud) |
+| **Multimodal Capture** | Web Speech API, HTML5 Media Capture, ADB Reverse Tunneling, Wi-Fi LAN |
+
 
 ---
 

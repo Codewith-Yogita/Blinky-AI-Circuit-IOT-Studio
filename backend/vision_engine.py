@@ -18,7 +18,7 @@ class OpenSourceVisionEngine:
         if HAS_YOLO and os.path.exists(weights_path):
             try:
                 self.model = YOLO(weights_path)
-                print(f"[VisionEngine] Successfully loaded custom trained YOLOv8 model from: {weights_path}")
+                print(f"[VisionEngine] Successfully loaded custom trained YOLO26 model from: {weights_path}")
             except Exception as e:
                 print(f"[VisionEngine] Error loading YOLO model: {e}")
         else:

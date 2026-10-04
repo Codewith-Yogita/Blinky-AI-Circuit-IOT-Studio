@@ -151,9 +151,9 @@ names:
   1: LED
 """)
 
-    print("[Trainer] Starting YOLO11 transfer learning (20 epochs)...")
-    # Using official YOLO11n for guaranteed stability, sharp feature heads, and high recall
-    model = YOLO("yolo11n.pt")
+    print("[Trainer] Starting Ultralytics YOLO26 transfer learning (20 epochs)...")
+    # Using official YOLO26n for guaranteed stability, sharp feature heads, and high recall
+    model = YOLO("yolo26n.pt")
     model.train(
         data=str(yaml_path),
         epochs=20,

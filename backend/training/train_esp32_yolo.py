@@ -82,8 +82,8 @@ names:
   0: ESP32
 """)
 
-    print("[Trainer] Starting YOLOv8 transfer learning (12 epochs)...")
-    model = YOLO("yolov8n.pt")
+    print("[Trainer] Starting Ultralytics YOLO26 transfer learning (12 epochs)...")
+    model = YOLO("yolo26n.pt")
     results = model.train(
         data=str(yaml_path),
         epochs=12,

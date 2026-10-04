@@ -140,43 +140,47 @@ export const BoundingBoxOverlay: React.FC<Props> = ({
   sourceWidth = 3,
   sourceHeight = 4,
 }) => {
-  // Gyroscope 60 FPS real-time motion compensation with noise suppression:
-  // Discards small hand micro-tremors to keep box rock-solid stationary,
-  // while tracking fast deliberate pans immediately.
+  // 60 FPS Real-time Inertial Projection:
+  // When phone moves, gyroscope instantly translates overlay at 60 FPS in lockstep with the desk
   const animGyroX = useRef(new Animated.Value(0)).current;
   const animGyroY = useRef(new Animated.Value(0)).current;
   const gyroOffset = useRef({ x: 0, y: 0 }).current;
 
   useEffect(() => {
-    Gyroscope.setUpdateInterval(16); // 60 FPS updates (~16ms)
+    Gyroscope.setUpdateInterval(16); // 60 FPS sensor updates (~16ms)
     let lastTime = Date.now();
+
+    // Standard phone lens vertical FOV is ~60 deg, giving focal scale ~ layoutHeight * 1.15
+    const FOCAL_SCALE = Math.max(500, layoutHeight * 1.15);
 
     const sub = Gyroscope.addListener((data) => {
       const now = Date.now();
       const dt = Math.min(0.04, (now - lastTime) / 1000);
       lastTime = now;
 
-      // Gyro noise filter: ignore baseline hand tremors (<0.14 rad/s)
+      // 1. Noise Filter: Discard micro-tremors (<0.10 rad/s) so box stays rock-solid when holding still
       const angularSpeed = Math.hypot(data.x, data.y);
-      if (angularSpeed < 0.14) {
-        // Smoothly decay to zero when holding still so box stays firmly intact
-        gyroOffset.x *= 0.88;
-        gyroOffset.y *= 0.88;
-        if (Math.abs(gyroOffset.x) < 0.3) gyroOffset.x = 0;
-        if (Math.abs(gyroOffset.y) < 0.3) gyroOffset.y = 0;
+      if (angularSpeed < 0.10) {
+        // Natural elastic centering to prevent cumulative drift
+        gyroOffset.x *= 0.92;
+        gyroOffset.y *= 0.92;
+        if (Math.abs(gyroOffset.x) < 0.2) gyroOffset.x = 0;
+        if (Math.abs(gyroOffset.y) < 0.2) gyroOffset.y = 0;
         animGyroX.setValue(gyroOffset.x);
         animGyroY.setValue(gyroOffset.y);
         return;
       }
 
-      // Deliberate motion: translate overlay in 60 FPS
-      const SENSITIVITY = 350;
-      gyroOffset.x -= data.y * SENSITIVITY * dt;
-      gyroOffset.y += data.x * SENSITIVITY * dt;
+      // 2. Active Motion: Translate overlay in lockstep with camera motion at 60 FPS
+      // Panning right (data.y > 0) -> desk moves left (-X)
+      // Tilting up (data.x > 0) -> desk moves down (+Y)
+      gyroOffset.x -= data.y * FOCAL_SCALE * dt;
+      gyroOffset.y += data.x * FOCAL_SCALE * dt;
 
-      // Clamp max displacement between vision frames
-      gyroOffset.x = Math.max(-80, Math.min(80, gyroOffset.x));
-      gyroOffset.y = Math.max(-80, Math.min(80, gyroOffset.y));
+      // Soft clamp displacement between vision anchors
+      const MAX_DISP = layoutWidth * 0.4;
+      gyroOffset.x = Math.max(-MAX_DISP, Math.min(MAX_DISP, gyroOffset.x));
+      gyroOffset.y = Math.max(-MAX_DISP, Math.min(MAX_DISP, gyroOffset.y));
 
       animGyroX.setValue(gyroOffset.x);
       animGyroY.setValue(gyroOffset.y);
@@ -185,14 +189,26 @@ export const BoundingBoxOverlay: React.FC<Props> = ({
     return () => {
       sub.remove();
     };
-  }, []);
+  }, [layoutWidth, layoutHeight]);
 
-  // When fresh vision detection arrives, lock onto verified vision coordinates
+  // Complementary Fusion: When fresh vision detection arrives, smoothly reconcile drift
+  // instead of a harsh pop
   useEffect(() => {
-    gyroOffset.x *= 0.1;
-    gyroOffset.y *= 0.1;
-    animGyroX.setValue(gyroOffset.x);
-    animGyroY.setValue(gyroOffset.y);
+    Animated.parallel([
+      Animated.timing(animGyroX, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: false,
+      }),
+      Animated.timing(animGyroY, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: false,
+      }),
+    ]).start(() => {
+      gyroOffset.x = 0;
+      gyroOffset.y = 0;
+    });
   }, [detections]);
 
   if (layoutWidth === 0 || layoutHeight === 0) return null;

@@ -21,9 +21,7 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState<string>('Ready • Scanning...');
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [streamMode, setStreamMode] = useState<'all' | 'balanced'>('all'); // 'all' = Stream All Frames (Instantaneous)
   const [pictureSize, setPictureSize] = useState<string | undefined>(undefined);
-  const [fpsCount, setFpsCount] = useState<number>(0);
 
   const [screenLayout, setScreenLayout] = useState<{ width: number; height: number }>({
     width: SCREEN_WIDTH,
@@ -37,8 +35,6 @@ export default function App() {
 
   const cameraRef = useRef<any>(null);
   const isProcessingRef = useRef<boolean>(false);
-  const frameCounterRef = useRef<number>(0);
-  const lastFpsTimeRef = useRef<number>(Date.now());
 
   // Setup efficient camera picture size on ready
   const handleCameraReady = async () => {
@@ -81,15 +77,6 @@ export default function App() {
         const items = res.detections || [];
         setDetections(items);
 
-        // Update FPS counter
-        frameCounterRef.current += 1;
-        const now = Date.now();
-        if (now - lastFpsTimeRef.current >= 1000) {
-          setFpsCount(frameCounterRef.current);
-          frameCounterRef.current = 0;
-          lastFpsTimeRef.current = now;
-        }
-
         if (items.length > 0) {
           setStatusMessage(`Tracking: ${items.map((i) => i.label).join(', ')}`);
         } else {
@@ -114,9 +101,8 @@ export default function App() {
 
       while (isActive) {
         await captureAndScan();
-        // In 'all' mode: send all frames immediately (0ms delay) for instantaneous tracking
-        const delay = streamMode === 'all' ? 0 : 800;
-        await new Promise((r) => setTimeout(r, delay));
+        // Zero-delay continuous frame streaming for instantaneous response
+        await new Promise((r) => setTimeout(r, 0));
       }
     };
 
@@ -125,17 +111,13 @@ export default function App() {
     return () => {
       isActive = false;
     };
-  }, [isCameraReady, streamMode, captureAndScan]);
+  }, [isCameraReady, captureAndScan]);
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
     if (width > 0 && height > 0) {
       setScreenLayout({ width, height });
     }
-  };
-
-  const toggleStreamMode = () => {
-    setStreamMode((prev) => (prev === 'all' ? 'balanced' : 'all'));
   };
 
   if (!permission?.granted) {
@@ -166,28 +148,15 @@ export default function App() {
         onCameraReady={handleCameraReady}
       />
 
-      {/* Top Floating Controls: Status & Mode Toggle */}
-      <View style={styles.topBar}>
-        <View style={styles.statusPill}>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: detections.length > 0 ? '#10b981' : isScanning ? '#06b6d4' : '#f59e0b' },
-            ]}
-          />
-          <Text style={styles.statusText}>{statusMessage}</Text>
-        </View>
-
-        {/* Option to stream all frames vs balanced */}
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={[styles.modeToggle, streamMode === 'all' ? styles.modeActive : styles.modeBalanced]}
-          onPress={toggleStreamMode}
-        >
-          <Text style={[styles.modeToggleText, streamMode === 'all' ? styles.textActive : styles.textBalanced]}>
-            {streamMode === 'all' ? `⚡ ALL FRAMES (${fpsCount} FPS)` : '🌿 BALANCED (1 FPS)'}
-          </Text>
-        </TouchableOpacity>
+      {/* Top Floating Status Indicator */}
+      <View style={styles.statusPill}>
+        <View
+          style={[
+            styles.statusDot,
+            { backgroundColor: detections.length > 0 ? '#10b981' : isScanning ? '#06b6d4' : '#f59e0b' },
+          ]}
+        />
+        <Text style={styles.statusText}>{statusMessage}</Text>
       </View>
 
       {/* Bounding Boxes with Text on Top */}
@@ -209,51 +178,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  topBar: {
+  statusPill: {
     position: 'absolute',
     top: 40,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 999,
-  },
-  statusPill: {
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(9, 8, 10, 0.85)',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  modeToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  modeActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderColor: '#10b981',
-  },
-  modeBalanced: {
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-    borderColor: '#f59e0b',
-  },
-  modeToggleText: {
-    fontSize: 10,
-    fontWeight: '800',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
-  },
-  textActive: {
-    color: '#10b981',
-  },
-  textBalanced: {
-    color: '#f59e0b',
+    zIndex: 999,
   },
   statusDot: {
     width: 7,

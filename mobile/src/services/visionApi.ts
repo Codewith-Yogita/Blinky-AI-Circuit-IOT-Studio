@@ -3,8 +3,22 @@ import { DEMO_PRESETS, COMPONENT_COLORS } from './demoPresets';
 
 let frameCounter = 1000;
 
-// Configurable backend URL pointing to PC's active LAN IP
-export const BACKEND_URL = 'http://192.168.1.11:8000';
+// Dual backend URLs: localhost (USB adb reverse) and LAN Wi-Fi IP
+export const BACKEND_URL = 'http://localhost:8000';
+export const FALLBACK_BACKEND_URL = 'http://192.168.1.11:8000';
+
+async function postFrame(url: string, bodyJson: string, timeoutMs: number = 3500) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const resp = await fetch(`${url}/api/vision/detect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: controller.signal,
+    body: bodyJson,
+  });
+  clearTimeout(timeoutId);
+  return resp;
+}
 
 export async function detectComponentsFromFrame(
   base64Image: string | null,
@@ -14,7 +28,6 @@ export async function detectComponentsFromFrame(
 ): Promise<FrameDetectionResponse> {
   frameCounter++;
 
-  // DEMO MODE: Explicitly enabled only when requested
   if (isDemoMode) {
     const selectedPreset = DEMO_PRESETS[presetIndex % DEMO_PRESETS.length];
     return {
@@ -24,7 +37,6 @@ export async function detectComponentsFromFrame(
     };
   }
 
-  // LIVE MODE: Must have an actual captured camera frame
   if (!base64Image) {
     return {
       frame_id: frameCounter,
@@ -33,26 +45,23 @@ export async function detectComponentsFromFrame(
     };
   }
 
-  // Send real image to FastAPI / Gemini Vision backend
+  const bodyJson = JSON.stringify({
+    image: `data:image/jpeg;base64,${base64Image}`,
+    frame_id: frameCounter,
+  });
+
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    let response: any = null;
+    try {
+      response = await postFrame(backendUrl, bodyJson, 3000);
+    } catch {
+      // Fallback to Wi-Fi LAN IP if localhost/USB fails
+      if (backendUrl !== FALLBACK_BACKEND_URL) {
+        response = await postFrame(FALLBACK_BACKEND_URL, bodyJson, 3000);
+      }
+    }
 
-    const response = await fetch(`${backendUrl}/api/vision/detect`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        image: `data:image/jpeg;base64,${base64Image}`,
-        frame_id: frameCounter,
-      }),
-    });
-
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
+    if (response && response.ok) {
       const data = await response.json();
       if (Array.isArray(data.detections)) {
         return {
@@ -66,10 +75,9 @@ export async function detectComponentsFromFrame(
       }
     }
   } catch {
-    // Backend offline or error - do NOT fake components!
+    // Backend offline or error
   }
 
-  // When no components are visible or backend has no detections, return strictly EMPTY
   return {
     frame_id: frameCounter,
     timestamp: Math.floor(Date.now() / 1000),

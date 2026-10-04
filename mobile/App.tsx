@@ -36,13 +36,13 @@ export default function App() {
   const cameraRef = useRef<any>(null);
   const isProcessingRef = useRef<boolean>(false);
 
-  // Setup efficient camera picture size on ready
+  // Setup high-clarity camera picture size on ready
   const handleCameraReady = async () => {
     setIsCameraReady(true);
     try {
       if (cameraRef.current?.getAvailablePictureSizesAsync) {
         const sizes: string[] = await cameraRef.current.getAvailablePictureSizesAsync();
-        const preferred = sizes.find((s) => s === '1280x720' || s === '640x480' || s === '800x600');
+        const preferred = sizes.find((s) => s === '1920x1080' || s === '1280x720');
         if (preferred) {
           setPictureSize(preferred);
         }
@@ -60,9 +60,9 @@ export default function App() {
       isProcessingRef.current = true;
       setIsScanning(true);
 
-      // Fast silent capture: skipProcessing: false enables high-speed JPEG compression (~25 KB)
+      // High-clarity, crisp photo capture for dataset collection and detection
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.15,
+        quality: 0.85,
         base64: true,
         skipProcessing: false,
         shutterSound: false,

@@ -73,16 +73,25 @@ async def detect_components(request: Request):
         raw_base64 = raw_base64.split(",", 1)[1]
     raw_base64 = raw_base64.strip()
 
-    # Save to disk at most once every 10s for debug artifacts without blocking real-time frames
+    # Continuously collect diverse training frames into dataset directory
     now = time.time()
-    if raw_base64 and (now - _last_save_time > 10.0):
+    if raw_base64 and (now - _last_save_time > 1.2):
         _last_save_time = now
         try:
             import base64
-            os.makedirs("training_artifacts", exist_ok=True)
-            with open("training_artifacts/latest_live_frame.jpg", "wb") as f:
-                f.write(base64.b64decode(raw_base64))
-        except Exception:
+            dataset_dir = os.path.join("training_artifacts", "collected_dataset")
+            os.makedirs(dataset_dir, exist_ok=True)
+            frame_filename = f"frame_{int(now * 1000)}.jpg"
+            frame_path = os.path.join(dataset_dir, frame_filename)
+            img_bytes = base64.b64decode(raw_base64)
+            with open(frame_path, "wb") as f:
+                f.write(img_bytes)
+            # Also keep latest_live_frame.jpg updated
+            with open(os.path.join("training_artifacts", "latest_live_frame.jpg"), "wb") as f:
+                f.write(img_bytes)
+            print(f"[Collector] Saved live training frame: {frame_filename} ({len(img_bytes)} bytes)")
+        except Exception as e:
+            print(f"[Collector] Save error: {e}")
             pass
 
     # Instant YOLO26 Engine Detection

@@ -43,8 +43,24 @@ training_artifacts/*
 !training_artifacts/.gitkeep
 esp32_data*/
 
+# Screenshots & Captured Photos
+screenshots/*
+!screenshots/.gitkeep
+mobile/screenshots/*
+!mobile/screenshots/.gitkeep
+mobile_screen*.png
+mobile/mobile_screen*.png
+
+# Exported ML binaries
+*.onnx
+*.torchscript
+*.tflite
+
 # Mobile & Expo
 mobile/node_modules/
 mobile/.expo/
 mobile/dist/
 mobile/web-build/
+mobile/android/
+mobile/ios/
+

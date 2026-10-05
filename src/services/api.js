@@ -91,6 +91,41 @@ function sanitizeProjectResponse(data) {
  *   "instructions": ["Step 1...", "Step 2..."]
  * }
  */
+export async function sendMultimodalAiChat({ prompt, image = null, components = [] }) {
+  if (!prompt || prompt.trim().length === 0) {
+    throw new Error("Please enter a message or prompt.");
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        prompt: prompt.trim(),
+        image: image || "",
+        components: components || [],
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        text: data.text,
+        circuitProject: data.circuitProject ? sanitizeProjectResponse(data.circuitProject) : null,
+        suggestedNextSteps: data.suggestedNextSteps || [],
+        source: data.source || "gemini-3.8-flash",
+      };
+    }
+  } catch (err) {
+    console.warn("[API Service] /api/ai/chat unavailable, using local synthesis:", err);
+  }
+
+  return null;
+}
+
 export async function generateProject({ prompt, board = "ESP32" }) {
   if (!prompt || prompt.trim().length === 0) {
     throw new Error("Please enter a description for your IoT project.");

@@ -233,4 +233,116 @@ export async function detectComponentsFromImage(imageDataUrl, preferredKit = "wa
   };
 }
 
-export { COMPONENT_CATALOG };
+export { COMPONENT_CATALOG, API_BASE_URL };
+
+/**
+ * Subscribe to live wireless frames & detections streamed from the Expo Go phone camera.
+ * Connects over WebSocket with automatic fallback polling to /api/vision/latest.
+ */
+export function subscribeToLivePhoneStream(onFrame, onStatusChange) {
+  let ws = null;
+  let pollInterval = null;
+  let isClosed = false;
+
+  const wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws/live";
+
+  function startPollingFallback() {
+    if (pollInterval || isClosed) return;
+    pollInterval = setInterval(async () => {
+      try {
+        const resp = await fetch(`${API_BASE_URL}/api/vision/latest`);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.image) {
+            onFrame(data);
+            if (onStatusChange) {
+              onStatusChange({
+                connected: true,
+                isLive: data.is_live,
+                latency_ms: data.latency_ms,
+                mode: "http-poll",
+              });
+            }
+          }
+        }
+      } catch {
+        if (onStatusChange) onStatusChange({ connected: false, isLive: false });
+      }
+    }, 250);
+  }
+
+  function connectWs() {
+    if (isClosed) return;
+    try {
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+        if (onStatusChange) {
+          onStatusChange({ connected: true, isLive: true, mode: "websocket" });
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.image) {
+            onFrame(data);
+            if (onStatusChange) {
+              onStatusChange({
+                connected: true,
+                isLive: true,
+                latency_ms: data.latency_ms,
+                mode: "websocket",
+              });
+            }
+          }
+        } catch {}
+      };
+
+      ws.onerror = () => {
+        startPollingFallback();
+      };
+
+      ws.onclose = () => {
+        if (!isClosed) {
+          startPollingFallback();
+          setTimeout(connectWs, 3000);
+        }
+      };
+    } catch {
+      startPollingFallback();
+    }
+  }
+
+  connectWs();
+
+  // Return unsubscribe cleanup function
+  return () => {
+    isClosed = true;
+    if (ws) {
+      try {
+        ws.close();
+      } catch {}
+      ws = null;
+    }
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+  };
+}
+
+export async function fetchLatestPhoneFrame() {
+  try {
+    const resp = await fetch(`${API_BASE_URL}/api/vision/latest`);
+    if (resp.ok) {
+      return await resp.json();
+    }
+  } catch {}
+  return null;
+}
+

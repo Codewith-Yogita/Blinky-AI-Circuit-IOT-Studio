@@ -18,6 +18,7 @@ import {
   Layers,
   HelpCircle,
   Camera,
+  Smartphone,
   Play,
   Terminal,
   Zap,
@@ -32,9 +33,13 @@ import {
   Check,
   Paperclip,
   X,
+  Minimize2,
+  Maximize2,
 } from "lucide-react";
 import { sendChatMessage } from "../services/chatAssistant";
 import { generateProject } from "../services/api";
+import { subscribeToLivePhoneStream } from "../services/visionDetection";
+import LivePhoneScreen, { normalizeBbox, getComponentColor } from "./LivePhoneScreen";
 import { waterLevelAlarmCircuit, joystickLedCircuit, singleLedCircuit } from "../data/mockCircuits";
 import CircuitSimulationCard from "./CircuitSimulationCard";
 import CodeGenerationCard from "./CodeGenerationCard";
@@ -59,9 +64,13 @@ export default function CircuitChatPage({
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [cameraDevices, setCameraDevices] = useState([]);
-  const [selectedCameraId, setSelectedCameraId] = useState("");
-  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
+  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(true);
+  const [livePhoneFrame, setLivePhoneFrame] = useState(null);
+  const [phoneStreamStatus, setPhoneStreamStatus] = useState({
+    connected: false,
+    isLive: false,
+    latency_ms: 0,
+  });
   const [cameraError, setCameraError] = useState("");
   const [scannedComponents, setScannedComponents] = useState([]);
   const [activeProject, setActiveProject] = useState(parentProject || null);
@@ -73,6 +82,17 @@ export default function CircuitChatPage({
   const [isListening, setIsListening] = useState(false);
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [isCameraMinimized, setIsCameraMinimized] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track window scroll to dock camera stream in bottom-left
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -149,9 +169,9 @@ export default function CircuitChatPage({
     }
   };
 
-  const sendImageImmediately = (file, imageDataUrl, source) => {
+  const sendImageImmediately = (file, imageDataUrl, source, customPrompt = null) => {
     handleSend(
-      `I attached a ${source} photo of my hardware. Identify the visible components and help me build the circuit.`,
+      customPrompt || `I attached a ${source} photo of my hardware. Identify the visible components and help me build the circuit.`,
       { name: file.name || `${source}-photo.jpg`, dataUrl: imageDataUrl }
     );
   };
@@ -166,179 +186,176 @@ export default function CircuitChatPage({
     reader.readAsDataURL(file);
   };
 
-  // Live camera stream management
+  // Unconditionally subscribe to live phone camera stream from Expo Go
   useEffect(() => {
-    let active = true;
-
-    if (!isLiveCameraOpen) {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-        mediaStreamRef.current = null;
+    const unsubscribe = subscribeToLivePhoneStream(
+      (frameData) => {
+        if (frameData && frameData.image) {
+          setLivePhoneFrame(frameData);
+          setPhoneStreamStatus({
+            connected: true,
+            isLive: true,
+            latency_ms: frameData.latency_ms || 15,
+          });
+        }
+      },
+      (status) => {
+        setPhoneStreamStatus(status);
       }
-      return;
-    }
-
-    const initCamera = async () => {
-      try {
-        setCameraError("");
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-          mediaStreamRef.current = null;
-        }
-
-        const constraints = selectedCameraId
-          ? { video: { deviceId: { exact: selectedCameraId } }, audio: false }
-          : { video: { facingMode: "environment" }, audio: false };
-
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        if (!active) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-
-        mediaStreamRef.current = stream;
-        if (liveVideoRef.current) {
-          liveVideoRef.current.srcObject = stream;
-          try {
-            await liveVideoRef.current.play();
-          } catch (e) {
-            console.warn("Camera video play handled:", e);
-          }
-        }
-
-        const devices = (await navigator.mediaDevices.enumerateDevices()).filter(
-          (d) => d.kind === "videoinput"
-        );
-
-        if (active) {
-          setCameraDevices(devices);
-          const activeTrack = stream.getVideoTracks()[0];
-          const actualDeviceId = activeTrack?.getSettings?.()?.deviceId;
-          if (actualDeviceId && !selectedCameraId) {
-            setSelectedCameraId(actualDeviceId);
-          }
-        }
-      } catch (err) {
-        console.error("Camera access error:", err);
-        if (active) {
-          setCameraError("Camera access failed. Check browser permissions and camera availability.");
-        }
-      }
-    };
-
-    initCamera();
+    );
 
     return () => {
-      active = false;
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-        mediaStreamRef.current = null;
-      }
+      unsubscribe();
     };
-  }, [isLiveCameraOpen, selectedCameraId]);
+  }, []);
 
   const handleCameraButton = () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      cameraInputRef.current?.click();
-      return;
-    }
     setIsLiveCameraOpen((prev) => !prev);
   };
 
   const handleCapturePhoto = () => {
-    const video = liveVideoRef.current;
-    if (!video) return;
+    if (!livePhoneFrame?.image) {
+      cameraInputRef.current?.click();
+      return;
+    }
 
-    try {
-      const width = video.videoWidth || 1280;
-      const height = video.videoHeight || 720;
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
+    const dataUrl = livePhoneFrame.image;
+    const name = `expo-go-capture-${Date.now()}.jpg`;
 
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(video, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        const currentDev = cameraDevices.find((d) => d.deviceId === selectedCameraId);
-        const name = currentDev?.label ? `${currentDev.label}.jpg` : "camera-capture.jpg";
-        setIsLiveCameraOpen(false);
-        sendImageImmediately({ name }, dataUrl, "camera");
-      }
-    } catch (err) {
-      console.error("Failed to capture photo frame:", err);
-      setCameraError("Failed to capture image frame.");
+    const detectedItems = livePhoneFrame.detections || [];
+    if (detectedItems.length > 0) {
+      const labels = detectedItems.map((d) => d.label || d.name).join(", ");
+      const autoPrompt = `I am using these detected hardware components: ${labels}. Build an interactive IoT circuit diagram and Arduino C++ sketch for them.`;
+      sendImageImmediately({ name }, dataUrl, "camera", autoPrompt);
+    } else {
+      sendImageImmediately({ name }, dataUrl, "camera");
     }
   };
 
   const renderLiveCameraOverlay = () => {
     if (!isLiveCameraOpen) return null;
 
-    return (
-      <div className="mb-3 w-full bg-[#16141f]/95 border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-[0_15px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
-            <span className="text-xs font-semibold text-zinc-200 tracking-wide uppercase shrink-0">
-              Live Camera Feed
-            </span>
+    const hasFrame = Boolean(livePhoneFrame?.image);
+    const detections = livePhoneFrame?.detections || [];
+    const shouldDockBottomLeft = messages.length > 0 || isScrolled;
 
-            {cameraDevices.length > 0 && (
-              <div className="relative flex-1 max-w-[220px]">
-                <select
-                  value={selectedCameraId}
-                  onChange={(e) => setSelectedCameraId(e.target.value)}
-                  className="w-full h-7 sm:h-8 rounded-lg bg-[#242031] border border-amber-500/30 px-2.5 text-xs text-amber-300 outline-none cursor-pointer hover:border-amber-500/60 focus:border-amber-500 transition-colors truncate"
-                  title="Switch camera device"
-                >
-                  {cameraDevices.map((device, idx) => (
-                    <option key={device.deviceId || idx} value={device.deviceId}>
-                      {device.label || `Camera ${idx + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+    // CASE 1: DOCKED IN BOTTOM-LEFT (When chat entered or page scrolled)
+    if (shouldDockBottomLeft) {
+      if (isCameraMinimized) {
+        return (
+          <div
+            onClick={() => setIsCameraMinimized(false)}
+            className="fixed bottom-6 left-6 z-50 flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-[#140e1c]/95 border border-emerald-500/40 text-white shadow-[0_15px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.25)] backdrop-blur-2xl cursor-pointer hover:scale-105 active:scale-95 transition-all group select-none"
+            title="Expand Live Phone Stream"
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            <Smartphone size={16} className="text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-bold font-outfit text-white">Live Phone Stream</span>
+              <span className="text-[10px] font-mono text-emerald-400 truncate max-w-[150px]">
+                {detections.length > 0
+                  ? detections.map((d) => d.label || d.name).join(", ")
+                  : "Tracking Hardware"}
+              </span>
+            </div>
+            <Maximize2 size={13} className="text-zinc-400 group-hover:text-white ml-1 shrink-0" />
+          </div>
+        );
+      }
+
+      return (
+        <div className="fixed bottom-6 left-6 z-50 w-[280px] sm:w-[320px] bg-[#120e1a]/95 border border-amber-500/40 rounded-2xl p-2.5 shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_25px_rgba(245,158,11,0.25)] backdrop-blur-2xl flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300 select-none">
+          <div className="flex items-center justify-between gap-1.5 border-b border-white/[0.08] pb-1.5 px-0.5">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div
+                className={`w-2 h-2 rounded-full shrink-0 ${
+                  hasFrame ? "bg-emerald-400 animate-pulse" : "bg-amber-500"
+                }`}
+              />
+              <span className="text-[11px] font-bold text-white font-outfit uppercase tracking-wide truncate flex items-center gap-1">
+                <Smartphone size={12} className="text-amber-400" />
+                <span>Phone Stream</span>
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 shrink-0 font-semibold">
+                {livePhoneFrame?.latency_ms || 15}ms
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsCameraMinimized(true)}
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Minimize player"
+              >
+                <Minimize2 size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLiveCameraOpen(false)}
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-colors cursor-pointer"
+                title="Close player"
+              >
+                <X size={13} />
+              </button>
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsLiveCameraOpen(false)}
-            className="w-7 h-7 rounded-full bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center transition-all cursor-pointer shrink-0"
-            title="Close camera preview"
-          >
-            <X size={14} />
-          </button>
-        </div>
-
-        <div className="relative w-full aspect-video sm:max-h-72 bg-black rounded-xl overflow-hidden border border-white/10 flex items-center justify-center">
-          <video
-            ref={liveVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-contain bg-black"
+          <LivePhoneScreen
+            frameData={livePhoneFrame}
+            maxHeight="220px"
+            onCapture={handleCapturePhoto}
+            captureLabel="Snap to Chat"
+            showControls={true}
           />
-          {cameraError && (
-            <div className="absolute inset-0 bg-black/85 flex items-center justify-center p-4 text-center text-xs text-red-400">
-              {cameraError}
-            </div>
-          )}
+        </div>
+      );
+    }
+
+    // CASE 2: CENTER VIEW (Before chat is entered and not scrolled)
+    return (
+      <div className="mb-4 w-full bg-[#130f1e]/95 border border-amber-500/40 rounded-2xl p-3 sm:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.85)] backdrop-blur-2xl flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="flex items-center justify-between gap-2 border-b border-white/[0.08] pb-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div
+              className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                hasFrame ? "bg-emerald-400 animate-pulse" : "bg-amber-500"
+              }`}
+            />
+            <span className="text-xs font-bold text-white tracking-wide uppercase shrink-0 flex items-center gap-1.5 font-outfit">
+              <Smartphone size={15} className="text-amber-400" />
+              <span>Direct Phone Camera Stream</span>
+            </span>
+
+            <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold truncate">
+              {hasFrame
+                ? `192.168.1.11:8000 • ${livePhoneFrame.latency_ms || 15}ms`
+                : "Waiting for Expo Go"}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsLiveCameraOpen(false)}
+              className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer shrink-0"
+              title="Hide direct camera view"
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 pt-1">
-          <p className="text-[11px] text-zinc-400 hidden sm:block">
-            Preview live hardware footage and click capture to send to Blinky AI.
-          </p>
-          <button
-            type="button"
-            onClick={handleCapturePhoto}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <Camera size={15} />
-            <span>Capture & Send Photo</span>
-          </button>
-        </div>
+        <LivePhoneScreen
+          frameData={livePhoneFrame}
+          maxHeight="380px"
+          onCapture={handleCapturePhoto}
+          captureLabel={
+            detections.length > 0
+              ? `Capture & Build (${detections.length} Parts)`
+              : "Capture Current Frame"
+          }
+        />
       </div>
     );
   };
@@ -349,12 +366,17 @@ export default function CircuitChatPage({
 
     setInputValue("");
 
+    const currentParts =
+      livePhoneFrame?.detections && livePhoneFrame.detections.length > 0
+        ? livePhoneFrame.detections
+        : scannedComponents;
+
     const userMsg = {
       id: Date.now(),
       sender: "user",
       text: textToSend,
       attachment,
-      scannedParts: [...scannedComponents],
+      scannedParts: [...currentParts],
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -569,11 +591,13 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
       return;
     }
 
-    // Otherwise, perform AI circuit synthesis or answering
+    // Otherwise, perform AI multimodal circuit synthesis or answering
     setIsLoading(true);
 
     try {
-      const response = await sendChatMessage(textToSend, messages, scannedComponents);
+      const liveImage = livePhoneFrame?.image || null;
+      const liveParts = livePhoneFrame?.detections?.length > 0 ? livePhoneFrame.detections : scannedComponents;
+      const response = await sendChatMessage(textToSend, messages, liveParts, liveImage);
 
       if (response.circuitProject) {
         setActiveProject(response.circuitProject);
@@ -581,10 +605,10 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
           onUpdateProject(response.circuitProject);
         }
 
-        // Only show components if the user's query specifically asked for that component!
+        // Show circuit and code whenever a project is generated or specifically requested
         setVisibleComponents({
-          circuit: wantsCircuit,
-          code: wantsCode,
+          circuit: wantsCircuit || Boolean(response.circuitProject),
+          code: wantsCode || Boolean(response.circuitProject?.code),
           flash: wantsFlash,
         });
       }
@@ -813,6 +837,25 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
             {/* Wide Input Capsule (Matching Reference Screenshot) */}
             <div className="w-full max-w-2xl mx-auto mt-2">
               {renderLiveCameraOverlay()}
+
+              {livePhoneFrame?.image && !isLiveCameraOpen && (
+                <div className="mb-2 flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#140e1c]/90 border border-emerald-500/30 text-emerald-400 text-xs font-mono shadow-sm">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="truncate">
+                      📸 Live Phone Camera Attached ({livePhoneFrame.detections?.length > 0 ? livePhoneFrame.detections.map((d) => d.label).join(", ") : "ESP32 View"})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsLiveCameraOpen(true)}
+                    className="text-[11px] text-amber-300 hover:text-amber-200 hover:underline shrink-0 ml-2 cursor-pointer"
+                  >
+                    View Stream
+                  </button>
+                </div>
+              )}
+
               <div className="relative rounded-full bg-[#121118]/90 border border-zinc-800/80 hover:border-zinc-700 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
 
                 {/* Hidden native file pickers */}
@@ -981,11 +1024,45 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
                       {isUser ? (
                         <>
                           {msg.attachment && (
-                            <img
-                              src={msg.attachment.dataUrl}
-                              alt={msg.attachment.name}
-                              className="mb-3 max-h-64 max-w-full rounded-xl border border-white/25 object-contain"
-                            />
+                            <div className="relative inline-block max-w-full rounded-xl overflow-hidden border border-white/20 mb-3 bg-black">
+                              <img
+                                src={msg.attachment.dataUrl}
+                                alt={msg.attachment.name}
+                                className="block max-h-64 max-w-full object-contain mx-auto"
+                              />
+                              {/* Overlay Bounding Boxes on Message Snapshot */}
+                              {Array.isArray(msg.scannedParts) &&
+                                msg.scannedParts.map((item, idx) => {
+                                  const { left, top, width, height } = normalizeBbox(item.bbox);
+                                  const color = getComponentColor(item);
+                                  const confPercent = Math.round((item.confidence || 0.95) * 100);
+                                  const clampedW = Math.min(width, 100 - left);
+                                  const clampedH = Math.min(height, 100 - top);
+
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="absolute border-2 rounded pointer-events-none"
+                                      style={{
+                                        borderColor: color,
+                                        backgroundColor: `${color}20`,
+                                        boxShadow: `0 0 8px ${color}60`,
+                                        left: `${left}%`,
+                                        top: `${top}%`,
+                                        width: `${clampedW}%`,
+                                        height: `${clampedH}%`,
+                                      }}
+                                    >
+                                      <span
+                                        className="absolute -top-3.5 left-0 px-1 py-0.2 rounded text-[8px] font-mono font-bold text-white whitespace-nowrap shadow"
+                                        style={{ backgroundColor: color }}
+                                      >
+                                        {item.label || item.name} ({confPercent}%)
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                            </div>
                           )}
                           <p>{msg.text}</p>
                         </>
@@ -1134,6 +1211,25 @@ You can click **Play Simulation (▶)** on the canvas to watch it build automati
             {/* Bottom Capsule Input Bar */}
             <div className="w-full">
               {renderLiveCameraOverlay()}
+
+              {livePhoneFrame?.image && !isLiveCameraOpen && (
+                <div className="mb-2 flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#140e1c]/90 border border-emerald-500/30 text-emerald-400 text-xs font-mono shadow-sm">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="truncate">
+                      📸 Live Phone Camera Attached ({livePhoneFrame.detections?.length > 0 ? livePhoneFrame.detections.map((d) => d.label).join(", ") : "ESP32 View"})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsLiveCameraOpen(true)}
+                    className="text-[11px] text-amber-300 hover:text-amber-200 hover:underline shrink-0 ml-2 cursor-pointer"
+                  >
+                    View Stream
+                  </button>
+                </div>
+              )}
+
               <div className="relative rounded-full bg-[#121118]/95 border border-zinc-800/80 focus-within:border-amber-500/60 shadow-[0_20px_50px_rgba(0,0,0,0.85)] p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 transition-all backdrop-blur-2xl">
 
                 {/* Hidden native file pickers */}

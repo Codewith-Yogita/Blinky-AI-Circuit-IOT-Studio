@@ -16,7 +16,14 @@ import {
   getOnDeviceModel,
   isNativeOnDeviceSupported,
 } from './src/services/onDeviceVision';
-import { detectComponentsFromFrame, BACKEND_URL } from './src/services/visionApi';
+import {
+  detectComponentsFromFrame,
+  getActiveBackendUrl,
+  getIsConnectedToPC,
+  setCustomBackendUrl,
+  DEFAULT_LAN_URL,
+} from './src/services/visionApi';
+import { Alert } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -104,15 +111,26 @@ export default function App() {
           setStatusMessage('Scanning hardware (On-Device)...');
         }
       } else if (!isNativeOnDeviceSupported && photo?.base64) {
-        // Fallback for Expo Go (which lacks native C++ TurboModules)
-        const res = await detectComponentsFromFrame(photo.base64, BACKEND_URL, false);
+        // High-performance streaming to PC Blinky Studio over Wi-Fi
+        const res = await detectComponentsFromFrame(photo.base64);
         const items = res.detections || [];
         setDetections(items);
 
+        const connected = getIsConnectedToPC();
+        const activeUrl = getActiveBackendUrl().replace('http://', '');
+
         if (items.length > 0) {
-          setStatusMessage(`Tracking (Expo Go): ${items.map((i) => i.label).join(', ')}`);
+          setStatusMessage(
+            connected
+              ? `⚡ Live Stream (${activeUrl}) • ${items.map((i) => i.label).join(', ')}`
+              : `Tracking: ${items.map((i) => i.label).join(', ')}`
+          );
         } else {
-          setStatusMessage('Scanning hardware (Backend)...');
+          setStatusMessage(
+            connected
+              ? `🟢 Live Streaming to PC Studio (${activeUrl})`
+              : `Scanning hardware (${activeUrl})...`
+          );
         }
       }
     } catch (err: any) {
@@ -152,6 +170,22 @@ export default function App() {
     }
   };
 
+  const handlePillPress = () => {
+    Alert.alert(
+      'PC Studio Connection',
+      `Target PC: ${getActiveBackendUrl()}\nStatus: ${
+        getIsConnectedToPC() ? '🟢 Connected (Streaming frames)' : '🟡 Connecting...'
+      }`,
+      [
+        { text: 'OK' },
+        {
+          text: 'Reset to 192.168.1.11',
+          onPress: () => setCustomBackendUrl('192.168.1.11'),
+        },
+      ]
+    );
+  };
+
   if (!permission?.granted) {
     return (
       <View style={styles.permissionContainer}>
@@ -181,15 +215,19 @@ export default function App() {
       />
 
       {/* Top Floating Status Indicator */}
-      <View style={styles.statusPill}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={handlePillPress}
+        style={styles.statusPill}
+      >
         <View
           style={[
             styles.statusDot,
-            { backgroundColor: detections.length > 0 ? '#10b981' : isScanning ? '#06b6d4' : '#f59e0b' },
+            { backgroundColor: getIsConnectedToPC() ? '#10b981' : isScanning ? '#06b6d4' : '#f59e0b' },
           ]}
         />
         <Text style={styles.statusText}>{statusMessage}</Text>
-      </View>
+      </TouchableOpacity>
 
       {/* Bounding Boxes with Text on Top */}
       {detections.length > 0 && (

@@ -1,4 +1,4 @@
-import { generateProject } from "./api";
+import { generateProject, sendMultimodalAiChat } from "./api";
 import {
   waterLevelAlarmCircuit,
   singleLedCircuit,
@@ -174,14 +174,39 @@ export function isCircuitSynthesisRequest(text) {
  * Accepts userMessage, conversationHistory, and optional scannedComponents list.
  * Returns { text: string, circuitProject: object | null, suggestedNextSteps: string[] }
  */
-export async function sendChatMessage(userMessage, conversationHistory = [], scannedComponents = []) {
+export async function sendChatMessage(userMessage, conversationHistory = [], scannedComponents = [], liveImage = null) {
   const trimmed = userMessage.trim();
   const lower = trimmed.toLowerCase();
 
   const hasScannedParts = Array.isArray(scannedComponents) && scannedComponents.length > 0;
-  const scannedNames = hasScannedParts ? scannedComponents.map((c) => c.name).join(", ") : "";
+  const scannedNames = hasScannedParts ? scannedComponents.map((c) => c.name || c.label || c).join(", ") : "";
 
-  // 1. Check if it matches an in-depth conceptual question
+  // 1. Send to Multimodal AI (Gemini 3.8 Flash) via FastAPI Backend
+  try {
+    const aiResult = await sendMultimodalAiChat({
+      prompt: trimmed,
+      image: liveImage,
+      components: scannedComponents,
+    });
+
+    if (aiResult && aiResult.text) {
+      return {
+        text: aiResult.text,
+        circuitProject: aiResult.circuitProject,
+        suggestedNextSteps: aiResult.suggestedNextSteps?.length > 0
+          ? aiResult.suggestedNextSteps
+          : [
+              "Open in Circuit Studio & Flash",
+              "Explain the pin routing in detail",
+              "What safety precautions should I take with this wiring?",
+            ],
+      };
+    }
+  } catch (err) {
+    console.warn("[ChatAssistant] Multimodal AI error, falling back to local engine:", err);
+  }
+
+  // 2. Check if it matches an in-depth conceptual question from local knowledge base
   for (const item of CIRCUIT_KNOWLEDGE_BASE) {
     if (item.triggers.some((trigger) => lower.includes(trigger))) {
       let circuitProject = null;

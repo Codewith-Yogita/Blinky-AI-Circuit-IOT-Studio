@@ -1,8 +1,28 @@
-import { loadTensorflowModel, TfliteModel } from 'react-native-fast-tflite';
-import { loadImage } from 'react-native-nitro-image';
+import type { TfliteModel } from 'react-native-fast-tflite';
 import { Asset } from 'expo-asset';
 import { DetectionItem } from '../types/detection';
 import { COMPONENT_COLORS } from './demoPresets';
+
+let fastTfliteModule: any = null;
+let nitroImageModule: any = null;
+
+try {
+  fastTfliteModule = require('react-native-fast-tflite');
+} catch (e) {
+  // Expected in Expo Go which lacks native C++ TurboModules
+  console.log('[OnDeviceVision] Fast-TFLite not available in this runtime');
+}
+
+try {
+  nitroImageModule = require('react-native-nitro-image');
+} catch (e) {
+  // Expected in Expo Go which lacks native C++ TurboModules
+  console.log('[OnDeviceVision] Nitro-Image not available in this runtime');
+}
+
+export const isNativeOnDeviceSupported = !!(
+  fastTfliteModule?.loadTensorflowModel && nitroImageModule?.loadImage
+);
 
 let cachedModel: TfliteModel | null = null;
 let isLoadingModel = false;
@@ -10,15 +30,20 @@ let isLoadingModel = false;
 const MODEL_INPUT_SIZE = 320;
 const NUM_CLASSES = 2; // 0: ESP32, 1: LED
 const NUM_ANCHORS = 2100;
-const CONFIDENCE_THRESHOLD = 0.25;
+const CONFIDENCE_THRESHOLD = 0.38;
 const IOU_THRESHOLD = 0.45;
 
 /**
  * Initializes and caches the offline on-device YOLO TFLite model.
  */
 export async function getOnDeviceModel(): Promise<TfliteModel | null> {
+  if (!isNativeOnDeviceSupported) {
+    return null;
+  }
   if (cachedModel) return cachedModel;
   if (isLoadingModel) return null;
+
+  const { loadTensorflowModel } = fastTfliteModule;
 
   try {
     isLoadingModel = true;
@@ -122,8 +147,9 @@ function applyNMS(candidates: CandidateBox[], iouThreshold = IOU_THRESHOLD): Can
 export async function detectComponentsOnDevice(imageUri: string): Promise<DetectionItem[]> {
   try {
     const model = await getOnDeviceModel();
-    if (!model) return [];
+    if (!model || !nitroImageModule?.loadImage) return [];
 
+    const { loadImage } = nitroImageModule;
     // Load native image from local file path and resize to 320x320 using native C++ Nitro engine
     const image = await loadImage({ filePath: imageUri });
     const resized = image.resize(MODEL_INPUT_SIZE, MODEL_INPUT_SIZE);

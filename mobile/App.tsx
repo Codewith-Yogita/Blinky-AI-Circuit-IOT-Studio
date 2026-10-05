@@ -11,14 +11,21 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BoundingBoxOverlay } from './src/components/BoundingBoxOverlay';
 import { DetectionItem } from './src/types/detection';
-import { detectComponentsOnDevice, getOnDeviceModel } from './src/services/onDeviceVision';
+import {
+  detectComponentsOnDevice,
+  getOnDeviceModel,
+  isNativeOnDeviceSupported,
+} from './src/services/onDeviceVision';
+import { detectComponentsFromFrame, BACKEND_URL } from './src/services/visionApi';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [detections, setDetections] = useState<DetectionItem[]>([]);
-  const [statusMessage, setStatusMessage] = useState<string>('Offline AI • Initializing...');
+  const [statusMessage, setStatusMessage] = useState<string>(
+    isNativeOnDeviceSupported ? 'Offline AI • Initializing...' : 'Expo Go Mode • Ready'
+  );
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [pictureSize, setPictureSize] = useState<string | undefined>(undefined);
@@ -36,15 +43,19 @@ export default function App() {
   const cameraRef = useRef<any>(null);
   const isProcessingRef = useRef<boolean>(false);
 
-  // Pre-warm on-device TFLite neural model
+  // Pre-warm on-device TFLite neural model if native runtime is available
   useEffect(() => {
-    getOnDeviceModel().then((model) => {
-      if (model) {
-        setStatusMessage('Offline AI • Ready');
-      } else {
-        setStatusMessage('Offline AI • Model load fallback');
-      }
-    });
+    if (isNativeOnDeviceSupported) {
+      getOnDeviceModel().then((model) => {
+        if (model) {
+          setStatusMessage('Offline AI • Ready');
+        } else {
+          setStatusMessage('Offline AI • Model load fallback');
+        }
+      });
+    } else {
+      setStatusMessage('Expo Go Mode • Using PC Backend');
+    }
   }, []);
 
   // Setup high-clarity camera picture size on ready
@@ -63,7 +74,7 @@ export default function App() {
     }
   };
 
-  // Instantaneous frame capture & 100% offline on-device detection
+  // Instantaneous frame capture & detection (Offline on-device or Expo Go backend)
   const captureAndScan = useCallback(async () => {
     if (!cameraRef.current || isProcessingRef.current || !isCameraReady) return;
 
@@ -71,9 +82,9 @@ export default function App() {
       isProcessingRef.current = true;
       setIsScanning(true);
 
-      // Fast, uncompressed native capture for on-device C++ pipeline (no base64 overhead)
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.85,
+        base64: !isNativeOnDeviceSupported,
         skipProcessing: false,
         shutterSound: false,
       });
@@ -82,7 +93,8 @@ export default function App() {
         setPhotoDimensions({ width: photo.width, height: photo.height });
       }
 
-      if (photo?.uri) {
+      if (isNativeOnDeviceSupported && photo?.uri) {
+        // 100% Offline On-Device Detection
         const items = await detectComponentsOnDevice(photo.uri);
         setDetections(items);
 
@@ -90,6 +102,17 @@ export default function App() {
           setStatusMessage(`Tracking (On-Device): ${items.map((i) => i.label).join(', ')}`);
         } else {
           setStatusMessage('Scanning hardware (On-Device)...');
+        }
+      } else if (!isNativeOnDeviceSupported && photo?.base64) {
+        // Fallback for Expo Go (which lacks native C++ TurboModules)
+        const res = await detectComponentsFromFrame(photo.base64, BACKEND_URL, false);
+        const items = res.detections || [];
+        setDetections(items);
+
+        if (items.length > 0) {
+          setStatusMessage(`Tracking (Expo Go): ${items.map((i) => i.label).join(', ')}`);
+        } else {
+          setStatusMessage('Scanning hardware (Backend)...');
         }
       }
     } catch (err: any) {

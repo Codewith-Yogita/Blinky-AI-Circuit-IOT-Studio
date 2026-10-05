@@ -1,31 +1,35 @@
 import os
 import sys
-import subprocess
+import types
 from pathlib import Path
 
-def convert():
+# Monkeypatch ai_edge_litert with tensorflow.lite so onnx2tf works seamlessly on Windows
+import tensorflow as tf
+mod = types.ModuleType("ai_edge_litert")
+sub = types.ModuleType("ai_edge_litert.interpreter")
+sub.Interpreter = tf.lite.Interpreter
+mod.interpreter = sub
+sys.modules["ai_edge_litert"] = mod
+sys.modules["ai_edge_litert.interpreter"] = sub
+
+from onnx2tf.onnx2tf import convert
+
+def main():
     base_dir = Path(__file__).resolve().parent.parent
     onnx_path = base_dir / "backend" / "esp32_yolo.onnx"
     output_dir = base_dir / "mobile" / "assets" / "models"
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    print(f"Converting ONNX model: {onnx_path}")
-    print(f"Output directory: {output_dir}")
-    
-    # Run onnx2tf command
-    cmd = [
-        sys.executable, "-m", "onnx2tf",
-        "-i", str(onnx_path),
-        "-o", str(output_dir),
-        "-osd" # output signature def
-    ]
-    
-    res = subprocess.run(cmd, capture_output=True, text=True)
-    print("STDOUT:", res.stdout)
-    if res.stderr:
-        print("STDERR:", res.stderr)
-        
-    print("Done conversion check.")
+
+    print(f"[Converter] Input ONNX: {onnx_path}")
+    print(f"[Converter] Output directory: {output_dir}")
+
+    convert(
+        input_onnx_file_path=str(onnx_path),
+        output_folder_path=str(output_dir),
+        output_signaturedefs=True,
+    )
+
+    print("[Converter] ONNX to TFLite conversion complete!")
 
 if __name__ == "__main__":
-    convert()
+    main()

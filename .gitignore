@@ -55,6 +55,8 @@ mobile/mobile_screen*.png
 *.onnx
 *.torchscript
 *.tflite
+!mobile/assets/models/esp32_yolo.tflite
+!mobile/assets/models/*.tflite
 
 # Mobile & Expo
 mobile/node_modules/
@@ -64,3 +66,4 @@ mobile/web-build/
 mobile/android/
 mobile/ios/
 
+backend/training_artifacts

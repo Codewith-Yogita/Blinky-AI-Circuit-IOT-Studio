@@ -11,14 +11,14 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { BoundingBoxOverlay } from './src/components/BoundingBoxOverlay';
 import { DetectionItem } from './src/types/detection';
-import { detectComponentsFromFrame, BACKEND_URL } from './src/services/visionApi';
+import { detectComponentsOnDevice, getOnDeviceModel } from './src/services/onDeviceVision';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [detections, setDetections] = useState<DetectionItem[]>([]);
-  const [statusMessage, setStatusMessage] = useState<string>('Ready • Scanning...');
+  const [statusMessage, setStatusMessage] = useState<string>('Offline AI • Initializing...');
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [pictureSize, setPictureSize] = useState<string | undefined>(undefined);
@@ -36,6 +36,17 @@ export default function App() {
   const cameraRef = useRef<any>(null);
   const isProcessingRef = useRef<boolean>(false);
 
+  // Pre-warm on-device TFLite neural model
+  useEffect(() => {
+    getOnDeviceModel().then((model) => {
+      if (model) {
+        setStatusMessage('Offline AI • Ready');
+      } else {
+        setStatusMessage('Offline AI • Model load fallback');
+      }
+    });
+  }, []);
+
   // Setup high-clarity camera picture size on ready
   const handleCameraReady = async () => {
     setIsCameraReady(true);
@@ -52,7 +63,7 @@ export default function App() {
     }
   };
 
-  // Instantaneous frame capture & local detection
+  // Instantaneous frame capture & 100% offline on-device detection
   const captureAndScan = useCallback(async () => {
     if (!cameraRef.current || isProcessingRef.current || !isCameraReady) return;
 
@@ -60,10 +71,9 @@ export default function App() {
       isProcessingRef.current = true;
       setIsScanning(true);
 
-      // High-clarity, crisp photo capture for dataset collection and detection
+      // Fast, uncompressed native capture for on-device C++ pipeline (no base64 overhead)
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.85,
-        base64: true,
         skipProcessing: false,
         shutterSound: false,
       });
@@ -72,15 +82,14 @@ export default function App() {
         setPhotoDimensions({ width: photo.width, height: photo.height });
       }
 
-      if (photo?.base64) {
-        const res = await detectComponentsFromFrame(photo.base64, BACKEND_URL, false);
-        const items = res.detections || [];
+      if (photo?.uri) {
+        const items = await detectComponentsOnDevice(photo.uri);
         setDetections(items);
 
         if (items.length > 0) {
-          setStatusMessage(`Tracking: ${items.map((i) => i.label).join(', ')}`);
+          setStatusMessage(`Tracking (On-Device): ${items.map((i) => i.label).join(', ')}`);
         } else {
-          setStatusMessage('Scanning hardware...');
+          setStatusMessage('Scanning hardware (On-Device)...');
         }
       }
     } catch (err: any) {

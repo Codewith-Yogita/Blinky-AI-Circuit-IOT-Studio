@@ -16,43 +16,26 @@ The system combines:
 
 ```mermaid
 flowchart TD
-    subgraph MobileDevice["Mobile Client (React Native + Expo)"]
-        Camera["1080p CameraView (Quality 0.85)"]
-        IMU["Hardware Gyroscope (DeviceMotion 60Hz)"]
-        Overlay["BoundingBoxOverlay (Native GPU Driver)"]
+    subgraph MobileDevice["Mobile AR Client (Standalone Edge AI)"]
+        Camera["High-Clarity CameraView (Quality 0.85)"]
+        NitroImage["Nitro C++ Image Preprocessing (320x320)"]
+        EdgeTFLite["Fast TFLite Engine (esp32_yolo.tflite)"]
+        Overlay["BoundingBoxOverlay (Instantaneous Optical HUD)"]
+        Screen["Mobile Display (Offline AR Overlay)"]
     end
 
-    subgraph Network["Low-Latency Transport"]
-        USB["USB Port Forwarding (adb reverse :8000)"]
-        LAN["Wi-Fi LAN HTTP/JSON (192.168.1.x:8000)"]
-    end
+    Camera -->|"Local File URI"| NitroImage
+    NitroImage -->|"Normalized RGB Float32 Tensor"| EdgeTFLite
+    EdgeTFLite -->|"Direct Optical Bounding Boxes"| Overlay
+    Overlay --> Screen
 
-    subgraph BackendEngine["Python Vision Engine (FastAPI)"]
-        Collector["Continuous Dataset Collector (1.2s Interval)"]
-        YOLO["YOLO26 / YOLOv8 Vision Model (640x640 Letterbox)"]
-        Inference["TensorRT / PyTorch C++ Runtime (<50ms)"]
-    end
-
-    subgraph DeepSynthesis["Cloud Intelligence Tier"]
+    subgraph DeepSynthesis["Cloud Intelligence Tier (Optional)"]
         Gemini["Google Gemini 2.5 Flash Vision"]
         Netlist["Netlist Validator & Wokwi Exporter"]
         Firmware["Arduino C++ Generator"]
     end
 
-    Camera -->|"Base64 JPEG Frame"| USB
-    Camera -.->|"Fallback"| LAN
-    USB --> Collector
-    LAN --> Collector
-    USB --> YOLO
-    LAN --> YOLO
-    Collector -->|"Persist High-Res Frames"| Disk[("training_artifacts/collected_dataset")]
-
-    YOLO --> Inference
-    Inference -->|"Normalized Bounding Boxes [x, y, w, h]"| Overlay
-    IMU -->|"Angular Deltas (gamma, beta)"| Overlay
-    Overlay -->|"Direct 60 FPS HUD Render"| Screen["Mobile Display"]
-
-    Inference -->|"Detected Component List"| Gemini
+    EdgeTFLite -.->|"Detected Component Telemetry"| Gemini
     Gemini --> Netlist
     Netlist --> Firmware
 ```
@@ -81,19 +64,15 @@ $$\text{bbox} = \{x, y, w, h\} \quad \text{where } x, y, w, h \in [0.0, 1.0]$$
 
 ---
 
-## 2. Optical-Inertial 60 FPS AR Tracking
+## 2. 100% Offline On-Device Edge Neural Tracking
 
-Standard video inference over Wi-Fi or USB introduces 30–80ms of network and inference latency. To achieve fluid 60 FPS motion without jitter or lagging bounding boxes, Blinky decouples **neural detection** from **screen rendering**.
+To achieve true untethered mobility in the lab or field without requiring a PC, backend server, or Wi-Fi network, Blinky runs YOLO neural inferences directly on the mobile device's neural engine.
 
 ### How It Works:
-1. **Neural Anchor Calibration**: Whenever a fresh detection frame arrives from the vision model (approx. 5–15 FPS), the overlay locks the physical angular orientation from the gyroscope ($\beta_{\text{anchor}}, \gamma_{\text{anchor}}$).
-2. **60 Hz Gyroscope Sampling**: Mobile hardware sensors (`DeviceMotion` from `expo-sensors`) sample the device's physical angular rotation every 16 milliseconds.
-3. **Perspective Projection**:
-   Angular shifts between the current device angle and the anchor are converted into pixel offsets:
-   $$\Delta X = -\tan(\gamma - \gamma_{\text{anchor}}) \cdot (W_{\text{layout}} \cdot K_f)$$
-   $$\Delta Y = \tan(\beta - \beta_{\text{anchor}}) \cdot (H_{\text{layout}} \cdot K_f)$$
-   where $K_f \approx 1.35$ is the camera focal length scale multiplier.
-4. **Native Driver GPU Acceleration**: The calculated offset $(\Delta X, \Delta Y)$ is dispatched directly to the native GPU compositor using `Animated.ValueXY` with `useNativeDriver: true`. This guarantees continuous 60 FPS rendering regardless of JS thread workload.
+1. **Zero-Backend Standalone Inference**: The mobile client bundles `esp32_yolo.tflite` into native Android assets, executed directly by `react-native-fast-tflite` (native C++ TFLite engine).
+2. **Accelerated Native Preprocessing**: Images captured from `expo-camera` are decoded and resized to $320 \times 320$ using `react-native-nitro-image` C++ native memory buffers, avoiding expensive JavaScript-to-native serialization.
+3. **Pure Optical HUD (Zero Gyro Drift)**: Bounding boxes are rendered directly from instantaneous neural output onto the camera overlay. By relying purely on optical neural tracking, Blinky eliminates the sensor drift, calibration errors, and accelerometer noise inherent to hardware IMUs/gyroscopes.
+4. **Vectorized Non-Maximum Suppression (NMS)**: Fast multi-class IoU filtering consolidates candidate detections into tight, crisp bounding boxes with confidence scores.
 
 ---
 

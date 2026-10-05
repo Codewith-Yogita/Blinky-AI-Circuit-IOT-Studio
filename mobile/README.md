@@ -6,10 +6,10 @@ The companion mobile app for **Blinky AI IoT Studio**. Point your phone camera a
 
 ## Features
 
-- **60 FPS Gyroscope Motion Tracking**: Hardware IMU gyroscope sensor fusion (`expo-sensors` DeviceMotion at 60 Hz) renders perspective-projected bounding boxes on the native GPU UI thread with zero damping lag.
-- **1080p Full HD Camera Pipeline**: High-clarity photo stream at 0.85 JPEG quality, capturing fine board traces, pins, and component labels without blocky compression artifacts.
-- **Smart Dual Networking**: Automatically routes traffic through zero-latency USB port forwarding (`http://localhost:8000`) and seamlessly falls back to Wi-Fi LAN IP (`http://192.168.1.x:8000`).
-- **Hands-Free Detection**: Continuous automatic detection loop running without manual shutter buttons.
+- **100% Offline On-Device AI Inference**: Powered by local TensorFlow Lite (`react-native-fast-tflite`) and C++ accelerated image preprocessing (`react-native-nitro-image`). Zero backend, network, or cloud connection required.
+- **Zero Sensor Drift Optical HUD**: Pure optical perspective AR bounding boxes rendered instantaneously from direct neural inferences without unreliable gyroscope drift or accelerometer noise.
+- **1080p Full HD Camera Pipeline**: High-clarity native photo capture with fine pin, trace, and chip detail preserved for accurate classification.
+- **Stand-alone Edge Operation**: Works completely untethered on physical devices in the field with the PC turned off.
 - **Dedicated Screenshots Directory**: Screenshots and sample captures can be saved in `mobile/screenshots/` (tracked with `.gitkeep`, raw images ignored by git).
 
 ---
@@ -17,10 +17,10 @@ The companion mobile app for **Blinky AI IoT Studio**. Point your phone camera a
 ## Tech Stack
 
 - **Framework**: React Native + Expo (SDK 57 Native Prebuild)
-- **Camera**: `expo-camera` (`CameraView`) configured for 1080p Full HD capture
-- **Motion Sensors**: `expo-sensors` (`DeviceMotion` 60 Hz)
-- **Native Modules**: `react-native-vision-camera`, `react-native-fast-tflite`, `react-native-nitro-modules`
-- **UI Design System**: Cybernetic Dark Obsidian (`#09080a`), Amber Gold (`#f59e0b`), Emerald (`#10b981`), Cyan (`#06b6d4`)
+- **On-Device Inference**: `react-native-fast-tflite` (native C++ TFLite engine)
+- **Image Acceleration**: `react-native-nitro-image` & `react-native-nitro-modules`
+- **Camera**: `expo-camera` (`CameraView`) configured for high-clarity capture
+- **UI Design System**: Cybernetic Dark Obsidian (`#09080a`), Emerald (`#10b981`), Amber Gold (`#f59e0b`), Cyan (`#06b6d4`)
 
 ---
 

@@ -1,6 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import { DeviceMotion } from 'expo-sensors';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { DetectionItem } from '../types/detection';
 import { COMPONENT_COLORS } from '../services/demoPresets';
 
@@ -12,7 +11,7 @@ interface Props {
   sourceHeight?: number;
 }
 
-// 0ms Instantaneous AR Bounding Box
+// Direct Instantaneous AR Bounding Box
 const DirectBox: React.FC<{
   item: DetectionItem;
   left: number;
@@ -61,56 +60,6 @@ export const BoundingBoxOverlay: React.FC<Props> = ({
 }) => {
   if (layoutWidth === 0 || layoutHeight === 0) return null;
 
-  // 60 FPS GPU Motion Tracking Values (Native Driver)
-  const motionAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-  const currentRotation = useRef<{ beta: number; gamma: number }>({ beta: 0, gamma: 0 });
-  const anchorRotation = useRef<{ beta: number; gamma: number }>({ beta: 0, gamma: 0 });
-  const hasAnchor = useRef<boolean>(false);
-
-  // Calibrate anchor on every fresh detection frame from the neural model
-  useEffect(() => {
-    if (detections.length > 0 && currentRotation.current) {
-      anchorRotation.current = {
-        beta: currentRotation.current.beta,
-        gamma: currentRotation.current.gamma,
-      };
-      hasAnchor.current = true;
-      motionAnim.setValue({ x: 0, y: 0 });
-    }
-  }, [detections, motionAnim]);
-
-  // 60 Hz Hardware Gyroscope / IMU Listener (16ms per frame = 60 FPS)
-  useEffect(() => {
-    DeviceMotion.setUpdateInterval(16); // 16ms = 60 FPS
-
-    const subscription = DeviceMotion.addListener((data) => {
-      if (!data?.rotation) return;
-      const { beta, gamma } = data.rotation;
-      currentRotation.current = { beta, gamma };
-
-      if (!hasAnchor.current) {
-        anchorRotation.current = { beta, gamma };
-        hasAnchor.current = true;
-        return;
-      }
-
-      // Compute perspective displacement from physical camera angular delta
-      const deltaGamma = gamma - anchorRotation.current.gamma;
-      const deltaBeta = beta - anchorRotation.current.beta;
-
-      // Project angular shift to screen pixels (focal length multiplier ~1.3x)
-      const shiftX = -Math.tan(deltaGamma) * (layoutWidth * 1.35);
-      const shiftY = Math.tan(deltaBeta) * (layoutHeight * 1.35);
-
-      // Instant GPU update on the native UI thread
-      motionAnim.setValue({ x: shiftX, y: shiftY });
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [layoutWidth, layoutHeight, motionAnim]);
-
   // Camera preview aspect ratio projection
   const viewAspect = layoutWidth / layoutHeight;
   const imgAspect = sourceWidth / sourceHeight;
@@ -130,18 +79,7 @@ export const BoundingBoxOverlay: React.FC<Props> = ({
   }
 
   return (
-    <Animated.View
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          transform: [
-            { translateX: motionAnim.x },
-            { translateY: motionAnim.y },
-          ],
-        },
-      ]}
-      pointerEvents="none"
-    >
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
       {detections.map((item) => {
         const left = item.bbox.x * sourceWidth * scale - offsetX;
         const top = item.bbox.y * sourceHeight * scale - offsetY;
@@ -164,29 +102,35 @@ export const BoundingBoxOverlay: React.FC<Props> = ({
           />
         );
       })}
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   box: {
     position: 'absolute',
-    borderWidth: 2,
-    borderRadius: 4,
+    borderWidth: 2.5,
+    borderRadius: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   labelTag: {
     position: 'absolute',
-    left: -2,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 3,
+    left: -2.5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 4,
   },
   labelText: {
     color: '#000000',
     fontSize: 12,
     fontWeight: '800',
-    fontFamily: 'monospace',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
 });
